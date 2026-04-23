@@ -1,5 +1,6 @@
 "use strict";
 import { Router } from "express";
+import cotizacionRouter from "./cotizacion.routes.js";
 
 /**
  * Registra todas las rutas de la API bajo el prefijo /api.
@@ -11,6 +12,7 @@ import { Router } from "express";
 export function routerApi(app) {
   const router = Router();
 
+  router.use("/cotizaciones", cotizacionRouter);
   // Ejemplo: cuando tengas tus rutas, las montás así:
   // router.use("/usuarios", usuariosRouter);
   // router.use("/clientes", clientesRouter);
