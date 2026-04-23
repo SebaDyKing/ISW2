@@ -1,17 +1,17 @@
 "use strict";
 import { crearCotizacionService } from "../services/cotizacion.service.js";
+import { cotizacionSchema } from "../validations/cotizacion.validation.js";
 
 export const crearSolicitud = async (req, res) => {
   try {
-    // Extraemos los datos que vienen del formulario (req.body)
-    const { nombre_empresa, telefono, correo, comentarios, id_plan } = req.body;
-
-    // Validación rápida
-    if (!nombre_empresa || !correo || !id_plan) {
+    const { error, value } = cotizacionSchema.validate(req.body);
+    if (error) {
       return res.status(400).json({
-        message: "Faltan campos obligatorios: nombre, correo o plan."
+        message: "Error de validación en los datos",
+        detalle: error.details[0].message
       });
     }
+    const { nombre_empresa, telefono, correo, comentarios, id_plan } = value;
 
     const nuevaCotizacion = await crearCotizacionService({
       nombre_empresa,
