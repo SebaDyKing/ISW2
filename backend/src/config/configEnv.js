@@ -5,7 +5,7 @@ config();
 export const db = {
   user: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
-  host: process.env.HOST,
+  host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT) || 5432,
   database: process.env.DATABASE
 }
