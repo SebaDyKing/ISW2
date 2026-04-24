@@ -14,3 +14,16 @@ export async function crearCotizacionService(datosCotizacion) {
     throw new Error("Error al guardar la cotización en la base de datos");
   }
 }
+
+export async function obtenerCotizacionesService() {
+  try {
+    const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
+    // Traemos todo ordenado por la fecha más reciente
+    return await repositorio.find({
+      order: { fecha_creacion: "DESC" }
+    });
+  } catch (error) {
+    console.error("Error en obtenerCotizacionesService:", error);
+    throw new Error("Error al obtener las cotizaciones");
+  }
+}
