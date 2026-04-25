@@ -1,19 +1,21 @@
 "use strict";
 import { Router } from "express";
-import { authMiddleware } from "../middleware/authentication.js";
-import {getAll, getById, getByEmpleado,create,
+import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
+import { getAll, getById, getByEmpleado, create,
         update, updateEstado, remove,
-
 } from "../controllers/contrato.controller.js";
 
 const router = Router();
 
-router.get("/", authMiddleware, getAll);
-router.get("/empleado/:id_empleado", authMiddleware, getByEmpleado); // ← antes que /:id
-router.get("/:id", authMiddleware, getById);
-router.post("/", authMiddleware, create);
-router.put("/:id", authMiddleware, update);
-router.patch("/:id/estado", authMiddleware, updateEstado);
-router.delete("/:id", authMiddleware, remove);
+// Lectura — admin y supervisor pueden ver
+router.get("/", authMiddleware, autorizeEntities("admin", "supervisor"), getAll);
+router.get("/empleado/:id_empleado", authMiddleware, autorizeEntities("admin", "supervisor"), getByEmpleado);
+router.get("/:id", authMiddleware, autorizeEntities("admin", "supervisor"), getById);
+
+// Escritura — solo admin
+router.post("/", authMiddleware, autorizeEntities("admin"), create);
+router.put("/:id", authMiddleware, autorizeEntities("admin"), update);
+router.patch("/:id/estado", authMiddleware, autorizeEntities("admin"), updateEstado);
+router.delete("/:id", authMiddleware, autorizeEntities("admin"), remove);
 
 export default router;
