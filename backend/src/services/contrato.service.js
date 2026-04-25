@@ -1,3 +1,4 @@
+"use strict";
 import { AppDataSource } from "../config/configDb.js";
 
 const getRepo = () => AppDataSource.getRepository("Contrato");
@@ -7,13 +8,13 @@ const ESTADOS_VALIDOS = ["ACTIVO", "POR VENCER", "FINALIZADO"];
 
 export async function getAllContratos() {
     return await getRepo().find({
-        relations: ["empleado", "instalacion"], // trae los datos relacionados
+        relations: ["empleado", "instalacion"],
     });
 }
 
 export async function getContratoById(id) {
     const contrato = await getRepo().findOne({
-        where: { idContrato: id }, // filtro por PK
+        where: { idContrato: id },
         relations: ["empleado", "instalacion"],
     });
     if (!contrato) throw { status: 404, message: "Contrato no encontrado" };
@@ -21,8 +22,12 @@ export async function getContratoById(id) {
 }
 
 export async function getContratosByEmpleado(idEmpleado) {
+    const empleado = await AppDataSource.getRepository("Empleado")
+        .findOne({ where: { idEmpleado } });
+    if (!empleado) throw { status: 404, message: "Empleado no encontrado" };
+
     return await getRepo().find({
-        where: { empleado: { idEmpleado } }, // filtro por relación
+        where: { empleado: { idEmpleado } },
         relations: ["instalacion"],
     });
 }
@@ -34,7 +39,7 @@ export async function createContrato(body) {
         estado = "ACTIVO",
     } = body;
 
-    // Validaciones
+    // Validaciones de campos obligatorios
     if (!idEmpleado || !idInstalacion || !tipo || !cargo ||
         !sueldo || !jornadaHoras || !fechaInicio) {
         throw { status: 400, message: "Todos los campos son obligatorios" };
@@ -49,17 +54,25 @@ export async function createContrato(body) {
         throw { status: 400, message: "La fecha fin debe ser posterior a la de inicio" };
     }
 
-    // Las relaciones se pasan como objetos con su PK
+    // Verifica que existan las entidades relacionadas
+    const empleado = await AppDataSource.getRepository("Empleado")
+        .findOne({ where: { idEmpleado } });
+    if (!empleado) throw { status: 404, message: "Empleado no encontrado" };
+
+    const instalacion = await AppDataSource.getRepository("Instalacion")
+        .findOne({ where: { idInstalacion } });
+    if (!instalacion) throw { status: 404, message: "Instalación no encontrada" };
+
     const nuevo = getRepo().create({
         tipo,
         cargo,
         sueldo,
-        jornadaHoras,   
-        fechaInicio,    
+        jornadaHoras,
+        fechaInicio,
         fechaFin,
         estado,
-        empleado: { idEmpleado }, // se asume que el empleado ya existe, solo se referencia por su ID
-        instalacion: { idInstalacion }, // se asume que la instalacion ya existe, solo se referencia por su ID
+        empleado: { idEmpleado },
+        instalacion: { idInstalacion },
     });
 
     return await getRepo().save(nuevo);
@@ -86,6 +99,20 @@ export async function updateContrato(id, body) {
         throw { status: 400, message: "La fecha fin debe ser posterior a la de inicio" };
     }
 
+    // Verifica existencia de relaciones si se quieren cambiar
+    if (idEmpleado) {
+        const empleado = await AppDataSource.getRepository("Empleado")
+            .findOne({ where: { idEmpleado } });
+        if (!empleado) throw { status: 404, message: "Empleado no encontrado" };
+        contrato.empleado = { idEmpleado };
+    }
+    if (idInstalacion) {
+        const instalacion = await AppDataSource.getRepository("Instalacion")
+            .findOne({ where: { idInstalacion } });
+        if (!instalacion) throw { status: 404, message: "Instalación no encontrada" };
+        contrato.instalacion = { idInstalacion };
+    }
+
     // Actualiza solo los campos que llegaron
     if (tipo) contrato.tipo = tipo;
     if (cargo) contrato.cargo = cargo;
@@ -94,13 +121,14 @@ export async function updateContrato(id, body) {
     if (fechaInicio) contrato.fechaInicio = fechaInicio;
     if (fechaFin) contrato.fechaFin = fechaFin;
     if (estado) contrato.estado = estado;
-    if (idEmpleado) contrato.empleado = { idEmpleado };
-    if (idInstalacion) contrato.instalacion = { idInstalacion };
 
     return await getRepo().save(contrato);
 }
 
 export async function updateEstadoContrato(id, estado) {
+    if (!estado) {
+        throw { status: 400, message: "El campo estado es obligatorio" };
+    }
     if (!ESTADOS_VALIDOS.includes(estado)) {
         throw { status: 400, message: `Estado inválido. Permitidos: ${ESTADOS_VALIDOS.join(", ")}` };
     }
@@ -112,4 +140,4 @@ export async function updateEstadoContrato(id, estado) {
 export async function deleteContrato(id) {
     const contrato = await getContratoById(id);
     await getRepo().remove(contrato);
-}   
+}
