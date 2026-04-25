@@ -1,6 +1,6 @@
 "use strict";
 import { Router } from "express";
-
+import contratoRouter from "./contrato.routes.js";
 /**
  * Registra todas las rutas de la API bajo el prefijo /api.
  * A medida que agregues módulos (usuarios, clientes, etc.) importá sus routers
@@ -10,11 +10,7 @@ import { Router } from "express";
  */
 export function routerApi(app) {
   const router = Router();
-
-  // Ejemplo: cuando tengas tus rutas, las montás así:
-  // router.use("/usuarios", usuariosRouter);
-  // router.use("/clientes", clientesRouter);
-  // router.use("/empleados", empleadosRouter);
+  router.use("/contratos", contratoRouter);
 
   app.use("/api", router);
 }
