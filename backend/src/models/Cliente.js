@@ -17,12 +17,6 @@ export const Cliente = new EntitySchema({
       type: "varchar",
       length: 150,
     },
-    rutEmpresa: {
-      name: "rut_empresa",
-      type: "varchar",
-      length: 20,
-      unique: true,
-    },
     telefono: {
       type: "varchar",
       length: 20,

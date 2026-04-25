@@ -29,10 +29,6 @@ export const Plan = new EntitySchema({
       precision: 10,
       scale: 2,
     },
-    activo: {
-      type: "boolean",
-      default: true,
-    },
   },
 
   relations: {

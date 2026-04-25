@@ -30,10 +30,6 @@ export const Usuario = new EntitySchema({
       type: "varchar",
       length: 255,
     },
-    activo: {
-      type: "boolean",
-      default: true,
-    },
     createdAt: {
       name: "created_at",
       type: "timestamp",
