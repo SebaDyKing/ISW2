@@ -20,10 +20,12 @@ export async function getHojaVidaServices() {
 export async function getHojaVidaServicesByID(id) {
   try{
     const hojavidaRepository = AppDataSource.getRepository(HojaVida)
-    return await hojavidaRepository.findOne({
+    const hojaVida = await hojavidaRepository.findOne({
       where : {idRegistro : id},
       relations : ["empleado","administrador","reporte"]
     })
+    if(!hojaVida) throw new Error("Hoja de vida no encontrada")
+    return hojaVida
   }catch(error){
     throw new Error(`Error al obtener la hoja de vida ${error.message}`)
   }
