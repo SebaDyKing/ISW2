@@ -1,6 +1,7 @@
 "use strict";
 import { Router } from "express";
 import hojaVidaRouter from "./hojavida.routes.js";
+import licenciaMedicaRouter from "./licenciamedica.routes.js";
 
 /**
  * Registra todas las rutas de la API bajo el prefijo /api.
@@ -13,6 +14,7 @@ export function routerApi(app) {
   const router = Router();
 
   router.use("/hojas-vida", hojaVidaRouter);
+  router.use("/licencias-medicas", licenciaMedicaRouter);
 
   app.use("/api", router);
 }
