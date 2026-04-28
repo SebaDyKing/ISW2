@@ -1,28 +1,19 @@
 "use strict";
 import { Router } from "express";
-import cotizacionRouter from "./cotizacion.routes.js";
-import usuarioRouter from "./usuario.routes.js";
-import hojaVidaRouter from "./hojavida.routes.js";
-import licenciaMedicaRouter from "./licenciamedica.routes.js";
-import contratoRouter from "./contrato.routes.js";
-import asistenciaRouter from "./asistencia.routes.js";
+import {
+  getAsistenciasController,
+  getAsistenciaByIdController,
+  registrarEntradaController,
+  registrarSalidaController,
+  eliminarAsistenciasController,
+} from "../controllers/asistencia.controller.js";
 
-/**
- * Registra todas las rutas de la API bajo el prefijo /api.
- * A medida que agregues módulos (usuarios, clientes, etc.) importá sus routers
- * y montalos acá con router.use("/recurso", recursoRouter).
- *
- * @param {import("express").Express} app - Instancia de Express.
- */
-export function routerApi(app) {
-  const router = Router();
+const router = Router();
 
-  router.use("/cotizaciones", cotizacionRouter);
-  router.use("/usuarios", usuarioRouter);
-  router.use("/contratos", contratoRouter);
-  router.use("/hojas-vida", hojaVidaRouter);
-  router.use("/licencias-medicas", licenciaMedicaRouter);
-  router.use("/asistencias", asistenciaRouter);
+router.get("/", getAsistenciasController);
+router.get("/:id", getAsistenciaByIdController);
+router.post("/entrada", registrarEntradaController);
+router.post("/salida", registrarSalidaController);
+router.delete("/", eliminarAsistenciasController);
 
-  app.use("/api", router);
-}
+export default router;
