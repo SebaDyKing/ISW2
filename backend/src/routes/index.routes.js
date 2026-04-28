@@ -5,6 +5,7 @@ import usuarioRouter from "./usuario.routes.js";
 import hojaVidaRouter from "./hojavida.routes.js";
 import licenciaMedicaRouter from "./licenciamedica.routes.js";
 import contratoRouter from "./contrato.routes.js";
+import asistenciaRouter from "./asistencia.routes.js";
 
 /**
  * Registra todas las rutas de la API bajo el prefijo /api.
@@ -21,6 +22,7 @@ export function routerApi(app) {
   router.use("/contratos", contratoRouter);
   router.use("/hojas-vida", hojaVidaRouter);
   router.use("/licencias-medicas", licenciaMedicaRouter);
+  router.use("/asistencias", asistenciaRouter);
 
   app.use("/api", router);
 }

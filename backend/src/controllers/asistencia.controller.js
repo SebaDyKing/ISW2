@@ -2,45 +2,65 @@
 import {
   registrarEntradaService,
   registrarSalidaService,
-  eliminarRegistrosService,
-} from "../services/registros.service.js";
+  getAsistenciasService,
+  getAsistenciaByIdService,
+  eliminarAsistenciasService,
+} from "../services/asistencia.services.js";
 import {
   handleSuccess,
   handleErrorClient,
   handleErrorServer,
-} from "../handlers/responseHandlers.js";
-import { validarNombre } from "../validations/registros.validation.js";
- 
-export async function entradaController(req, res) {
+} from "../Handlers/responseHanders.js";
+
+export async function registrarEntradaController(req, res) {
   try {
-    const { error } = validarNombre(req.body);
-    if (error) return handleErrorClient(res, 400, "Datos inválidos", error);
- 
-    const registro = await registrarEntradaService(req.body.nombre);
-    handleSuccess(res, 201, `Entrada registrada para ${req.body.nombre.trim()}`, registro);
+    const idContrato = req.body?.idContrato;
+    if (!idContrato) {
+      return handleErrorClient(res, 400, "El campo idContrato es requerido");
+    }
+    const registro = await registrarEntradaService({ idContrato });
+    handleSuccess(res, 201, "Entrada registrada correctamente", registro);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
   }
 }
- 
-export async function salidaController(req, res) {
+
+export async function registrarSalidaController(req, res) {
   try {
-    const { error } = validarNombre(req.body);
-    if (error) return handleErrorClient(res, 400, "Datos inválidos", error);
- 
-    const registro = await registrarSalidaService(req.body.nombre);
-    handleSuccess(res, 201, `Salida registrada para ${req.body.nombre.trim()}`, registro);
+    const idContrato = req.body?.idContrato;
+    if (!idContrato) {
+      return handleErrorClient(res, 400, "El campo idContrato es requerido");
+    }
+    const registro = await registrarSalidaService({ idContrato });
+    handleSuccess(res, 200, "Salida registrada correctamente", registro);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
   }
 }
- 
-export async function eliminarController(req, res) {
+
+export async function getAsistenciasController(req, res) {
   try {
-    const resultado = await eliminarRegistrosService();
-    handleSuccess(res, 200, "Registros y estados eliminados", resultado);
+    const data = await getAsistenciasService();
+    handleSuccess(res, 200, "Asistencias obtenidas correctamente", data);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
   }
 }
- 
+
+export async function getAsistenciaByIdController(req, res) {
+  try {
+    const data = await getAsistenciaByIdService(Number(req.params.id));
+    handleSuccess(res, 200, "Asistencia obtenida correctamente", data);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
+}
+
+export async function eliminarAsistenciasController(req, res) {
+  try {
+    const resultado = await eliminarAsistenciasService();
+    handleSuccess(res, 200, "Registros de asistencia eliminados", resultado);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
+}
