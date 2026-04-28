@@ -1,9 +1,9 @@
 "use strict";
 import {
-  getAsistenciasService,
-  getAsistenciaByIdService,
   registrarEntradaService,
   registrarSalidaService,
+  getAsistenciasService,
+  getAsistenciaByIdService,
   eliminarAsistenciasService,
 } from "../services/asistencia.services.js";
 import {
@@ -11,34 +11,15 @@ import {
   handleErrorClient,
   handleErrorServer,
 } from "../Handlers/responseHanders.js";
-import { validateAsistenciaBody } from "../validations/asistencia.validations.js";
-
-export async function getAsistenciasController(req, res) {
-  try {
-    const asistencias = await getAsistenciasService();
-    handleSuccess(res, 200, "Asistencias obtenidas", asistencias);
-  } catch (error) {
-    handleErrorServer(res, 500, error.message);
-  }
-}
-
-export async function getAsistenciaByIdController(req, res) {
-  try {
-    const id = Number(req.params.id);
-    const asistencia = await getAsistenciaByIdService(id);
-    handleSuccess(res, 200, "Asistencia obtenida", asistencia);
-  } catch (error) {
-    handleErrorServer(res, 500, error.message);
-  }
-}
 
 export async function registrarEntradaController(req, res) {
   try {
-    const { error, value } = validateAsistenciaBody(req.body);
-    if (error) return handleErrorClient(res, 400, "Datos inválidos", error.details);
-
-    const registro = await registrarEntradaService(value);
-    handleSuccess(res, 201, "Entrada registrada", registro);
+    const idContrato = req.body?.idContrato;
+    if (!idContrato) {
+      return handleErrorClient(res, 400, "El campo idContrato es requerido");
+    }
+    const registro = await registrarEntradaService({ idContrato });
+    handleSuccess(res, 201, "Entrada registrada correctamente", registro);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
   }
@@ -46,11 +27,30 @@ export async function registrarEntradaController(req, res) {
 
 export async function registrarSalidaController(req, res) {
   try {
-    const { error, value } = validateAsistenciaBody(req.body);
-    if (error) return handleErrorClient(res, 400, "Datos inválidos", error.details);
+    const idContrato = req.body?.idContrato;
+    if (!idContrato) {
+      return handleErrorClient(res, 400, "El campo idContrato es requerido");
+    }
+    const registro = await registrarSalidaService({ idContrato });
+    handleSuccess(res, 200, "Salida registrada correctamente", registro);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
+}
 
-    const registro = await registrarSalidaService(value);
-    handleSuccess(res, 200, "Salida registrada", registro);
+export async function getAsistenciasController(req, res) {
+  try {
+    const data = await getAsistenciasService();
+    handleSuccess(res, 200, "Asistencias obtenidas correctamente", data);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
+}
+
+export async function getAsistenciaByIdController(req, res) {
+  try {
+    const data = await getAsistenciaByIdService(Number(req.params.id));
+    handleSuccess(res, 200, "Asistencia obtenida correctamente", data);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
   }
@@ -59,7 +59,7 @@ export async function registrarSalidaController(req, res) {
 export async function eliminarAsistenciasController(req, res) {
   try {
     const resultado = await eliminarAsistenciasService();
-    handleSuccess(res, 200, "Todas las asistencias eliminadas", resultado);
+    handleSuccess(res, 200, "Registros de asistencia eliminados", resultado);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
   }
