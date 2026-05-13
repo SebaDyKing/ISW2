@@ -29,7 +29,7 @@ export async function registrarUsuarioService(datosRegistro) {
     rut,
     correo,
     passwordHash: passwordEncriptada,
-    entity: "cliente" 
+    rol: "cliente" 
   });
   const usuarioGuardado = await usuarioRepo.save(nuevoUsuario);
 
@@ -40,7 +40,7 @@ export async function registrarUsuarioService(datosRegistro) {
   });
   await clienteRepo.save(nuevoCliente);
 
-  delete usuarioGuardado.password_hash; 
+  delete usuarioGuardado.passwordHash;
   return usuarioGuardado;
 }
 
@@ -61,7 +61,7 @@ export async function loginService(correo, password) {
 
   const payload = {
     idUsuario: usuario.idUsuario, 
-    entity: usuario.entity,       // "cliente" o "admin"
+    rol: usuario.rol,       // "cliente" o "admin"
     correo: usuario.correo
   };
 

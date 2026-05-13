@@ -29,10 +29,10 @@ export async function seedDatabase() {
 
   // 4 usuarios base
   const usuarios = await usuarioRepo.save([
-    { nombre: "Juan",     apellido: "Pérez", rut: "11111111-1", correo: "juan@test.cl",     passwordHash },
-    { nombre: "Ana",      apellido: "Soto",  rut: "22222222-2", correo: "ana@test.cl",      passwordHash },
-    { nombre: "Carlos",   apellido: "Ruiz",  rut: "33333333-3", correo: "carlos@test.cl",   passwordHash },
-    { nombre: "CleanPro", apellido: "SpA",   rut: "44444444-4", correo: "cleanpro@test.cl", passwordHash },
+    { nombre: "Juan",     apellido: "Pérez", rut: "11111111-1", correo: "juan@test.cl",     passwordHash, rol: "empleado" },
+    { nombre: "Ana",      apellido: "Soto",  rut: "22222222-2", correo: "ana@test.cl",      passwordHash, rol: "admin" },
+    { nombre: "Carlos",   apellido: "Ruiz",  rut: "33333333-3", correo: "carlos@test.cl",   passwordHash, rol: "supervisor" },
+    { nombre: "CleanPro", apellido: "SpA",   rut: "44444444-4", correo: "cleanpro@test.cl", passwordHash, rol: "cliente" },
   ]);
 
   // Empleado (usa Usuario 1 = Juan Pérez)

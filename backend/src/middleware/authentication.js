@@ -32,7 +32,7 @@ export const authMiddleware = (req, res, next) => {
 export const autorizeEntities = (...allowedRoles) => {
     return (req, res, next) => {
         // Validamos si el rol/entidad del usuario está en la lista de permitidos
-        if (!req.user || !allowedRoles.includes(req.user.entity)) { 
+        if (!req.user || !allowedRoles.includes(req.user.rol)) { 
             return handleErrorClient(res, 403, "No tienes permisos de seguridad para acceder a esta ruta.");
         }
         next();
