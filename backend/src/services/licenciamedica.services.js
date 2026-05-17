@@ -1,4 +1,6 @@
 "use strict";
+import fs from "fs"
+import path from "path"
 import { AppDataSource } from "../config/configDb.js";
 import { LicenciaMedica } from "../models/LicenciaMedica.js";
 import { Empleado } from "../models/Empleado.js";
@@ -31,6 +33,10 @@ export async function getLicenciaMedicaServicesByID(id) {
 
 export async function createLicenciaMedicaServices(data) {
   try {
+    if (!data.archivoPdf) {
+      throw new Error("El archivo PDF es obligatorio");
+    }
+
     // Verificar que existe el empleado
     const empleadoRepository = AppDataSource.getRepository(Empleado);
     const empleado = await empleadoRepository.findOne({
@@ -45,7 +51,7 @@ export async function createLicenciaMedicaServices(data) {
       fechaFin: data.fechaFin,
       diagnostico: data.diagnostico,
       estado: "pendiente",
-      archivoPdf: data.archivoPdf || null,
+      archivoPdf: data.archivoPdf,
       empleado,
     });
     return await licenciaRepository.save(newLicencia);
@@ -82,13 +88,23 @@ export async function updateEstadoLicenciaMedicaServices(id, data) {
 export async function deleteLicenciaMedicaServices(id) {
   try {
     const licenciaRepository = AppDataSource.getRepository(LicenciaMedica);
-    const resultado = await licenciaRepository.delete(id);
+    const licencia = await licenciaRepository.findOneBy({idLicencia: id})
+    
+    if(!licencia) throw new Error("Licencia médica no encontrada")
 
-    if (resultado.affected === 0) {
-      throw new Error("Licencia médica no encontrada");
+    if(licencia.archivoPdf){
+      const filePath = path.join("uploads",licencia.archivoPdf)
+      try{
+        fs.unlinkSync(filePath)
+      }catch(error){
+        console.warn(`No se pudo borrar el archivo ${filePath}:`, error.message);
+      }
     }
-
-    return { id, message: "Licencia médica eliminada" };
+    const resultado = await licenciaRepository.delete(id)
+    if(resultado.affected=== 0) {
+      throw new Error("Licencia medica no encontrada")
+    }
+    return {id,message: "Licencia Medica eliminada"}
   } catch (error) {
     throw new Error(`Error al eliminar la licencia médica ${error.message}`);
   }
