@@ -6,6 +6,7 @@ import cors from "cors";
 import { connectDB } from "./config/configDb.js";
 import { HOST, PORT } from "./config/configEnv.js";
 import { routerApi } from "./routes/index.routes.js";
+import { seedDatabase } from "./config/seed.js";
 
 const app = express();
 app.use(express.json());
@@ -16,7 +17,8 @@ app.get("/", (req, res) => {
 });
 
 connectDB()
-  .then(() => {
+  .then(async () => {
+    await seedDatabase();
     routerApi(app);
 
     app.listen(PORT, () => {
