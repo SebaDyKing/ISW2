@@ -37,10 +37,19 @@ export async function getLicenciaMedicaByIdController(req, res) {
 
 export async function createLicenciaMedicaController(req, res) {
   try {
+    if (!req.file) {
+      return handleErrorClient(res, 400, "El archivo PDF es obligatorio");
+    }
+
     const { error, value } = validateLicenciaMedicaBody(req.body);
     if (error) return handleErrorClient(res, 400, "Datos inválidos", error.details);
 
-    const nueva = await createLicenciaMedicaServices(value);
+    const datos = {
+      ...value,
+      archivoPdf: req.file.filename,
+    };
+
+    const nueva = await createLicenciaMedicaServices(datos);
     handleSuccess(res, 201, "Licencia médica creada", nueva);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
@@ -49,7 +58,7 @@ export async function createLicenciaMedicaController(req, res) {
 
 export async function updateEstadoLicenciaMedicaController(req, res) {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id;
 
     const { error, value } = validateLicenciaMedicaEstado(req.body);
     if (error) return handleErrorClient(res, 400, "Datos inválidos", error.details);
@@ -63,7 +72,7 @@ export async function updateEstadoLicenciaMedicaController(req, res) {
 
 export async function deleteLicenciaMedicaController(req, res) {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id;
 
     const resultado = await deleteLicenciaMedicaServices(id);
     handleSuccess(res, 200, "Licencia médica eliminada", resultado);

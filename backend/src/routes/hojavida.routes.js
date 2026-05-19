@@ -6,7 +6,7 @@ import {
   createHojaVidaController,
   updateHojaVidaController,
   deleteHojaVidaController,
-} from "../controllers/hojavida.controllers.js";
+} from "../controllers/hojavida.controller.js";
 
 const router = Router();
 

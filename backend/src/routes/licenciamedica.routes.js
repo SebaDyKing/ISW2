@@ -1,18 +1,19 @@
 "use strict";
 import { Router } from "express";
+import uploadMiddleware from "../middlewares/upload.middleware.js";
 import {
   getLicenciasMedicasController,
   getLicenciaMedicaByIdController,
   createLicenciaMedicaController,
   updateEstadoLicenciaMedicaController,
   deleteLicenciaMedicaController,
-} from "../controllers/licenciamedica.controllers.js";
+} from "../controllers/licenciamedica.controller.js";
 
 const router = Router();
 
 router.get("/", getLicenciasMedicasController);
 router.get("/:id", getLicenciaMedicaByIdController);
-router.post("/", createLicenciaMedicaController);
+router.post("/", uploadMiddleware.single("archivoPdf"), createLicenciaMedicaController);
 router.patch("/:id/estado", updateEstadoLicenciaMedicaController);
 router.delete("/:id", deleteLicenciaMedicaController);
 
