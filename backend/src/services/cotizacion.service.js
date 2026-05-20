@@ -3,6 +3,7 @@ import { AppDataSource } from "../config/configDb.js";
 import { SolicitudCotizacion } from "../models/SolicitudCotizacion.js";
 import { Cliente } from "../models/Cliente.js";
 import { Instalacion } from "../models/Instalacion.js";
+import { enviarCorreoSolicitudRecibida, enviarCorreoEstadoCotizacion } from "../utils/email.js";
 
 export async function crearCotizacionService(datosCotizacion) {
   const { id_usuario, comentarios, id_plan, id_instalacion } = datosCotizacion;
@@ -13,7 +14,8 @@ export async function crearCotizacionService(datosCotizacion) {
 
   // Busca el Perfil de Cliente asociado al Usuario
   const clienteActual = await clienteRepo.findOne({
-    where: { usuario: { idUsuario: id_usuario } } 
+    where: { usuario: { idUsuario: id_usuario } },
+    relations: ["usuario"]
   });
 
   if (!clienteActual) {
@@ -54,6 +56,8 @@ export async function crearCotizacionService(datosCotizacion) {
   });
 
   const solicitudGuardada = await cotizacionRepo.save(nuevaSolicitud);
+  await enviarCorreoSolicitudRecibida(clienteActual.usuario.correo, clienteActual.nombreEmpresa);
+  delete solicitudGuardada.cliente.usuario.passwordHash;
   return solicitudGuardada;
 }
 export async function obtenerCotizacionesService() {
@@ -98,5 +102,16 @@ export async function actualizarEstadoService(idSolicitud, nuevoEstado) {
 
   cotizacion.estado = nuevoEstado;
   const cotizacionActualizada = await repositorio.save(cotizacion);
+  
+  // Enviar correo al cliente informando el nuevo estado
+  const cotizacionConCliente = await repositorio.findOne({
+    where: { idSolicitud: parseInt(idSolicitud) },
+    relations: ["cliente", "cliente.usuario"]
+  });
+  await enviarCorreoEstadoCotizacion(
+    cotizacionConCliente.cliente.usuario.correo,
+    cotizacionConCliente.cliente.nombreEmpresa,
+    nuevoEstado
+  );
   return cotizacionActualizada;
 }
