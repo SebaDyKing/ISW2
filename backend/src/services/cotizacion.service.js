@@ -25,7 +25,8 @@ export async function crearCotizacionService(datosCotizacion) {
     where: { 
       idInstalacion: id_instalacion,
       cliente: { idCliente: clienteActual.idCliente }
-    }
+    },
+    relations: ["cliente"]
   });
 
   if (!instalacionValida) {
@@ -59,7 +60,7 @@ export async function obtenerCotizacionesService() {
   try {
     const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
     return await repositorio.find({
-      order: { fecha_creacion: "DESC" },
+      order: { fechaCreacion: "DESC" },
       relations: ["cliente", "plan", "instalacion"] 
     });
   } catch (error) {
@@ -75,11 +76,27 @@ export async function obtenerMisCotizacionesService(id_usuario) {
       where: { 
         cliente: { usuario: { idUsuario: id_usuario } } 
       },
-      order: { fecha_creacion: "DESC" },
+      order: { fechaCreacion: "DESC" },
       relations: ["plan", "instalacion"] 
     });
   } catch (error) {
     console.error("Error en obtenerMisCotizacionesService:", error);
     throw new Error("Error al obtener tus cotizaciones");
   }
+}
+
+export async function actualizarEstadoService(idSolicitud, nuevoEstado) {
+  const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
+
+  const cotizacion = await repositorio.findOne({
+    where: { idSolicitud: parseInt(idSolicitud) }
+  });
+
+  if (!cotizacion) {
+    throw new Error("Cotización no encontrada.");
+  }
+
+  cotizacion.estado = nuevoEstado;
+  const cotizacionActualizada = await repositorio.save(cotizacion);
+  return cotizacionActualizada;
 }

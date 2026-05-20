@@ -8,6 +8,7 @@ import { Supervisor } from "../models/Supervisor.js";
 import { Cliente } from "../models/Cliente.js";
 import { Instalacion } from "../models/Instalacion.js";
 import { Contrato } from "../models/Contrato.js";
+import { Plan } from "../models/Plan.js";
 
 /**
  * @brief Inserta datos iniciales en la base de datos para pruebas locales.
@@ -27,10 +28,17 @@ export async function seedDatabase() {
 
   const passwordHash = await bcrypt.hash("password123", 10);
 
+  const planRepo = AppDataSource.getRepository(Plan);
+  const planes = await planRepo.save([
+    { tipo: "Básico",    cantidadEmpleados: 2,  cantidadProductos: 5,  precio: 150000 },
+    { tipo: "Estándar", cantidadEmpleados: 5,  cantidadProductos: 15, precio: 300000 },
+    { tipo: "Premium",  cantidadEmpleados: 10, cantidadProductos: 30, precio: 500000 },
+  ]);
+
   // 4 usuarios base
   const usuarios = await usuarioRepo.save([
     { nombre: "Juan",     apellido: "Pérez", rut: "11111111-1", correo: "juan@test.cl",     passwordHash, rol: "empleado" },
-    { nombre: "Ana",      apellido: "Soto",  rut: "22222222-2", correo: "ana@test.cl",      passwordHash, rol: "admin" },
+    { nombre: "Ana",      apellido: "Soto",  rut: "22222222-2", correo: "ana@test.cl",      passwordHash, rol: "administrador" },
     { nombre: "Carlos",   apellido: "Ruiz",  rut: "33333333-3", correo: "carlos@test.cl",   passwordHash, rol: "supervisor" },
     { nombre: "CleanPro", apellido: "SpA",   rut: "44444444-4", correo: "cleanpro@test.cl", passwordHash, rol: "cliente" },
   ]);

@@ -4,6 +4,7 @@ import {
     crearSolicitud,
     obtenerCotizaciones, //para el admin
     obtenerMisCotizaciones //para el cliente
+    ,actualizarEstado
 } from "../controllers/cotizacion.controller.js";
 import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
 
@@ -23,8 +24,14 @@ router.get("/mis-cotizaciones",
 
 router.get("/", 
     authMiddleware,                
-    autorizeEntities("admin"),      
+    autorizeEntities("administrador"),      
     obtenerCotizaciones            
+);
+
+router.patch("/:id/estado",
+    authMiddleware,
+    autorizeEntities("administrador"),
+    actualizarEstado
 );
 
 export default router;
