@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { contratosService } from '../services/contratosService'
+import { contratosService } from '../services/ContratosService'
+import { adminService } from '../services/adminService'
+import { generateContractPDF } from '../utils/pdfGenerator'
 
 const INITIAL_FORM = {
   idEmpleado: '',
@@ -26,7 +28,8 @@ export function useNuevoContrato({ onSuccess } = {}) {
       try {
         setLoadingOptions(true)
         const [empRes, instRes] = await Promise.all([
-      
+          adminService.getEmpleados(),
+          adminService.getInstalaciones()
         ])
         setEmpleados(empRes.data)
         setInstalaciones(instRes.data)
@@ -63,6 +66,12 @@ export function useNuevoContrato({ onSuccess } = {}) {
         idInstalacion: parseInt(form.idInstalacion, 10),
         fechaFin: form.fechaFin || null,               // opcional
       })
+      const employeeData = empleados.find(e => String(e.idEmpleado) === String(form.idEmpleado))
+      const facilityData = instalaciones.find(i => String(i.idInstalacion) === String(form.idInstalacion))
+      
+      // Generar PDF
+      await generateContractPDF(form, employeeData, facilityData)
+
       reset()
       onSuccess?.()
     } catch (err) {

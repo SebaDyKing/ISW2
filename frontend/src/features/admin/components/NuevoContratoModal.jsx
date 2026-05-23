@@ -1,13 +1,6 @@
 import { useNuevoContrato } from '../hooks/useNuevoContrato'
+import { TIPOS_CONTRATO, LEY_LABORAL_CHILE } from '../constants/contratos.constants'
 import styles from './NuevoContratoModal.module.css'
-
-const TIPOS_CONTRATO = [
-  { value: 'plazo_fijo',  label: 'Plazo Fijo' },
-  { value: 'indefinido',  label: 'Indefinido' },
-  { value: 'traslado',    label: 'Traslado' },
-  { value: 'reemplazo',   label: 'Reemplazo' },
-]
-
 export default function NuevoContratoModal({ onClose, onSuccess }) {
   const {
     form,
@@ -24,6 +17,8 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
       onClose()
     },
   })
+
+  const isPlazoFijo = form.tipo === 'plazo_fijo'
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) onClose()
@@ -156,10 +151,10 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
                   name="sueldo"
                   value={form.sueldo}
                   onChange={handleChange}
-                  placeholder="500000"
+                  placeholder={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP.toString()}
                   required
-                  min={0}
-                  step="0.01"
+                  min={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP}
+                  step="1"
                   className={styles.input}
                 />
               </div>
@@ -173,10 +168,10 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
                   name="jornadaHoras"
                   value={form.jornadaHoras}
                   onChange={handleChange}
-                  placeholder="45"
+                  placeholder={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL.toString()}
                   required
                   min={1}
-                  max={45}
+                  max={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL}
                   className={styles.input}
                 />
               </div>
@@ -203,13 +198,16 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label}>Fecha Fin</label>
+                <label className={styles.label}>
+                  Fecha Fin {isPlazoFijo && <span className={styles.required}>*</span>}
+                </label>
                 <input
                   type="date"
                   name="fechaFin"
                   value={form.fechaFin}
                   onChange={handleChange}
                   min={form.fechaInicio || undefined}
+                  required={isPlazoFijo}
                   className={styles.input}
                 />
               </div>

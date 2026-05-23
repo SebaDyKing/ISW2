@@ -13,7 +13,26 @@ export async function getMetricasDashboard() {
     const instalacionesEnCurso = await AppDataSource.getRepository("Instalacion")
         .count({ where: { estado: "EN_CURSO" } });
 
-    return { asistenciaHoy, personalActivo, instalacionesEnCurso };
+    const totalEmpleados = await AppDataSource.getRepository("Empleado").count();
+    const porcentajeAsistencia = totalEmpleados > 0 ? Math.round((asistenciaHoy / totalEmpleados) * 100) : 0;
+
+    return { asistenciaHoy: porcentajeAsistencia, personalActivo, instalacionesEnCurso };
+}
+
+export async function getHistorialReciente() {
+    // Obtenemos los últimos contratos creados como historial
+    const contratos = await AppDataSource.getRepository("Contrato")
+        .find({
+            relations: ["empleado", "instalacion"],
+            order: { fechaInicio: "DESC" },
+            take: 5
+        });
+
+    return contratos.map(c => ({
+        tipo: "Contrato creado",
+        descripcion: `${c.empleado?.nombre} ${c.empleado?.apellido} asignado a ${c.instalacion?.nombre}`,
+        fecha: c.fechaInicio
+    }));
 }
 
 export async function getAlertasPendientes() {
