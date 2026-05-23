@@ -34,10 +34,6 @@ export const Instalacion = new EntitySchema({
       type: "varchar",
       length: 20,
     },
-    activa: {
-      type: "boolean",
-      default: true,
-    },
     createdAt: {
       name: "created_at",
       type: "timestamp",

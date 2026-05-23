@@ -20,6 +20,12 @@ export const Usuario = new EntitySchema({
       type: "varchar",
       length: 100,
     },
+    rut: {
+      type: "varchar",
+      length: 12,
+      unique: true,
+      nullable: false,
+    },
     correo: {
       type: "varchar",
       length: 150,
@@ -30,10 +36,6 @@ export const Usuario = new EntitySchema({
       type: "varchar",
       length: 255,
     },
-    activo: {
-      type: "boolean",
-      default: true,
-    },
     createdAt: {
       name: "created_at",
       type: "timestamp",
@@ -43,6 +45,12 @@ export const Usuario = new EntitySchema({
       name: "updated_at",
       type: "timestamp",
       updateDate: true,
+    },
+    rol: {
+      name: "rol",
+      type: "varchar",
+      length: 50,
+      nullable: false
     },
   },
 
