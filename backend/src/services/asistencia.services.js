@@ -25,6 +25,10 @@ export async function registrarEntradaService(data) {
       entrada: new Date().toTimeString().split(" ")[0],
       estado: "presente",
       contrato: { idContrato: data.idContrato },
+      // MODIFICACIÓN: Se agregaron latitudEntrada y longitudEntrada
+      // Antes este bloque estaba suelto fuera de la función, causando ReferenceError
+      latitudEntrada: data.latitud,
+      longitudEntrada: data.longitud,
     });
 
     return await asistenciaRepository.save(nuevaAsistencia);
@@ -55,10 +59,12 @@ export async function registrarSalidaService(data) {
       throw new Error("Ya existe una salida registrada para hoy.");
     }
 
-    asistenciaRepository.merge(asistencia, {
-      salida: new Date().toTimeString().split(" ")[0],
-      estado: "completo",
-    });
+    // MODIFICACIÓN: Se reemplazó asistenciaRepository.merge() por asignación directa
+    // El merge original no incluía latitud/longitud, ahora se asignan directamente los 4 campos
+    asistencia.salida = new Date().toTimeString().split(" ")[0];
+    asistencia.estado = "completo";
+    asistencia.latitudSalida = data.latitud;
+    asistencia.longitudSalida = data.longitud;
 
     return await asistenciaRepository.save(asistencia);
   } catch (error) {
@@ -66,6 +72,7 @@ export async function registrarSalidaService(data) {
   }
 }
 
+// Sin cambios desde aquí
 export async function getAsistenciasService() {
   try {
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
