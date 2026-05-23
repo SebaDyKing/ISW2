@@ -1,0 +1,96 @@
+@reference "../../../index.css";
+.overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm;
+}
+.modal {
+  @apply bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden;
+}
+
+/* Header */
+.header {
+  @apply flex items-center justify-between px-6 py-5 border-b border-slate-100;
+}
+.headerLeft {
+  @apply flex items-center gap-3;
+}
+.headerIcon {
+  @apply w-9 h-9 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0;
+}
+.headerIconSvg {
+  @apply w-5 h-5 text-indigo-600;
+}
+.headerTitle {
+  @apply text-base font-bold text-slate-800;
+}
+.headerSubtitle {
+  @apply text-xs text-slate-400 mt-0.5;
+}
+.closeBtn {
+  @apply p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors;
+}
+
+/* Body */
+.body {
+  @apply px-6 py-5 space-y-4 max-h-[65vh] overflow-y-auto;
+}
+.row {
+  @apply grid grid-cols-2 gap-4;
+}
+.field {
+  @apply flex flex-col gap-1.5;
+}
+.fieldFull {
+  @apply flex flex-col gap-1.5 col-span-2;
+}
+.label {
+  @apply text-xs font-semibold text-slate-500 uppercase tracking-wider;
+}
+.required {
+  @apply text-red-400 ml-0.5;
+}
+.input {
+  @apply w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50
+         focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent
+         placeholder:text-slate-300 transition;
+}
+.select {
+  @apply w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50
+         focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent
+         text-slate-700 transition cursor-pointer;
+}
+.selectDisabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Sección */
+.sectionLabel {
+  @apply text-[11px] font-bold text-slate-400 uppercase tracking-widest pt-1;
+}
+.divider {
+  @apply border-t border-slate-100;
+}
+
+/* Error */
+.error {
+  @apply flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3;
+}
+.errorIcon {
+  @apply w-4 h-4 text-red-500 shrink-0;
+}
+
+/* Footer */
+.footer {
+  @apply flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50;
+}
+.btnCancel {
+  @apply px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300
+         rounded-xl hover:bg-slate-100 transition-colors;
+}
+.btnSubmit {
+  @apply flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white
+         bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.spinner {
+  @apply w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin;
+}

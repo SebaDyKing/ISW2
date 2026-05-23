@@ -1,0 +1,30 @@
+@reference "../../../index.css";
+.page {
+  @apply flex-1 bg-slate-50 min-h-screen;
+}
+.container {
+  @apply max-w-6xl mx-auto px-8 py-8 space-y-6;
+}
+.header {
+  @apply flex items-start justify-between;
+}
+.title {
+  @apply text-2xl font-bold text-slate-800 tracking-tight;
+}
+.subtitle {
+  @apply text-sm text-slate-500 mt-1;
+}
+.actions {
+  @apply flex items-center gap-3;
+}
+.btnSecondary {
+  @apply flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700
+         border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors;
+}
+.btnPrimary {
+  @apply flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white
+         bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm;
+}
+.btnIcon {
+  @apply w-4 h-4;
+}
