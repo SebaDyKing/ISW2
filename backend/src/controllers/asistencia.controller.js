@@ -17,14 +17,14 @@ import {
 
 export async function registrarEntradaController(req, res) {
   try {
-    const { idContrato, latitud, longitud } = req.body;
+    const { idContrato, latitud, longitud, fechaDispositivo, horaDispositivo } = req.body;
 
-    const { error } = validateAsistenciaBody({ idContrato, latitud, longitud });
+    const { error } = validateAsistenciaBody({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     if (error) {
       return handleErrorClient(res, 400, error.details.map((d) => d.message).join(", "));
     }
 
-    const registro = await registrarEntradaService({ idContrato, latitud, longitud });
+    const registro = await registrarEntradaService({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     handleSuccess(res, 201, "Entrada registrada correctamente", registro);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
@@ -33,14 +33,14 @@ export async function registrarEntradaController(req, res) {
 
 export async function registrarSalidaController(req, res) {
   try {
-    const { idContrato, latitud, longitud } = req.body;
+    const { idContrato, latitud, longitud, fechaDispositivo, horaDispositivo } = req.body;
 
-    const { error } = validateAsistenciaBody({ idContrato, latitud, longitud });
+    const { error } = validateAsistenciaBody({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     if (error) {
       return handleErrorClient(res, 400, error.details.map((d) => d.message).join(", "));
     }
 
-    const registro = await registrarSalidaService({ idContrato, latitud, longitud });
+    const registro = await registrarSalidaService({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     handleSuccess(res, 200, "Salida registrada correctamente", registro);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
@@ -49,14 +49,14 @@ export async function registrarSalidaController(req, res) {
 
 export async function registrarInicioColacionController(req, res) {
   try {
-    const { idContrato, latitud, longitud } = req.body;
+    const { idContrato, latitud, longitud, fechaDispositivo, horaDispositivo } = req.body;
 
-    const { error } = validateAsistenciaBody({ idContrato, latitud, longitud });
+    const { error } = validateAsistenciaBody({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     if (error) {
       return handleErrorClient(res, 400, error.details.map((d) => d.message).join(", "));
     }
 
-    const registro = await registrarInicioColacionService({ idContrato, latitud, longitud });
+    const registro = await registrarInicioColacionService({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     handleSuccess(res, 200, "Inicio de colación registrado correctamente", registro);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
@@ -65,14 +65,14 @@ export async function registrarInicioColacionController(req, res) {
 
 export async function registrarFinColacionController(req, res) {
   try {
-    const { idContrato, latitud, longitud } = req.body;
+    const { idContrato, latitud, longitud, fechaDispositivo, horaDispositivo } = req.body;
 
-    const { error } = validateAsistenciaBody({ idContrato, latitud, longitud });
+    const { error } = validateAsistenciaBody({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     if (error) {
       return handleErrorClient(res, 400, error.details.map((d) => d.message).join(", "));
     }
 
-    const registro = await registrarFinColacionService({ idContrato, latitud, longitud });
+    const registro = await registrarFinColacionService({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     handleSuccess(res, 200, "Fin de colación registrado correctamente", registro);
   } catch (error) {
     handleErrorServer(res, 500, error.message);

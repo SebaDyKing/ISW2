@@ -6,7 +6,8 @@ export async function registrarEntradaService(data) {
   try {
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
-    const hoy = new Date().toISOString().split("T")[0];
+    // Se usa la fecha proveniente del dispositivo
+    const hoy = data.fechaDispositivo; 
 
     const registroExistente = await asistenciaRepository.findOne({
       where: {
@@ -22,7 +23,7 @@ export async function registrarEntradaService(data) {
 
     const nuevaAsistencia = asistenciaRepository.create({
       fecha: hoy,
-      entrada: new Date().toTimeString().split(" ")[0],
+      entrada: data.horaDispositivo, // Se usa la hora del dispositivo
       estado: "presente",
       contrato: { idContrato: data.idContrato },
       latitudEntrada: data.latitud,
@@ -39,7 +40,7 @@ export async function registrarSalidaService(data) {
   try {
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
-    const hoy = new Date().toISOString().split("T")[0];
+    const hoy = data.fechaDispositivo;
 
     const asistencia = await asistenciaRepository.findOne({
       where: {
@@ -57,7 +58,7 @@ export async function registrarSalidaService(data) {
       throw new Error("Ya existe una salida registrada para hoy.");
     }
 
-    asistencia.salida = new Date().toTimeString().split(" ")[0];
+    asistencia.salida = data.horaDispositivo; // Hora del dispositivo
     asistencia.estado = "completo";
     asistencia.latitudSalida = data.latitud;
     asistencia.longitudSalida = data.longitud;
@@ -72,7 +73,7 @@ export async function registrarInicioColacionService(data) {
   try {
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
-    const hoy = new Date().toISOString().split("T")[0];
+    const hoy = data.fechaDispositivo;
 
     const asistencia = await asistenciaRepository.findOne({
       where: {
@@ -94,7 +95,7 @@ export async function registrarInicioColacionService(data) {
       throw new Error("Ya existe un inicio de colación registrado para hoy.");
     }
 
-    asistencia.inicioColacion = new Date().toTimeString().split(" ")[0];
+    asistencia.inicioColacion = data.horaDispositivo; // Hora del dispositivo
 
     return await asistenciaRepository.save(asistencia);
   } catch (error) {
@@ -106,7 +107,7 @@ export async function registrarFinColacionService(data) {
   try {
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
-    const hoy = new Date().toISOString().split("T")[0];
+    const hoy = data.fechaDispositivo;
 
     const asistencia = await asistenciaRepository.findOne({
       where: {
@@ -124,13 +125,15 @@ export async function registrarFinColacionService(data) {
       throw new Error("Ya existe un fin de colación registrado para hoy.");
     }
 
-    const [hh, mm, ss] = asistencia.inicioColacion.split(":").map(Number);
-    const inicioEnMinutos = hh * 60 + mm + ss / 60;
+    // Cálculo usando el string de la hora de inicio
+    const [hhInicio, mmInicio, ssInicio = 0] = asistencia.inicioColacion.split(":").map(Number);
+    const inicioEnMinutos = hhInicio * 60 + mmInicio + ssInicio / 60;
 
-    const ahora = new Date();
-    const ahoraEnMinutos = ahora.getHours() * 60 + ahora.getMinutes() + ahora.getSeconds() / 60;
+    // Cálculo usando el string de la hora enviada por el dispositivo
+    const [hhFin, mmFin, ssFin = 0] = data.horaDispositivo.split(":").map(Number);
+    const finEnMinutos = hhFin * 60 + mmFin + ssFin / 60;
 
-    const minutosTranscurridos = ahoraEnMinutos - inicioEnMinutos;
+    const minutosTranscurridos = finEnMinutos - inicioEnMinutos;
 
     if (minutosTranscurridos < 30) {
       const minutosRestantes = Math.ceil(30 - minutosTranscurridos);
@@ -139,7 +142,7 @@ export async function registrarFinColacionService(data) {
       );
     }
 
-    asistencia.finColacion = ahora.toTimeString().split(" ")[0];
+    asistencia.finColacion = data.horaDispositivo; // Hora del dispositivo
 
     return await asistenciaRepository.save(asistencia);
   } catch (error) {
