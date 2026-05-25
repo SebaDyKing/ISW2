@@ -2,11 +2,12 @@
 import {
   registrarEntradaService,
   registrarSalidaService,
+  registrarInicioColacionService,
+  registrarFinColacionService,
   getAsistenciasService,
   getAsistenciaByIdService,
   eliminarAsistenciasService,
 } from "../services/asistencia.services.js";
-// MODIFICACIÓN: Se agregó import de validateAsistenciaBody para validar los datos antes de llamar al servicio
 import { validateAsistenciaBody } from "../validations/asistencia.validations.js";
 import {
   handleSuccess,
@@ -16,18 +17,13 @@ import {
 
 export async function registrarEntradaController(req, res) {
   try {
-    // MODIFICACIÓN: Se reemplazó "const idContrato = req.body?.idContrato" por destructuring
-    // para extraer también latitud y longitud en la misma función (antes eran dos funciones duplicadas)
     const { idContrato, latitud, longitud } = req.body;
 
-    // MODIFICACIÓN: Se agregó validación con Joi antes de llamar al servicio
-    // Antes no se validaba nada, cualquier dato pasaba directo
     const { error } = validateAsistenciaBody({ idContrato, latitud, longitud });
     if (error) {
       return handleErrorClient(res, 400, error.details.map((d) => d.message).join(", "));
     }
 
-    // MODIFICACIÓN: Se agregó latitud y longitud al llamado del servicio
     const registro = await registrarEntradaService({ idContrato, latitud, longitud });
     handleSuccess(res, 201, "Entrada registrada correctamente", registro);
   } catch (error) {
@@ -37,17 +33,13 @@ export async function registrarEntradaController(req, res) {
 
 export async function registrarSalidaController(req, res) {
   try {
-    // MODIFICACIÓN: Se reemplazó "const idContrato = req.body?.idContrato" por destructuring
-    // para extraer también latitud y longitud en la misma función (antes eran dos funciones duplicadas)
     const { idContrato, latitud, longitud } = req.body;
 
-    // MODIFICACIÓN: Se agregó validación con Joi antes de llamar al servicio
     const { error } = validateAsistenciaBody({ idContrato, latitud, longitud });
     if (error) {
       return handleErrorClient(res, 400, error.details.map((d) => d.message).join(", "));
     }
 
-    // MODIFICACIÓN: Se agregó latitud y longitud al llamado del servicio
     const registro = await registrarSalidaService({ idContrato, latitud, longitud });
     handleSuccess(res, 200, "Salida registrada correctamente", registro);
   } catch (error) {
@@ -55,7 +47,38 @@ export async function registrarSalidaController(req, res) {
   }
 }
 
-// Sin cambios desde aquí
+export async function registrarInicioColacionController(req, res) {
+  try {
+    const { idContrato, latitud, longitud } = req.body;
+
+    const { error } = validateAsistenciaBody({ idContrato, latitud, longitud });
+    if (error) {
+      return handleErrorClient(res, 400, error.details.map((d) => d.message).join(", "));
+    }
+
+    const registro = await registrarInicioColacionService({ idContrato, latitud, longitud });
+    handleSuccess(res, 200, "Inicio de colación registrado correctamente", registro);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
+}
+
+export async function registrarFinColacionController(req, res) {
+  try {
+    const { idContrato, latitud, longitud } = req.body;
+
+    const { error } = validateAsistenciaBody({ idContrato, latitud, longitud });
+    if (error) {
+      return handleErrorClient(res, 400, error.details.map((d) => d.message).join(", "));
+    }
+
+    const registro = await registrarFinColacionService({ idContrato, latitud, longitud });
+    handleSuccess(res, 200, "Fin de colación registrado correctamente", registro);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
+}
+
 export async function getAsistenciasController(req, res) {
   try {
     const data = await getAsistenciasService();
