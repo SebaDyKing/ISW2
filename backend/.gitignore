@@ -42,5 +42,3 @@ temp/
 .npm
 .eslintcache
 
-# Uploads (si el backend recibe archivos)
-uploads/
