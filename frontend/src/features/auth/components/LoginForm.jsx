@@ -6,6 +6,7 @@ import { loginService } from "../services/auth.service";
 function LoginForm() {
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
+  const [verPassword, setVerPassword] = useState(false);
   const [cargando, setCargando] = useState(false);
   const navigate = useNavigate();
 
@@ -49,13 +50,22 @@ function LoginForm() {
               Contraseña
             </label>
             <input
-              type="password"
+              type={verPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={verPassword}
+                onChange={() => setVerPassword(!verPassword)}
+                className="cursor-pointer"
+              />
+              Mostrar contraseña
+            </label>
           </div>
           <button
             type="submit"
