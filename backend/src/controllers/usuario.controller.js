@@ -84,20 +84,13 @@ export const actualizarUsuario = async (req, res) => {
 
 export const eliminarUsuario = async (req, res) => {
   try {
-    const { id } = req.params; // El ID del usuario que queremos borrar
-    
-    // Simulamos el ID del admin que está haciendo la petición
-    const idAdminSolicitante = req.headers["x-admin-id"];
-
-    if (!idAdminSolicitante) {
-      return res.status(401).json({ message: "Falta el ID del administrador en los headers (x-admin-id)." });
-    }
+    const { id } = req.params;
+    const idAdminSolicitante = req.user.idUsuario;
 
     await eliminarUsuarioService(id, idAdminSolicitante);
 
     res.status(200).json({ message: "Cuenta de usuario eliminada de forma permanente." });
   } catch (error) {
-    // Si intenta borrarse a sí mismo
     if (error.message.includes("no puede eliminar su propia cuenta")) {
       return res.status(403).json({ message: error.message });
     }
