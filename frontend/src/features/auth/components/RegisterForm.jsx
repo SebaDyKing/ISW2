@@ -23,6 +23,9 @@ function RegisterForm() {
     if (e.target.name === "telefono") {
       const soloNumeros = e.target.value.replace(/\D/g, "");
       setForm({ ...form, telefono: soloNumeros });
+    } else if (e.target.name === "nombre" || e.target.name === "apellido") {
+      const soloLetras = e.target.value.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s]/g, "");
+      setForm({ ...form, [e.target.name]: soloLetras });
     } else {
       setForm({ ...form, [e.target.name]: e.target.value });
     }
@@ -107,6 +110,7 @@ function RegisterForm() {
               <input
                 type="text"
                 name="nombre"
+                maxLength={50}
                 value={form.nombre}
                 onChange={handleChange}
                 placeholder="Juan"
@@ -121,6 +125,7 @@ function RegisterForm() {
               <input
                 type="text"
                 name="apellido"
+                maxLength={50}
                 value={form.apellido}
                 onChange={handleChange}
                 placeholder="Pérez"
@@ -165,6 +170,7 @@ function RegisterForm() {
             <input
               type={verPassword ? "text" : "password"}
               name="password"
+              maxLength={64}
               value={form.password}
               onChange={handleChange}
               placeholder="••••••••"
@@ -188,6 +194,7 @@ function RegisterForm() {
             <input
               type={verConfirmar ? "text" : "password"}
               name="confirmarPassword"
+              maxLength={64}
               value={form.confirmarPassword}
               onChange={handleChange}
               placeholder="••••••••"
