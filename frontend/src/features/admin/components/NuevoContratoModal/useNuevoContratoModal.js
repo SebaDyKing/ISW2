@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { contratosService } from '../services/ContratosService'
-import { adminService } from '../services/adminService'
-import { generateContractPDF } from '../utils/pdfGenerator'
+import { contratosService } from '../../services/contratosService'
+import { adminService } from '../../services/adminService'
+import { generateContractPDF } from '../../utils/pdfGenerator'
 
 const INITIAL_FORM = {
   idEmpleado: '',
@@ -14,7 +14,7 @@ const INITIAL_FORM = {
   fechaFin: '',
 }
 
-export function useNuevoContrato({ onSuccess } = {}) {
+export function useNuevoContratoModal({ onSuccess } = {}) {
   const [form, setForm] = useState(INITIAL_FORM)
   const [empleados, setEmpleados] = useState([])
   const [instalaciones, setInstalaciones] = useState([])

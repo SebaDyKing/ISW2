@@ -1,29 +1,21 @@
-import { useState, useMemo } from 'react'
-import { useContratos } from '../hooks/useContratos'
-import AlertaRiesgoLegal from '../components/AlertaRiesgoLegal'
-import ContratosTable from '../components/ContratosTable'
-import NuevoContratoModal from '../components/NuevoContratoModal'
+import React from 'react'
+import { useContratosPage } from './useContratosPage'
+import AlertaRiesgoLegal from '../../components/AlertaRiesgoLegal/AlertaRiesgoLegal'
+import ContratosTable from '../../components/ContratosTable/ContratosTable'
+import NuevoContratoModal from '../../components/NuevoContratoModal/NuevoContratoModal'
 import styles from './ContratosPage.module.css'
 
 export default function ContratosPage() {
-  const { contratos, loading, error, refetch } = useContratos()
-  const [search, setSearch] = useState('')
-  const [showModal, setShowModal] = useState(false)
-
-  const contratosFiltrados = useMemo(() => {
-    if (!search) return contratos
-    const q = search.toLowerCase()
-    return contratos.filter((c) =>
-      c.nombre?.toLowerCase().includes(q) ||
-      c.rut?.includes(q) ||
-      c.instalacion?.toLowerCase().includes(q)
-    )
-  }, [contratos, search])
-
-  const alertaTrabajador = useMemo(
-    () => contratos.find((c) => c.tieneAlerta) ?? null,
-    [contratos]
-  )
+  const {
+    contratosFiltrados,
+    alertaTrabajador,
+    loading,
+    error,
+    setSearch,
+    showModal,
+    setShowModal,
+    refetch
+  } = useContratosPage()
 
   return (
     <div className={styles.page}>

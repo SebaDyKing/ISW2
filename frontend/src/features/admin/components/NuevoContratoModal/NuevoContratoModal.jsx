@@ -1,5 +1,5 @@
-import { useNuevoContrato } from '../hooks/useNuevoContrato'
-import { TIPOS_CONTRATO, LEY_LABORAL_CHILE } from '../constants/contratos.constants'
+import { useNuevoContratoModal } from './useNuevoContratoModal'
+import { TIPOS_CONTRATO, LEY_LABORAL_CHILE } from '../../constants/contratos.constants'
 import styles from './NuevoContratoModal.module.css'
 export default function NuevoContratoModal({ onClose, onSuccess }) {
   const {
@@ -11,7 +11,7 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
     error,
     handleChange,
     submit,
-  } = useNuevoContrato({
+  } = useNuevoContratoModal({
     onSuccess: () => {
       onSuccess?.()
       onClose()
