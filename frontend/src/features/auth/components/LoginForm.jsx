@@ -15,9 +15,33 @@ function LoginForm() {
     setCargando(true);
     try {
       const data = await loginService(correo, password);
+      
       localStorage.setItem("token", data.token);
+
+      const nombreReal = data.usuario.nombre || "Usuario";
+      const apellidoReal = data.usuario.apellido || "";
+      
+      const nombreCompleto = `${nombreReal} ${apellidoReal}`.trim();
+      
+      const inicialApellido = apellidoReal ? `${apellidoReal.charAt(0).toUpperCase()}.` : "";
+      const nombreMostrar = `${nombreReal} ${inicialApellido}`.trim();
+
+      const datosUsuario = {
+        nombreCompleto: nombreCompleto,
+        nombreMostrar: nombreMostrar,
+        rol: data.usuario.rol
+      };
+      
+      localStorage.setItem("usuario", JSON.stringify(datosUsuario));
+
       toast.success("¡Bienvenido!");
-      navigate("/dashboard");
+
+      const payload = JSON.parse(atob(data.token.split(".")[1]));
+      if (payload.rol === "administrador")   navigate("/admin");
+      else if (payload.rol === "empleado")   navigate("/empleado");
+      else if (payload.rol === "supervisor") navigate("/supervisor");
+      else                                   navigate("/cliente");
+
     } catch (error) {
       toast.error(error.response?.data?.message || "Error al iniciar sesión");
     } finally {
