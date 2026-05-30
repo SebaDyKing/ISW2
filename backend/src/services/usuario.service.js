@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 export async function crearUsuarioService(datosUsuario) {
   try {
     const usuarioRepository = AppDataSource.getRepository(Usuario);
-    const { nombre, apellido, rut, correo, password } = datosUsuario;
+    const { nombre, apellido, rut, correo, password, rol } = datosUsuario;
 
     // Verificamos si existe un usuario con el mismo RUT o correo para evitar duplicados
     const usuarioExistente = await usuarioRepository.findOne({
@@ -23,11 +23,7 @@ export async function crearUsuarioService(datosUsuario) {
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     const nuevoUsuario = usuarioRepository.create({
-      nombre,
-      apellido,
-      rut,
-      correo,
-      passwordHash: passwordHash 
+      nombre, apellido, rut, correo, passwordHash, rol
     });
 
     const usuarioGuardado = await usuarioRepository.save(nuevoUsuario);
@@ -48,7 +44,7 @@ export async function obtenerUsuariosService() {
     const usuarioRepository = AppDataSource.getRepository(Usuario);
 
     const usuarios = await usuarioRepository.find({
-      select: ["idUsuario", "nombre", "apellido", "rut", "correo", "createdAt", "updatedAt"]
+      select: ["idUsuario", "nombre", "apellido", "rut", "correo", "rol", "createdAt", "updatedAt"]
     });
     
     return usuarios;

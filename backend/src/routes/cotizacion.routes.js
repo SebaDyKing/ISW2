@@ -1,11 +1,37 @@
 "use strict";
 import { Router } from "express";
-import { crearSolicitud, obtenerCotizaciones } from "../controllers/cotizacion.controller.js";
-import { isAdmin } from "../middlewares/auth.middleware.js";
+import {
+    crearSolicitud,
+    obtenerCotizaciones, //para el admin
+    obtenerMisCotizaciones //para el cliente
+    ,actualizarEstado
+} from "../controllers/cotizacion.controller.js";
+import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
 
 const router = Router();
 
-router.post("/", crearSolicitud);
-router.get("/", isAdmin, obtenerCotizaciones);
+router.post("/solicitar",
+    authMiddleware,                 
+    autorizeEntities("cliente"),    
+    crearSolicitud                  
+);
+
+router.get("/mis-cotizaciones",
+    authMiddleware,
+    autorizeEntities("cliente"),
+    obtenerMisCotizaciones
+);
+
+router.get("/", 
+    authMiddleware,                
+    autorizeEntities("administrador"),      
+    obtenerCotizaciones            
+);
+
+router.patch("/:id/estado",
+    authMiddleware,
+    autorizeEntities("administrador"),
+    actualizarEstado
+);
 
 export default router;

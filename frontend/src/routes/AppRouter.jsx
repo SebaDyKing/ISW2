@@ -1,24 +1,54 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import App from "../App.jsx"
-import AdminPage from "../features/admin/pages/AdminPage.jsx"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import LoginForm    from "../features/auth/components/LoginForm";
+import RegisterForm from "../features/auth/components/RegisterForm";
+import PrivateRoute from "./PrivateRoute";
+import AdminLayout       from "../features/admin/components/AdminLayout";
+import UsuariosTable     from "../features/admin/components/UsuariosTable";
+import CotizacionesTable from "../features/admin/components/CotizacionesTable";
+import LandingPage         from "../features/cliente/components/LandingPage";
+import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
 
-/**
- * Router de la aplicación.
- *
- * - "/"       -> App (home actual; el equipo la reemplaza cuando quiera)
- * - "/admin"  -> AdminPage (panel de administración)
- * - "*"       -> cualquier ruta desconocida vuelve a "/"
- *
- * Para sumar más vistas, agregás un <Route> acá. No hace falta tocar main.jsx.
- */
-export default function AppRouter() {
+function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/admin" element={<AdminPage />} />
+        {/* Pública */}
+        <Route path="/"         element={<LandingPage />} />
+        <Route path="/login"    element={<LoginForm />} />
+        <Route path="/registro" element={<RegisterForm />} />
+
+        {/* Admin */}
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute allowedRoles={["administrador"]}>
+              <AdminLayout />
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<Navigate to="usuarios" replace />} />
+          <Route path="usuarios"     element={<UsuariosTable />} />
+          <Route path="cotizaciones" element={<CotizacionesTable />} />
+        </Route>
+
+        {/* Cliente */}
+        <Route
+          path="/cliente/cotizar"
+          element={
+            <PrivateRoute allowedRoles={["cliente"]}>
+              <SolicitarCotizacion />
+            </PrivateRoute>
+          }
+        />
+
+        <Route path="/empleado"   element={<div>Panel empleado — próximamente</div>} />
+        <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
+        <Route path="/cliente"    element={<div>Panel cliente — próximamente</div>} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
+
+export default AppRouter;

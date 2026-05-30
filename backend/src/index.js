@@ -7,6 +7,7 @@ import { connectDB } from "./config/configDb.js";
 import { HOST, PORT } from "./config/configEnv.js";
 import { routerApi } from "./routes/index.routes.js";
 import { seedDatabase } from "./config/seed.js";
+import authRouter from "./routes/auth.routes.js";
 
 const app = express();
 app.use(cors({
@@ -15,6 +16,11 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true 
+}));
+app.use("/api/auth", authRouter);
 
 app.get("/", (req, res) => {
   res.send("¡Bienvenido a mi API REST con TypeORM!");
