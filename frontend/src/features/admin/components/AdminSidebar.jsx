@@ -18,16 +18,7 @@ function IconClose() {
   )
 }
 
-/**
- * Sidebar lateral del panel de administración.
- *
- * Responsive:
- * - lg+ (>=1024px): fijo a la izquierda, siempre visible (lg:sticky lg:translate-x-0).
- * - mobile: drawer. Oculto fuera de pantalla (-translate-x-full); se abre con `open`
- *   (translate-x-0) y se cierra con el backdrop, la X o al elegir una sección.
- *
- * Navega por estado local (no por rutas) y recibe las secciones como data.
- */
+
 export default function AdminSidebar({ secciones, activa, onSelect, open, onClose }) {
   return (
     <>
