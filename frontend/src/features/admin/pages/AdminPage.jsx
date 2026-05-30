@@ -26,6 +26,16 @@ function IconHojaVida() {
   )
 }
 
+function IconMenu() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  )
+}
+
 // Secciones del panel admin. Para sumar una nueva, ensamblás su <XxxView />,
 // le das un icon y agregás una entrada acá. El sidebar se actualiza solo.
 const SECCIONES = [
@@ -35,13 +45,41 @@ const SECCIONES = [
 
 export default function AdminPage() {
   const [seccion, setSeccion] = useState(SECCIONES[0].key)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const activa = SECCIONES.find((s) => s.key === seccion) ?? SECCIONES[0]
 
+  // En mobile, elegir una sección cierra el drawer. En desktop no tiene efecto visible.
+  const handleSelect = (key) => {
+    setSeccion(key)
+    setSidebarOpen(false)
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-50 lg:flex">
       <Toaster position="top-right" />
-      <AdminSidebar secciones={SECCIONES} activa={seccion} onSelect={setSeccion} />
+
+      <AdminSidebar
+        secciones={SECCIONES}
+        activa={seccion}
+        onSelect={handleSelect}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
       <div className="flex-1 min-w-0">
+        {/* Topbar: solo mobile. En desktop el sidebar ya está siempre visible. */}
+        <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-slate-200 flex items-center gap-3 px-4 h-14">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="text-slate-600 hover:text-slate-900"
+            aria-label="Abrir menú"
+          >
+            <IconMenu />
+          </button>
+          <span className="font-semibold text-slate-900">{activa.label}</span>
+        </div>
+
         <main>{activa.render()}</main>
       </div>
     </div>
