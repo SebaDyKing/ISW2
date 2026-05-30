@@ -40,7 +40,14 @@ function LoginForm() {
       if (payload.rol === "administrador")   navigate("/admin");
       else if (payload.rol === "empleado")   navigate("/empleado");
       else if (payload.rol === "supervisor") navigate("/supervisor");
-      else                                   navigate("/cliente");
+      else {
+        const planGuardado = sessionStorage.getItem("planPreseleccionado");
+        if (planGuardado) {
+          navigate("/cliente/cotizar");
+        } else {
+          navigate("/cliente");
+        }
+      }
 
     } catch (error) {
       toast.error(error.response?.data?.message || "Error al iniciar sesión");

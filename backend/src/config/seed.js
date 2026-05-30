@@ -73,15 +73,34 @@ export async function seedDatabase() {
   });
 
   // Instalación del cliente
+  // Instalaciones del cliente
   const instalacionRepo = AppDataSource.getRepository(Instalacion);
-  const instalacion = await instalacionRepo.save({
-    nombre: "Edificio Central",
-    direccion: "Av. Test 123, Concepción",
-    latitud: -36.8270,
-    longitud: -73.0498,
-    telefono: "+56 41 222 3333",
-    cliente,
-  });
+  const [instalacion] = await instalacionRepo.save([
+    {
+      nombre: "Edificio Central",
+      direccion: "Av. Test 123, Concepción",
+      latitud: -36.8270,
+      longitud: -73.0498,
+      telefono: "+56 41 222 3333",
+      cliente,
+    },
+    {
+      nombre: "Sucursal Norte",
+      direccion: "Calle Los Pinos 456, Concepción",
+      latitud: -36.8100,
+      longitud: -73.0600,
+      telefono: "+56 41 333 4444",
+      cliente,
+    },
+    {
+      nombre: "Bodega Sur",
+      direccion: "Ruta 160 Km 5, Coronel",
+      latitud: -37.0200,
+      longitud: -73.1500,
+      telefono: "+56 41 444 5555",
+      cliente,
+    },
+  ]);
 
   // Contrato vinculando al Empleado Juan con la Instalación
   const contratoRepo = AppDataSource.getRepository(Contrato);
