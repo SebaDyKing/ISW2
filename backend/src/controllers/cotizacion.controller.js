@@ -4,7 +4,7 @@ import {
   obtenerCotizacionesService,
   obtenerMisCotizacionesService,
   actualizarEstadoService
- } from "../services/cotizacion.service.js";
+} from "../services/cotizacion.service.js";
 import { cotizacionSchema } from "../validations/cotizacion.validation.js";
 
 export const crearSolicitud = async (req, res) => {
@@ -16,8 +16,8 @@ export const crearSolicitud = async (req, res) => {
         detalle: error.details[0].message
       });
     }
-    const { comentarios,id_plan,id_instalacion } = value;
-    const idUsuario = req.user.idUsuario; 
+    const { comentarios, id_plan, id_instalacion } = value;
+    const idUsuario = req.user.idUsuario;
 
     const nuevaCotizacion = await crearCotizacionService({
       id_usuario: idUsuario,
@@ -26,18 +26,22 @@ export const crearSolicitud = async (req, res) => {
       id_instalacion
     });
 
-    //respuesta exitosa    
     res.status(201).json({
       message: "Solicitud guardada correctamente",
       data: nuevaCotizacion
     });
   } catch (error) {
     console.error("Error al crear solicitud:", error);
-    if (error.message.includes("Ya tienes") || error.message.includes("no pertenece") || error.message.includes("no encontrado")) {
+    if (
+      error.message.includes("Ya tienes") ||
+      error.message.includes("Esta instalación") ||
+      error.message.includes("no pertenece") ||
+      error.message.includes("no encontrado")
+    ) {
       return res.status(400).json({ message: error.message });
     }
-      res.status(500).json({ message: "Error interno del servidor" });
-    }
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
 };
 
 export const obtenerCotizaciones = async (req, res) => {
@@ -63,7 +67,6 @@ export const obtenerMisCotizaciones = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Error al recuperar tus cotizaciones" });
   }
-  
 };
 
 export const actualizarEstado = async (req, res) => {
