@@ -1,0 +1,9 @@
+@reference "../../index.css";
+
+.layout {
+  @apply flex min-h-screen bg-slate-50;
+}
+
+.main {
+  @apply flex-1 overflow-auto;
+}

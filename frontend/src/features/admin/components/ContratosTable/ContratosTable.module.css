@@ -1,0 +1,56 @@
+@reference "../../../../index.css";
+
+.container {
+  @apply bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm;
+}
+.header {
+  @apply flex items-center justify-between px-5 py-3 border-b border-slate-100;
+}
+.searchBox {
+  @apply relative w-80;
+}
+.searchIcon {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none;
+}
+.searchInput {
+  @apply w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent placeholder:text-slate-400 transition;
+}
+.filterBtn {
+  @apply p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600;
+}
+.filterIcon {
+  @apply w-5 h-5;
+}
+.tableWrapper {
+  @apply overflow-x-auto;
+}
+.table {
+  @apply w-full min-w-[700px];
+}
+.theadRow {
+  @apply border-b border-slate-100 bg-slate-50/50;
+}
+.thCell {
+  @apply text-left text-[11px] font-semibold text-slate-400 tracking-widest uppercase px-5 py-3;
+}
+.skeletonRow {
+  @apply border-b border-slate-100;
+}
+.skeletonCell {
+  @apply py-4 px-5;
+}
+.skeletonDiv {
+  @apply h-4 bg-slate-100 rounded animate-pulse w-3/4;
+}
+.errorRow {
+  @apply text-center py-14;
+}
+.errorText {
+  @apply text-sm text-red-500 font-medium;
+}
+.emptyRow {
+  @apply text-center py-14 text-slate-400 text-sm;
+}
+.highlightText {
+  @apply font-medium text-slate-600;
+}
