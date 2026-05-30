@@ -1,13 +1,6 @@
 "use strict";
 import Joi from "joi";
 
-/**
- * @brief Esquema de validación para el registro de entrada/salida de asistencia.
- *        Valida el campo requerido: idContrato (FK al contrato del empleado).
- *        Utiliza Joi para asegurar que los datos cumplan con los tipos y restricciones establecidas.
- * @param {Object} input - Objeto que representa los datos del registro a validar.
- * @return {Object} - Resultado de la validación con información sobre los errores, si los hay.
- */
 export const asistenciaBodyValidation = Joi.object({
   idContrato: Joi.number().integer().positive().required().messages({
     "number.base": "El campo idContrato debe ser un número",
@@ -15,14 +8,20 @@ export const asistenciaBodyValidation = Joi.object({
     "number.positive": "El campo idContrato debe ser un número positivo",
     "any.required": "El campo idContrato es obligatorio",
   }),
+  latitud: Joi.number().min(-90).max(90).required().messages({
+    "any.required": "La latitud es obligatoria",
+    "number.base": "La latitud debe ser un número válido",
+    "number.min": "La latitud mínima es -90",
+    "number.max": "La latitud máxima es 90",
+  }),
+  longitud: Joi.number().min(-180).max(180).required().messages({
+    "any.required": "La longitud es obligatoria",
+    "number.base": "La longitud debe ser un número válido",
+    "number.min": "La longitud mínima es -180",
+    "number.max": "La longitud máxima es 180",
+  }),
 });
 
-/**
- * @brief Función que valida los datos completos del registro de asistencia.
- *        Retorna un objeto con los resultados de la validación, incluyendo todos los errores si existen.
- * @param {Object} input - Objeto con los datos del registro a validar.
- * @return {Object} - Resultado de la validación, incluyendo mensajes de error si los hay.
- */
 export function validateAsistenciaBody(input) {
   return asistenciaBodyValidation.validate(input, { abortEarly: false });
 }

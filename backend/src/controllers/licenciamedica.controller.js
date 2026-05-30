@@ -1,4 +1,6 @@
 "use strict";
+import fs from "fs";
+import path from "path";
 import {
   getLicenciasMedicasServices,
   getLicenciaMedicaServicesByID,
@@ -30,6 +32,31 @@ export async function getLicenciaMedicaByIdController(req, res) {
     const id = Number(req.params.id);
     const licencia = await getLicenciaMedicaServicesByID(id);
     handleSuccess(res, 200, "Licencia médica obtenida", licencia);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
+}
+
+export async function getPdfLicenciaMedicaController(req, res) {
+  try {
+    const id = Number(req.params.id);
+    const licencia = await getLicenciaMedicaServicesByID(id);
+
+    if (!licencia.archivoPdf) {
+      return handleErrorClient(res, 404, "La licencia no tiene un PDF asociado");
+    }
+
+    // path.basename evita cualquier intento de path traversal en el nombre guardado
+    const filePath = path.resolve("uploads", path.basename(licencia.archivoPdf));
+
+    if (!fs.existsSync(filePath)) {
+      return handleErrorClient(res, 404, "El archivo PDF no se encuentra en el servidor");
+    }
+
+    // Inline para que el iframe del front lo muestre embebido
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${path.basename(filePath)}"`);
+    res.sendFile(filePath);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
   }

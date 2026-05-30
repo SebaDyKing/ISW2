@@ -25,6 +25,8 @@ export async function registrarEntradaService(data) {
       entrada: new Date().toTimeString().split(" ")[0],
       estado: "presente",
       contrato: { idContrato: data.idContrato },
+      latitudEntrada: data.latitud,
+      longitudEntrada: data.longitud,
     });
 
     return await asistenciaRepository.save(nuevaAsistencia);
@@ -55,14 +57,93 @@ export async function registrarSalidaService(data) {
       throw new Error("Ya existe una salida registrada para hoy.");
     }
 
-    asistenciaRepository.merge(asistencia, {
-      salida: new Date().toTimeString().split(" ")[0],
-      estado: "completo",
-    });
+    asistencia.salida = new Date().toTimeString().split(" ")[0];
+    asistencia.estado = "completo";
+    asistencia.latitudSalida = data.latitud;
+    asistencia.longitudSalida = data.longitud;
 
     return await asistenciaRepository.save(asistencia);
   } catch (error) {
     throw new Error(`Error al registrar salida: ${error.message}`);
+  }
+}
+
+export async function registrarInicioColacionService(data) {
+  try {
+    const asistenciaRepository = AppDataSource.getRepository(Asistencia);
+
+    const hoy = new Date().toISOString().split("T")[0];
+
+    const asistencia = await asistenciaRepository.findOne({
+      where: {
+        contrato: { idContrato: data.idContrato },
+        fecha: hoy,
+      },
+      relations: ["contrato"],
+    });
+
+    if (!asistencia) {
+      throw new Error("Debe registrar entrada antes de iniciar la colación.");
+    }
+
+    if (asistencia.salida) {
+      throw new Error("No puede iniciar colación después de haber registrado la salida.");
+    }
+
+    if (asistencia.inicioColacion) {
+      throw new Error("Ya existe un inicio de colación registrado para hoy.");
+    }
+
+    asistencia.inicioColacion = new Date().toTimeString().split(" ")[0];
+
+    return await asistenciaRepository.save(asistencia);
+  } catch (error) {
+    throw new Error(`Error al registrar inicio de colación: ${error.message}`);
+  }
+}
+
+export async function registrarFinColacionService(data) {
+  try {
+    const asistenciaRepository = AppDataSource.getRepository(Asistencia);
+
+    const hoy = new Date().toISOString().split("T")[0];
+
+    const asistencia = await asistenciaRepository.findOne({
+      where: {
+        contrato: { idContrato: data.idContrato },
+        fecha: hoy,
+      },
+      relations: ["contrato"],
+    });
+
+    if (!asistencia?.inicioColacion) {
+      throw new Error("Debe iniciar la colación antes de registrar su término.");
+    }
+
+    if (asistencia.finColacion) {
+      throw new Error("Ya existe un fin de colación registrado para hoy.");
+    }
+
+    const [hh, mm, ss] = asistencia.inicioColacion.split(":").map(Number);
+    const inicioEnMinutos = hh * 60 + mm + ss / 60;
+
+    const ahora = new Date();
+    const ahoraEnMinutos = ahora.getHours() * 60 + ahora.getMinutes() + ahora.getSeconds() / 60;
+
+    const minutosTranscurridos = ahoraEnMinutos - inicioEnMinutos;
+
+    if (minutosTranscurridos < 30) {
+      const minutosRestantes = Math.ceil(30 - minutosTranscurridos);
+      throw new Error(
+        `Aún no han transcurrido 30 minutos desde el inicio de la colación. Faltan ${minutosRestantes} minuto(s).`
+      );
+    }
+
+    asistencia.finColacion = ahora.toTimeString().split(" ")[0];
+
+    return await asistenciaRepository.save(asistencia);
+  } catch (error) {
+    throw new Error(`Error al registrar fin de colación: ${error.message}`);
   }
 }
 

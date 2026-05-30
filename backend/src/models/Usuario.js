@@ -46,6 +46,12 @@ export const Usuario = new EntitySchema({
       type: "timestamp",
       updateDate: true,
     },
+    rol: {
+      name: "rol",
+      type: "varchar",
+      length: 50,
+      nullable: false
+    },
   },
 
   relations: {
