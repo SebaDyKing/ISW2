@@ -1,16 +1,20 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import LoginForm    from "../features/auth/components/LoginForm";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import PrivateRoute from "./PrivateRoute";
 import AdminLayout       from "../features/admin/components/AdminLayout";
 import UsuariosTable     from "../features/admin/components/UsuariosTable";
 import CotizacionesTable from "../features/admin/components/CotizacionesTable";
+import LicenciasMedicasView from "../features/admin/components/LicenciasMedicasView";
+import HojaVidaView         from "../features/admin/components/HojaVidaView";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
 
 function AppRouter() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" />
       <Routes>
         {/* Pública */}
         <Route path="/"         element={<LandingPage />} />
@@ -29,6 +33,8 @@ function AppRouter() {
           <Route index element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios"     element={<UsuariosTable />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
+          <Route path="licencias"    element={<LicenciasMedicasView />} />
+          <Route path="hojas-vida"   element={<HojaVidaView />} />
         </Route>
 
         {/* Cliente */}
