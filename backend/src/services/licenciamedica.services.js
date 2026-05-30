@@ -10,7 +10,7 @@ export async function getLicenciasMedicasServices() {
   try {
     const licenciaRepository = AppDataSource.getRepository(LicenciaMedica);
     return await licenciaRepository.find({
-      relations: ["empleado", "supervisor"],
+      relations: ["empleado", "empleado.usuario", "supervisor", "supervisor.usuario"],
     });
   } catch (error) {
     throw new Error(`Error al obtener las licencias médicas ${error.message}`);
@@ -22,7 +22,7 @@ export async function getLicenciaMedicaServicesByID(id) {
     const licenciaRepository = AppDataSource.getRepository(LicenciaMedica);
     const licencia = await licenciaRepository.findOne({
       where: { idLicencia: id },
-      relations: ["empleado", "supervisor"],
+      relations: ["empleado", "empleado.usuario", "supervisor", "supervisor.usuario"],
     });
     if (!licencia) throw new Error("Licencia médica no encontrada");
     return licencia;
