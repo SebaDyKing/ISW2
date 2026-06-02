@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { registroService } from "../services/auth.service";
+import { normalizarRut } from "../../../utils/rut";
 
 function RegisterForm() {
   const [form, setForm] = useState({
     nombre_empresa: "",
     telefono: "",
     nombre: "",
-    apellido: "",
+    apellido: "", 
     rut: "",
     correo: "",
     password: "",
@@ -20,15 +21,18 @@ function RegisterForm() {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    if (e.target.name === "telefono") {
-      const soloNumeros = e.target.value.replace(/\D/g, "");
-      setForm({ ...form, telefono: soloNumeros });
-    } else if (e.target.name === "nombre" || e.target.name === "apellido") {
-      const soloLetras = e.target.value.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s]/g, "");
-      setForm({ ...form, [e.target.name]: soloLetras });
-    } else {
-      setForm({ ...form, [e.target.name]: e.target.value });
-    }
+  if (e.target.name === "telefono") {
+    const soloNumeros = e.target.value.replace(/\D/g, "");
+    setForm({ ...form, telefono: soloNumeros });
+  } else if (e.target.name === "nombre" || e.target.name === "apellido") {
+    const soloLetras = e.target.value.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s]/g, "");
+    setForm({ ...form, [e.target.name]: soloLetras });
+  } else if (e.target.name === "rut") {
+    // Quita puntos automáticamente mientras el usuario escribe
+    setForm({ ...form, rut: normalizarRut(e.target.value) });
+  } else {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  }
   };
 
   const handleSubmit = async (e) => {

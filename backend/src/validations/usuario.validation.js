@@ -1,54 +1,67 @@
 "use strict";
 import Joi from "joi";
 
-// Expresión regular para validar RUT chileno (con o sin puntos, pero con guion)
-// Ejemplos válidos: 12.345.678-9, 12345678-9, 9.876.543-K
-const rutRegex = /^[0-9]{1,2}(\.?[0-9]{3}){2}-[0-9Kk]{1}$/;
+// RUT: sin puntos, con guión
+const rutRegex = /^\d{7,8}-[\dkK]$/;
+
+const nombreApellidoRegex = /^[a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s]+$/;
 
 export const usuarioBodyValidation = Joi.object({
-  nombre: Joi.string().max(100).required().messages({
-    "string.empty": "El nombre es obligatorio.",
-    "string.max": "El nombre no puede superar los 100 caracteres."
+  nombre: Joi.string().min(2).max(50).pattern(nombreApellidoRegex).required().messages({
+    "string.min": "El nombre debe tener al menos 2 caracteres.",
+    "string.max": "El nombre no puede superar los 50 caracteres.",
+    "string.pattern.base": "El nombre solo puede contener letras.",
+    "any.required": "El nombre es obligatorio.",
   }),
-  
-  apellido: Joi.string().max(100).required().messages({
-    "string.empty": "El apellido es obligatorio.",
-    "string.max": "El apellido no puede superar los 100 caracteres."
+  apellido: Joi.string().min(2).max(50).pattern(nombreApellidoRegex).required().messages({
+    "string.min": "El apellido debe tener al menos 2 caracteres.",
+    "string.max": "El apellido no puede superar los 50 caracteres.",
+    "string.pattern.base": "El apellido solo puede contener letras.",
+    "any.required": "El apellido es obligatorio.",
   }),
-
-  rut: Joi.string().pattern(rutRegex).required().messages({
-    "string.pattern.base": "El RUT ingresado no tiene un formato válido. Debe incluir guion y dígito verificador.",
-    "string.empty": "El RUT es obligatorio."
+  rut: Joi.string().max(12).pattern(rutRegex).required().messages({
+    "string.pattern.base": "El RUT debe tener el formato 12345678-9 (sin puntos).",
+    "any.required": "El RUT es obligatorio.",
   }),
-
   correo: Joi.string().email().max(150).required().messages({
-    "string.email": "El formato del correo electrónico no es válido.",
-    "string.empty": "El correo es obligatorio."
+    "string.email": "El formato del correo no es válido.",
+    "any.required": "El correo es obligatorio.",
   }),
-
-  // El cliente envía "password", y nosotros en el backend lo convertiremos a "passwordHash"
-  password: Joi.string().min(6).max(255).required().messages({
-    "string.min": "La contraseña debe tener al menos 6 caracteres por seguridad.",
-    "string.empty": "La contraseña es obligatoria."
+  password: Joi.string().min(6).max(50).required().messages({
+    "string.min": "La contraseña debe tener al menos 6 caracteres.",
+    "string.max": "La contraseña no puede superar los 50 caracteres.",
+    "any.required": "La contraseña es obligatoria.",
+  }),
+  rol: Joi.string().valid("cliente", "empleado", "supervisor", "administrador").required().messages({
+    "any.only": "El rol debe ser cliente, empleado, supervisor o administrador.",
+    "any.required": "El rol es obligatorio.",
   }),
 });
 
 export const usuarioUpdateValidation = Joi.object({
-  nombre: Joi.string().max(100).messages({
-    "string.max": "El nombre no puede superar los 100 caracteres."
+  nombre: Joi.string().min(2).max(50).pattern(nombreApellidoRegex).messages({
+    "string.min": "El nombre debe tener al menos 2 caracteres.",
+    "string.max": "El nombre no puede superar los 50 caracteres.",
+    "string.pattern.base": "El nombre solo puede contener letras.",
   }),
-  apellido: Joi.string().max(100).messages({
-    "string.max": "El apellido no puede superar los 100 caracteres."
+  apellido: Joi.string().min(2).max(50).pattern(nombreApellidoRegex).messages({
+    "string.min": "El apellido debe tener al menos 2 caracteres.",
+    "string.max": "El apellido no puede superar los 50 caracteres.",
+    "string.pattern.base": "El apellido solo puede contener letras.",
   }),
-  rut: Joi.string().pattern(rutRegex).messages({
-    "string.pattern.base": "El RUT ingresado no tiene un formato válido."
+  rut: Joi.string().max(12).pattern(rutRegex).messages({
+    "string.pattern.base": "El RUT debe tener el formato 12345678-9 (sin puntos).",
   }),
   correo: Joi.string().email().max(150).messages({
-    "string.email": "El formato del correo electrónico no es válido."
+    "string.email": "El formato del correo no es válido.",
   }),
-  password: Joi.string().min(6).max(255).messages({
-    "string.min": "La contraseña debe tener al menos 6 caracteres."
-  })
+  password: Joi.string().min(6).max(50).messages({
+    "string.min": "La contraseña debe tener al menos 6 caracteres.",
+    "string.max": "La contraseña no puede superar los 50 caracteres.",
+  }),
+  rol: Joi.string().valid("cliente", "empleado", "supervisor", "administrador").messages({
+    "any.only": "El rol debe ser cliente, empleado, supervisor o administrador.",
+  }),
 }).min(1).messages({
-  "object.min": "Debes proporcionar al menos un campo para actualizar."
+  "object.min": "Debes proporcionar al menos un campo para actualizar.",
 });

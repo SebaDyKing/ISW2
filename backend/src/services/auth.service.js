@@ -70,6 +70,6 @@ export async function loginService(correo, password) {
 
   return { 
     token, 
-    usuario: { id: usuario.idUsuario, correo: usuario.correo, rol: usuario.entity } 
+    usuario: { id: usuario.idUsuario, correo: usuario.correo, rol: usuario.rol, nombre: usuario.nombre, apellido: usuario.apellido } 
   };
 }

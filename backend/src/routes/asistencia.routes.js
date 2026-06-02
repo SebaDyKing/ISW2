@@ -5,6 +5,8 @@ import {
   getAsistenciaByIdController,
   registrarEntradaController,
   registrarSalidaController,
+  registrarInicioColacionController,
+  registrarFinColacionController,
   eliminarAsistenciasController,
 } from "../controllers/asistencia.controller.js";
 
@@ -14,6 +16,8 @@ router.get("/", getAsistenciasController);
 router.get("/:id", getAsistenciaByIdController);
 router.post("/entrada", registrarEntradaController);
 router.post("/salida", registrarSalidaController);
+router.post("/colacion/inicio", registrarInicioColacionController);
+router.post("/colacion/fin", registrarFinColacionController);
 router.delete("/", eliminarAsistenciasController);
 
 export default router;

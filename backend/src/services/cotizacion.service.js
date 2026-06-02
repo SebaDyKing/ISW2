@@ -12,7 +12,6 @@ export async function crearCotizacionService(datosCotizacion) {
   const cotizacionRepo = AppDataSource.getRepository(SolicitudCotizacion);
   const instalacionRepo = AppDataSource.getRepository(Instalacion);
 
-  // Busca el Perfil de Cliente asociado al Usuario
   const clienteActual = await clienteRepo.findOne({
     where: { usuario: { idUsuario: id_usuario } },
     relations: ["usuario"]
@@ -22,9 +21,8 @@ export async function crearCotizacionService(datosCotizacion) {
     throw new Error("Perfil de cliente no encontrado para este usuario.");
   }
 
-  // Validar que la instalación le pertenece al cliente
   const instalacionValida = await instalacionRepo.findOne({
-    where: { 
+    where: {
       idInstalacion: id_instalacion,
       cliente: { idCliente: clienteActual.idCliente }
     },
@@ -35,16 +33,16 @@ export async function crearCotizacionService(datosCotizacion) {
     throw new Error("La instalación indicada no existe o no pertenece a tu cuenta.");
   }
 
-  // Validar que no haya cotización Pendiente
   const cotizacionPendiente = await cotizacionRepo.findOne({
     where: {
       estado: "Pendiente",
-      cliente: { idCliente: clienteActual.idCliente }
+      cliente: { idCliente: clienteActual.idCliente },
+      instalacion: { idInstalacion: id_instalacion }
     }
   });
 
   if (cotizacionPendiente) {
-    throw new Error("Ya tienes una cotización en proceso. Por favor espera a que sea respondida.");
+    throw new Error("Esta instalación ya tiene una cotización pendiente. Espera a que sea respondida.");
   }
 
   const nuevaSolicitud = cotizacionRepo.create({
@@ -52,20 +50,25 @@ export async function crearCotizacionService(datosCotizacion) {
     estado: "Pendiente",
     cliente: clienteActual,
     instalacion: instalacionValida,
-    plan: { idPlan: id_plan } 
+    plan: { idPlan: id_plan }
   });
 
   const solicitudGuardada = await cotizacionRepo.save(nuevaSolicitud);
-  await enviarCorreoSolicitudRecibida(clienteActual.usuario.correo, clienteActual.nombreEmpresa);
+
+  // Envío en segundo plano — no bloquea la respuesta
+  enviarCorreoSolicitudRecibida(clienteActual.usuario.correo, clienteActual.nombreEmpresa)
+    .catch((err) => console.error("Error enviando correo de solicitud:", err));
+
   delete solicitudGuardada.cliente.usuario.passwordHash;
   return solicitudGuardada;
 }
+
 export async function obtenerCotizacionesService() {
   try {
     const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
     return await repositorio.find({
       order: { fechaCreacion: "DESC" },
-      relations: ["cliente", "plan", "instalacion"] 
+      relations: ["cliente", "plan", "instalacion"]
     });
   } catch (error) {
     console.error("Error en obtenerCotizacionesService:", error);
@@ -77,11 +80,11 @@ export async function obtenerMisCotizacionesService(id_usuario) {
   try {
     const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
     return await repositorio.find({
-      where: { 
-        cliente: { usuario: { idUsuario: id_usuario } } 
+      where: {
+        cliente: { usuario: { idUsuario: id_usuario } }
       },
       order: { fechaCreacion: "DESC" },
-      relations: ["plan", "instalacion"] 
+      relations: ["plan", "instalacion"]
     });
   } catch (error) {
     console.error("Error en obtenerMisCotizacionesService:", error);
@@ -102,16 +105,18 @@ export async function actualizarEstadoService(idSolicitud, nuevoEstado) {
 
   cotizacion.estado = nuevoEstado;
   const cotizacionActualizada = await repositorio.save(cotizacion);
-  
-  // Enviar correo al cliente informando el nuevo estado
+
   const cotizacionConCliente = await repositorio.findOne({
     where: { idSolicitud: parseInt(idSolicitud) },
     relations: ["cliente", "cliente.usuario"]
   });
-  await enviarCorreoEstadoCotizacion(
+
+  // Envío en segundo plano — no bloquea la respuesta
+  enviarCorreoEstadoCotizacion(
     cotizacionConCliente.cliente.usuario.correo,
     cotizacionConCliente.cliente.nombreEmpresa,
     nuevoEstado
-  );
+  ).catch((err) => console.error("Error enviando correo de estado:", err));
+
   return cotizacionActualizada;
 }
