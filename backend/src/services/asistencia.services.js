@@ -11,8 +11,8 @@ function horaAMinutos(horaStr) {
 export async function registrarEntradaService(data) {
   try {
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
-    
-    const hoy = data.fechaDispositivo; 
+
+    const hoy = data.fechaDispositivo;
 
     const registroExistente = await asistenciaRepository.findOne({
       where: {
@@ -195,6 +195,7 @@ export async function getAsistenciasService() {
   try {
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
     return await asistenciaRepository.find({
+      where: { contrato: { idContrato } },
       relations: ["contrato"],
     });
   } catch (error) {
