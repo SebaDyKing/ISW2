@@ -13,3 +13,5 @@ export const db = {
 //exporta credenciales del .env para utilizarlo en el backend
 export const PORT = Number(process.env.PORT) || 3000;
 export const HOST = process.env.HOST || 'localhost';
+export const EMAIL_USER = process.env.EMAIL_USER;
+export const EMAIL_PASS = process.env.EMAIL_PASS;

@@ -54,5 +54,11 @@ export const Cliente = new EntitySchema({
       target: "ReporteCliente",
       inverseSide: "cliente",
     },
+    cotizaciones: {
+      type: "one-to-many",
+      target: "SolicitudCotizacion",
+      inverseSide: "cliente",
   },
-});
+}
+}
+);
