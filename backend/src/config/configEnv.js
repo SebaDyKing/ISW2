@@ -15,3 +15,4 @@ export const PORT = Number(process.env.PORT) || 3000;
 export const HOST = process.env.HOST || 'localhost';
 export const EMAIL_USER = process.env.EMAIL_USER;
 export const EMAIL_PASS = process.env.EMAIL_PASS;
+export const JWT_SECRET = process.env.JWT_SECRET || process.env.SECRET_JWT_KEY || "CleanPro_Secreto_Ultra_Seguro_2026";
