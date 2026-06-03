@@ -1,0 +1,53 @@
+@reference "../../../../index.css";
+
+.row {
+  @apply border-b border-slate-100 hover:bg-slate-50/70 focus-within:bg-slate-50/70 transition-colors cursor-pointer;
+}
+
+.cell {
+  @apply py-4 px-5;
+}
+
+.workerWrapper {
+  @apply flex items-center gap-3;
+}
+
+.avatarBox {
+  @apply relative w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0;
+}
+
+.alertDot {
+  @apply absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-white;
+}
+
+.workerName {
+  @apply text-sm font-semibold text-slate-800 leading-tight;
+}
+
+.workerSub {
+  @apply text-xs text-slate-500 mt-0.5;
+}
+
+.instName {
+  @apply text-sm font-medium text-slate-700;
+}
+
+.instRole {
+  @apply text-xs text-slate-500 flex items-center gap-1 mt-0.5;
+}
+
+.typeWrapper {
+  @apply flex items-center gap-2 text-sm text-slate-600;
+}
+
+.periodBadge {
+  @apply text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md whitespace-nowrap;
+}
+
+.iconSm {
+  @apply w-4 h-4 text-slate-500 shrink-0;
+}
+
+.iconXs {
+  @apply w-3 h-3;
+}

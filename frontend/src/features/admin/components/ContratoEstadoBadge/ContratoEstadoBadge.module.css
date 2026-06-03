@@ -1,0 +1,17 @@
+@reference "../../../../index.css";
+
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold tracking-wider;
+}
+
+.activo {
+  @apply bg-emerald-50 text-emerald-600 border border-emerald-200;
+}
+
+.porVencer {
+  @apply bg-amber-50 text-amber-600 border border-amber-200;
+}
+
+.finalizado {
+  @apply bg-slate-100 text-slate-500 border border-slate-200;
+}

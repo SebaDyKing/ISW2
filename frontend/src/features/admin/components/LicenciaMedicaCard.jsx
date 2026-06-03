@@ -4,11 +4,6 @@ import { getEstado } from "../utils/estadoLicencia"
 function getInitials(nombre = "", apellido = "") {
   return `${nombre[0] ?? ""}${apellido[0] ?? ""}`.toUpperCase() || "LM"
 }
-
-// El backend hoy carga la relación "empleado" pero NO "empleado.usuario",
-// así que nombre/apellido pueden no venir. Mostramos lo mejor disponible:
-// nombre completo -> RUT -> id. Si más adelante el backend carga la relación
-// anidada, el nombre aparece solo sin tocar este componente.
 function datosEmpleado(empleado) {
   const u = empleado?.usuario
   const nombre = u?.nombre ?? ""
@@ -108,7 +103,7 @@ export default function LicenciaMedicaCard({
             type="button"
             onClick={() => onVerPdf(licencia)}
             disabled={!tienePdf}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <IconEye /> {tienePdf ? "Ver PDF" : "Sin PDF"}
           </button>

@@ -5,6 +5,11 @@ import PrivateRoute from "./PrivateRoute";
 import AdminLayout       from "../features/admin/components/AdminLayout";
 import UsuariosTable     from "../features/admin/components/UsuariosTable";
 import CotizacionesTable from "../features/admin/components/CotizacionesTable";
+import LicenciasMedicasView from "../features/admin/components/LicenciasMedicasView";
+import HojaVidaView         from "../features/admin/components/HojaVidaView";
+import EmpleadoLayout  from "../features/empleado/components/EmpleadoLayout";
+import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
+import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
 import EmpleadoPortal from "../components/EmpleadoPortal";
@@ -40,6 +45,7 @@ function PanelClienteProximamente() {
 function AppRouter() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" />
       <Routes>
         {/* Pública */}
         <Route path="/"         element={<LandingPage />} />
@@ -58,6 +64,8 @@ function AppRouter() {
           <Route index element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios"     element={<UsuariosTable />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
+          <Route path="licencias"    element={<LicenciasMedicasView />} />
+          <Route path="hojas-vida"   element={<HojaVidaView />} />
         </Route>
 
         {/* Cliente */}
