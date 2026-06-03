@@ -9,10 +9,12 @@ const PLAN_STYLES = {
 };
 
 function LandingPage() {
-  const [planes, setPlanes]   = useState([]);
+  const [planes, setPlanes]     = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [error, setError]     = useState(null);
+  const [error, setError]       = useState(null);
   const navigate = useNavigate();
+
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     obtenerPlanesService()
@@ -22,7 +24,6 @@ function LandingPage() {
   }, []);
 
   const handleSolicitarPlan = (idPlan) => {
-    const token = localStorage.getItem("token");
     if (!token) {
       sessionStorage.setItem("planPreseleccionado", idPlan);
       navigate("/login");
@@ -31,13 +32,55 @@ function LandingPage() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/");
+  };
+
   if (cargando) return <p style={{ padding: "2rem", fontSize: "14px", color: "#64748b" }}>Cargando planes...</p>;
   if (error)    return <p style={{ padding: "2rem", fontSize: "14px", color: "#ef4444" }}>{error}</p>;
 
   return (
     <div style={{ maxWidth: "860px", margin: "0 auto", padding: "3rem 2rem" }}>
-      <h1 style={{ fontSize: "20px", fontWeight: 500, marginBottom: ".4rem" }}>Planes de limpieza</h1>
-      <p style={{ fontSize: "14px", color: "#64748b", marginBottom: "2rem" }}>Elige el plan que mejor se adapte a tu empresa</p>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+        <div>
+          <h1 style={{ fontSize: "20px", fontWeight: 500, marginBottom: ".4rem" }}>Planes de limpieza</h1>
+          <p style={{ fontSize: "14px", color: "#64748b" }}>Elige el plan que mejor se adapte a tu empresa</p>
+        </div>
+
+        {!token ? (
+          <button
+            onClick={() => navigate("/login")}
+            style={{
+              padding: ".45rem 1rem",
+              border: "1px solid #cbd5e1",
+              borderRadius: "6px",
+              background: "transparent",
+              fontSize: "13px",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Iniciar sesión
+          </button>
+        ) : (
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: ".45rem 1rem",
+              border: "1px solid #cbd5e1",
+              borderRadius: "6px",
+              background: "transparent",
+              fontSize: "13px",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Cerrar sesión
+          </button>
+        )}
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: "1rem" }}>
         {planes.map((plan) => {
