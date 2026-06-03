@@ -7,6 +7,7 @@ import UsuariosTable     from "../features/admin/components/UsuariosTable";
 import CotizacionesTable from "../features/admin/components/CotizacionesTable";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
+import EmpleadoPortal from "../components/EmpleadoPortal";
 
 function PanelClienteProximamente() {
   const navigate = useNavigate();
@@ -69,7 +70,14 @@ function AppRouter() {
           }
         />
 
-        <Route path="/empleado"   element={<div>Panel empleado — próximamente</div>} />
+        <Route
+          path="/empleado"
+          element={
+            <PrivateRoute allowedRoles={["empleado"]}>
+              <EmpleadoPortal />
+            </PrivateRoute>
+          }
+        />
         <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
         <Route
           path="/cliente"
