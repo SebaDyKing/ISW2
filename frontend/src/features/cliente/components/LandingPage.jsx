@@ -18,7 +18,7 @@ function LandingPage() {
 
   useEffect(() => {
     obtenerPlanesService()
-      .then((res) => setPlanes(res.data))
+      .then((res) => setPlanes(res))
       .catch(() => setError("No se pudieron cargar los planes."))
       .finally(() => setCargando(false));
   }, []);
