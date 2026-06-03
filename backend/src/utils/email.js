@@ -1,10 +1,12 @@
 "use strict";
 import mailer from "../config/mailer.js";
+import { EMAIL_USER } from "../config/configEnv.js";
+
 const transporter = mailer.transporter;
 
 export async function enviarCorreoSolicitudRecibida(correoDestino, nombreEmpresa) {
   await transporter.sendMail({
-    from: `"CleanPro Sistema" <${process.env.EMAIL_USER}>`,
+    from: `"CleanPro Sistema" <${EMAIL_USER}>`,
     to: correoDestino,
     subject: "Solicitud de cotización recibida",
     html: `
@@ -26,7 +28,7 @@ export async function enviarCorreoEstadoCotizacion(correoDestino, nombreEmpresa,
   const esAprobada = estado === "Aprobada";
 
   await transporter.sendMail({
-    from: `"CleanPro Sistema" <${process.env.EMAIL_USER}>`,
+    from: `"CleanPro Sistema" <${EMAIL_USER}>`,
     to: correoDestino,
     subject: `Cotización ${esAprobada ? "aprobada" : "rechazada"}`,
     html: `

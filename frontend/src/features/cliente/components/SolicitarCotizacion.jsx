@@ -70,6 +70,18 @@ function SolicitarCotizacion() {
         background: "#fff", border: "1px solid #e2e8f0",
         borderRadius: "10px", padding: "1.75rem", maxWidth: "500px",
       }}>
+
+        <button
+          onClick={() => navigate("/")}
+          style={{
+            background: "none", border: "none", padding: 0,
+            fontSize: "13px", color: "#64748b", cursor: "pointer",
+            marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "4px",
+          }}
+        >
+          ← Volver
+        </button>
+
         <p style={{ fontSize: "17px", fontWeight: 500, marginBottom: ".25rem" }}>Solicitar cotización</p>
         <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "1.5rem" }}>Completa los datos para enviar tu solicitud</p>
 

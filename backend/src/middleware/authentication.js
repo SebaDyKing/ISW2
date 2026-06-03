@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { handleErrorClient } from "../Handlers/responseHanders.js";
+import { JWT_SECRET } from "../config/configEnv.js";
 
 /**
  * @brief Middleware que verifica que el usuario haya iniciado sesión (Token válido).
@@ -16,7 +17,7 @@ export const authMiddleware = (req, res, next) => {
 
     try {
         // Usamos la firma del archivo .env
-        const payload = jwt.verify(token, process.env.JWT_SECRET); 
+        const payload = jwt.verify(token, JWT_SECRET); 
         
         // Guardamos los datos del usuario en la request para que el Controlador los use
         req.user = payload; 

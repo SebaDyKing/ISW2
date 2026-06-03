@@ -59,6 +59,14 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6 transition"
+        >
+          ← Volver
+        </button>
+
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
           Iniciar sesión
         </h2>

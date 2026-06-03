@@ -15,6 +15,7 @@ import { LicenciaMedica } from '../models/LicenciaMedica.js';
 import { HojaVida } from '../models/HojaVida.js';
 import { ReporteCliente } from '../models/ReporteCliente.js';
 import { SolicitudCotizacion } from '../models/SolicitudCotizacion.js';
+
 /**
  * Configuración de la fuente de datos (DataSource) de TypeORM.
  * Establece la conexión con la base de datos PostgreSQL utilizando
