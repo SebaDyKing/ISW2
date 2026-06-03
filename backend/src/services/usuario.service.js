@@ -1,6 +1,7 @@
 "use strict";
 import { AppDataSource } from "../config/configDb.js";
 import { Usuario } from "../models/Usuario.js";
+import { Empleado } from "../models/Empleado.js";
 import bcrypt from "bcrypt";
 
 export async function crearUsuarioService(datosUsuario) {
@@ -51,6 +52,31 @@ export async function obtenerUsuariosService() {
   } catch (error) {
     console.error("Error en obtenerUsuariosService:", error);
     throw new Error("Error al obtener la lista de usuarios");
+  }
+}
+
+export async function obtenerEmpleadosService() {
+  try {
+    const empleadoRepo = AppDataSource.getRepository(Empleado);
+    const empleadosRaw = await empleadoRepo.find({
+      relations: ["usuario"]
+    });
+    
+    // Mapear para que el frontend reciba nombre, apellido y correo directamente en el objeto
+    const empleadosMapeados = empleadosRaw.map(emp => ({
+      idEmpleado: emp.idEmpleado,
+      rut: emp.rut,
+      fechaNacimiento: emp.fechaNacimiento,
+      nombre: emp.usuario?.nombre,
+      apellido: emp.usuario?.apellido,
+      correo: emp.usuario?.correo,
+      idUsuario: emp.usuario?.idUsuario,
+    }));
+
+    return empleadosMapeados;
+  } catch (error) {
+    console.error("Error en obtenerEmpleadosService:", error);
+    throw new Error("Error al obtener la lista de empleados");
   }
 }
 

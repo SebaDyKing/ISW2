@@ -1,6 +1,6 @@
 "use strict";
 import { usuarioBodyValidation, usuarioUpdateValidation } from "../validations/usuario.validation.js";
-import { crearUsuarioService, obtenerUsuariosService,obtenerUsuarioPorIdService, actualizarUsuarioService,eliminarUsuarioService } from "../services/usuario.service.js";
+import { crearUsuarioService, obtenerUsuariosService, obtenerUsuarioPorIdService, actualizarUsuarioService, eliminarUsuarioService, obtenerEmpleadosService } from "../services/usuario.service.js";
 
 export const crearUsuario = async (req, res) => {
   try {
@@ -38,6 +38,18 @@ export const obtenerUsuarios = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Error interno al recuperar los usuarios" });
+  }
+};
+
+export const obtenerEmpleados = async (req, res) => {
+  try {
+    const empleados = await obtenerEmpleadosService();
+    res.status(200).json({
+      message: "Lista de empleados recuperada con éxito",
+      data: empleados
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error interno al recuperar los empleados" });
   }
 };
 

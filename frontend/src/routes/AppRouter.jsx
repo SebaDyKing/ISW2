@@ -1,12 +1,17 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import LoginForm    from "../features/auth/components/LoginForm";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import PrivateRoute from "./PrivateRoute";
 import AdminLayout       from "../features/admin/components/AdminLayout";
 import UsuariosTable     from "../features/admin/components/UsuariosTable";
 import CotizacionesTable from "../features/admin/components/CotizacionesTable";
+import LicenciasMedicasView from "../features/admin/components/LicenciasMedicasView";
+import HojaVidaView         from "../features/admin/components/HojaVidaView";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
+import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
+import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
 
 function PanelClienteProximamente() {
   const navigate = useNavigate();
@@ -39,6 +44,7 @@ function PanelClienteProximamente() {
 function AppRouter() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" />
       <Routes>
         {/* Pública */}
         <Route path="/"         element={<LandingPage />} />
@@ -54,9 +60,13 @@ function AppRouter() {
             </PrivateRoute>
           }
         >
-          <Route index element={<Navigate to="usuarios" replace />} />
+          <Route index               element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios"     element={<UsuariosTable />} />
+          <Route path="contratos"    element={<ContratosPage />} />
+          <Route path="dashboard"    element={<AdminDashboard />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
+          <Route path="licencias"    element={<LicenciasMedicasView />} />
+          <Route path="hojas-vida"   element={<HojaVidaView />} />
         </Route>
 
         {/* Cliente */}
