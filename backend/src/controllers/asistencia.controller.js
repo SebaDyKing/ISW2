@@ -27,7 +27,11 @@ export async function registrarEntradaController(req, res) {
     const registro = await registrarEntradaService({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     handleSuccess(res, 201, "Entrada registrada correctamente", registro);
   } catch (error) {
-    handleErrorServer(res, 500, error.message);
+    if (error.status === 400 || error.status === 404) {
+      handleErrorClient(res, error.status, error.message);
+    } else {
+      handleErrorServer(res, 500, error.message);
+    }
   }
 }
 
@@ -43,7 +47,11 @@ export async function registrarSalidaController(req, res) {
     const registro = await registrarSalidaService({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     handleSuccess(res, 200, "Salida registrada correctamente", registro);
   } catch (error) {
-    handleErrorServer(res, 500, error.message);
+    if (error.status === 400 || error.status === 404) {
+      handleErrorClient(res, error.status, error.message);
+    } else {
+      handleErrorServer(res, 500, error.message);
+    }
   }
 }
 
@@ -59,7 +67,11 @@ export async function registrarInicioColacionController(req, res) {
     const registro = await registrarInicioColacionService({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     handleSuccess(res, 200, "Inicio de colación registrado correctamente", registro);
   } catch (error) {
-    handleErrorServer(res, 500, error.message);
+    if (error.status === 400 || error.status === 404) {
+      handleErrorClient(res, error.status, error.message);
+    } else {
+      handleErrorServer(res, 500, error.message);
+    }
   }
 }
 
@@ -75,7 +87,11 @@ export async function registrarFinColacionController(req, res) {
     const registro = await registrarFinColacionService({ idContrato, latitud, longitud, fechaDispositivo, horaDispositivo });
     handleSuccess(res, 200, "Fin de colación registrado correctamente", registro);
   } catch (error) {
-    handleErrorServer(res, 500, error.message);
+    if (error.status === 400 || error.status === 404) {
+      handleErrorClient(res, error.status, error.message);
+    } else {
+      handleErrorServer(res, 500, error.message);
+    }
   }
 }
 
@@ -93,7 +109,11 @@ export async function getAsistenciaByIdController(req, res) {
     const data = await getAsistenciaByIdService(Number(req.params.id));
     handleSuccess(res, 200, "Asistencia obtenida correctamente", data);
   } catch (error) {
-    handleErrorServer(res, 500, error.message);
+    if (error.status === 404) {
+      handleErrorClient(res, 404, error.message);
+    } else {
+      handleErrorServer(res, 500, error.message);
+    }
   }
 }
 
