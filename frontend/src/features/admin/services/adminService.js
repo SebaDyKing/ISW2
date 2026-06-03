@@ -1,12 +1,17 @@
-import axios from 'axios'
+import axios from 'axios';
 
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api', // Ajuste default para local
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   withCredentials: true,
-})
+});
+
+function getAuthHeader() {
+  const token = localStorage.getItem("token");
+  return { Authorization: `Bearer ${token}` };
+}
 
 export const adminService = {
-  getEmpleados: () => api.get('/usuarios/empleados'), // Asumiendo ruta
-  getInstalaciones: () => api.get('/instalaciones'),  // Asumiendo ruta
-  getDashboard: () => api.get('/dashboard'),
+  getEmpleados: () => api.get('/usuarios/empleados', { headers: getAuthHeader() }),
+  getInstalaciones: () => api.get('/instalaciones', { headers: getAuthHeader() }),
+  getDashboard: () => api.get('/dashboard', { headers: getAuthHeader() }),
 }

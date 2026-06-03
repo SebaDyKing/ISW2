@@ -1,14 +1,19 @@
-import axios from 'axios'
+import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL, // cambiar por URL de tu API en un archivo .env
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
   withCredentials: true,
-})
+});
+
+function getAuthHeader() {
+  const token = localStorage.getItem("token");
+  return { Authorization: `Bearer ${token}` };
+}
 
 export const contratosService = {
-  getAll: (params) => api.get('/contratos', { params }),
-  getById: (id) => api.get(`/contratos/${id}`),
-  create: (data) => api.post('/contratos', data),
-  update: (id, data) => api.put(`/contratos/${id}`, data),
-  delete: (id) => api.delete(`/contratos/${id}`),
+  getAll: (params) => api.get('/contratos', { params, headers: getAuthHeader() }),
+  getById: (id) => api.get(`/contratos/${id}`, { headers: getAuthHeader() }),
+  create: (data) => api.post('/contratos', data, { headers: getAuthHeader() }),
+  update: (id, data) => api.put(`/contratos/${id}`, data, { headers: getAuthHeader() }),
+  delete: (id) => api.delete(`/contratos/${id}`, { headers: getAuthHeader() }),
 }

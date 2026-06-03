@@ -10,6 +10,8 @@ import LicenciasMedicasView from "../features/admin/components/LicenciasMedicasV
 import HojaVidaView         from "../features/admin/components/HojaVidaView";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
+import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
+import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
 
 function AppRouter() {
   return (
@@ -30,8 +32,10 @@ function AppRouter() {
             </PrivateRoute>
           }
         >
-          <Route index element={<Navigate to="usuarios" replace />} />
+          <Route index               element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios"     element={<UsuariosTable />} />
+          <Route path="contratos"    element={<ContratosPage />} />
+          <Route path="dashboard"    element={<AdminDashboard />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
           <Route path="licencias"    element={<LicenciasMedicasView />} />
           <Route path="hojas-vida"   element={<HojaVidaView />} />
