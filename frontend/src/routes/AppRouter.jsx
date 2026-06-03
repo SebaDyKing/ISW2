@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import LoginForm    from "../features/auth/components/LoginForm";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import PrivateRoute from "./PrivateRoute";
