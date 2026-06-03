@@ -97,7 +97,8 @@ export async function registrarFinColacionController(req, res) {
 
 export async function getAsistenciasController(req, res) {
   try {
-    const data = await getAsistenciasService();
+    const { idContrato } = req.query;
+    const data = await getAsistenciasService(idContrato ? Number(idContrato) : undefined);
     handleSuccess(res, 200, "Asistencias obtenidas correctamente", data);
   } catch (error) {
     handleErrorServer(res, 500, error.message);
