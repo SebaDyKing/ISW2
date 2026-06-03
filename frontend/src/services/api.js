@@ -1,8 +1,9 @@
 import axios from "axios";
 
-// Creamos una instancia de Axios con la URL base del backend
+// Creamos una instancia de Axios con la URL base del backend.
+// Lee VITE_API_URL del entorno (deploy); en local cae a localhost:3001.
 const api = axios.create({
-  baseURL: "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3001/api",
 });
 
 // Interceptor para inyectar automáticamente el token JWT en cada petición

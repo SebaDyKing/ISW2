@@ -13,7 +13,7 @@ import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
 import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
-import EmpleadoPortal from "../components/EmpleadoPortal";
+import MarcarAsistencia from "../components/MarcarAsistencia";
 
 function PanelClienteProximamente() {
   const navigate = useNavigate();
@@ -79,14 +79,20 @@ function AppRouter() {
           }
         />
 
+        {/* Empleado */}
         <Route
           path="/empleado"
           element={
             <PrivateRoute allowedRoles={["empleado"]}>
-              <EmpleadoPortal />
+              <EmpleadoLayout />
             </PrivateRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="asistencia" replace />} />
+          <Route path="asistencia" element={<MarcarAsistencia />} />
+          <Route path="licencias" element={<MisLicenciasView />} />
+          <Route path="hoja-vida" element={<MisHojasVidaView />} />
+        </Route>
         <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
         <Route
           path="/cliente"
