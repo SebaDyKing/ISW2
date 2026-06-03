@@ -10,16 +10,18 @@ import { seedDatabase } from "./config/seed.js";
 import authRouter from "./routes/auth.routes.js";
 
 const app = express();
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://146.83.198.35:1318",
+];
+if (process.env.CORS_ORIGIN) allowedOrigins.push(process.env.CORS_ORIGIN);
+
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json());
 app.use(morgan("dev"));
-app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true 
-}));
 app.use("/api/auth", authRouter);
 
 app.get("/", (req, res) => {
