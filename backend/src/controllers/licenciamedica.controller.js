@@ -74,6 +74,7 @@ export async function createLicenciaMedicaController(req, res) {
     const datos = {
       ...value,
       archivoPdf: req.file.filename,
+      idUsuario: req.user?.idUsuario, // viene del token (authMiddleware)
     };
 
     const nueva = await createLicenciaMedicaServices(datos);

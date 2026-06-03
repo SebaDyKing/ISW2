@@ -10,7 +10,7 @@ export async function getLicenciasMedicasServices() {
   try {
     const licenciaRepository = AppDataSource.getRepository(LicenciaMedica);
     return await licenciaRepository.find({
-      relations: ["empleado", "empleado.usuario", "supervisor", "supervisor.usuario"],
+      relations: { empleado: { usuario: true }, supervisor: { usuario: true } },
     });
   } catch (error) {
     throw new Error(`Error al obtener las licencias médicas ${error.message}`);
@@ -22,7 +22,7 @@ export async function getLicenciaMedicaServicesByID(id) {
     const licenciaRepository = AppDataSource.getRepository(LicenciaMedica);
     const licencia = await licenciaRepository.findOne({
       where: { idLicencia: id },
-      relations: ["empleado", "empleado.usuario", "supervisor", "supervisor.usuario"],
+      relations: { empleado: { usuario: true }, supervisor: { usuario: true } },
     });
     if (!licencia) throw new Error("Licencia médica no encontrada");
     return licencia;
@@ -36,13 +36,13 @@ export async function createLicenciaMedicaServices(data) {
     if (!data.archivoPdf) {
       throw new Error("El archivo PDF es obligatorio");
     }
-
-    // Verificar que existe el empleado
     const empleadoRepository = AppDataSource.getRepository(Empleado);
     const empleado = await empleadoRepository.findOne({
-      where: { idEmpleado: data.idEmpleado },
+      where: data.idEmpleado
+        ? { idEmpleado: data.idEmpleado }
+        : { usuario: { idUsuario: data.idUsuario } },
     });
-    if (!empleado) throw new Error("Empleado no encontrado");
+    if (!empleado) throw new Error("No se encontró el empleado del usuario");
 
     // Crear y guardar la lcencia medica
     const licenciaRepository = AppDataSource.getRepository(LicenciaMedica);

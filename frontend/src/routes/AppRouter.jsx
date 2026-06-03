@@ -5,8 +5,17 @@ import PrivateRoute from "./PrivateRoute";
 import AdminLayout       from "../features/admin/components/AdminLayout";
 import UsuariosTable     from "../features/admin/components/UsuariosTable";
 import CotizacionesTable from "../features/admin/components/CotizacionesTable";
+import LicenciasMedicasView from "../features/admin/components/LicenciasMedicasView";
+import HojaVidaView         from "../features/admin/components/HojaVidaView";
+import EmpleadoLayout  from "../features/empleado/components/EmpleadoLayout";
+import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
+import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
+import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
+import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
+import EmpleadoPortal from "../components/EmpleadoPortal";
+import { Toaster } from "react-hot-toast";
 
 function PanelClienteProximamente() {
   const navigate = useNavigate();
@@ -39,6 +48,7 @@ function PanelClienteProximamente() {
 function AppRouter() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" />
       <Routes>
         {/* Pública */}
         <Route path="/"         element={<LandingPage />} />
@@ -54,9 +64,13 @@ function AppRouter() {
             </PrivateRoute>
           }
         >
-          <Route index element={<Navigate to="usuarios" replace />} />
+          <Route index               element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios"     element={<UsuariosTable />} />
+          <Route path="contratos"    element={<ContratosPage />} />
+          <Route path="dashboard"    element={<AdminDashboard />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
+          <Route path="licencias"    element={<LicenciasMedicasView />} />
+          <Route path="hojas-vida"   element={<HojaVidaView />} />
         </Route>
 
         {/* Cliente */}
@@ -69,7 +83,14 @@ function AppRouter() {
           }
         />
 
-        <Route path="/empleado"   element={<div>Panel empleado — próximamente</div>} />
+        <Route
+          path="/empleado"
+          element={
+            <PrivateRoute allowedRoles={["empleado"]}>
+              <EmpleadoPortal />
+            </PrivateRoute>
+          }
+        />
         <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
         <Route
           path="/cliente"
