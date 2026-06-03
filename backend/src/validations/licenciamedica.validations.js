@@ -28,11 +28,10 @@ export const licenciaMedicaBodyValidation = Joi.object({
     "string.empty": `El campo diagnostico no puede estar vacío`,
     "any.required": `El campo diagnostico es obligatorio`,
   }),
-  idEmpleado: Joi.number().integer().positive().required().messages({
+  idEmpleado: Joi.number().integer().positive().optional().messages({
     "number.base": `El campo idEmpleado debe ser un número`,
     "number.integer": `El campo idEmpleado debe ser un entero`,
     "number.positive": `El campo idEmpleado debe ser un número positivo`,
-    "any.required": `El campo idEmpleado es obligatorio`,
   }),
   archivoPdf: Joi.string().max(255).optional().messages({
     "string.base": `El campo archivoPdf debe ser un texto`,

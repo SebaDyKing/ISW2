@@ -8,6 +8,9 @@ import UsuariosTable     from "../features/admin/components/UsuariosTable";
 import CotizacionesTable from "../features/admin/components/CotizacionesTable";
 import LicenciasMedicasView from "../features/admin/components/LicenciasMedicasView";
 import HojaVidaView         from "../features/admin/components/HojaVidaView";
+import EmpleadoLayout  from "../features/empleado/components/EmpleadoLayout";
+import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
+import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
 
@@ -47,7 +50,19 @@ function AppRouter() {
           }
         />
 
-        <Route path="/empleado"   element={<div>Panel empleado — próximamente</div>} />
+        {/* Empleado */}
+        <Route
+          path="/empleado"
+          element={
+            <PrivateRoute allowedRoles={["empleado"]}>
+              <EmpleadoLayout />
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<Navigate to="licencias" replace />} />
+          <Route path="licencias" element={<MisLicenciasView />} />
+          <Route path="hoja-vida" element={<MisHojasVidaView />} />
+        </Route>
         <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
         <Route path="/cliente"    element={<div>Panel cliente — próximamente</div>} />
 
