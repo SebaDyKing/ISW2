@@ -6,6 +6,6 @@ import { getDashboard } from "../controllers/dashboard.controller.js";
 const router = Router();
 
 // Solo el administrador puede ver el dashboard
-router.get("/", authMiddleware, autorizeEntities("admin"), getDashboard);
+router.get("/", authMiddleware, autorizeEntities("administrador"), getDashboard);
 
 export default router;

@@ -14,6 +14,8 @@ import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
 import MarcarAsistencia from "../components/MarcarAsistencia";
+import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
+import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
 
 function PanelClienteProximamente() {
   const navigate = useNavigate();
@@ -62,8 +64,10 @@ function AppRouter() {
             </PrivateRoute>
           }
         >
-          <Route index element={<Navigate to="usuarios" replace />} />
+          <Route index               element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios"     element={<UsuariosTable />} />
+          <Route path="contratos"    element={<ContratosPage />} />
+          <Route path="dashboard"    element={<AdminDashboard />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
           <Route path="licencias"    element={<LicenciasMedicasView />} />
           <Route path="hojas-vida"   element={<HojaVidaView />} />
