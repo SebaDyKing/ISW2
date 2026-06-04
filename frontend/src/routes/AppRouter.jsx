@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import LoginForm    from "../features/auth/components/LoginForm";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import PrivateRoute from "./PrivateRoute";
@@ -12,10 +13,9 @@ import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
 import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
+import MarcarAsistencia from "../components/MarcarAsistencia";
 import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
 import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
-import EmpleadoPortal from "../components/EmpleadoPortal";
-import { Toaster } from "react-hot-toast";
 
 function PanelClienteProximamente() {
   const navigate = useNavigate();
@@ -83,14 +83,20 @@ function AppRouter() {
           }
         />
 
+        {/* Empleado */}
         <Route
           path="/empleado"
           element={
             <PrivateRoute allowedRoles={["empleado"]}>
-              <EmpleadoPortal />
+              <EmpleadoLayout />
             </PrivateRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="asistencia" replace />} />
+          <Route path="asistencia" element={<MarcarAsistencia />} />
+          <Route path="licencias" element={<MisLicenciasView />} />
+          <Route path="hoja-vida" element={<MisHojasVidaView />} />
+        </Route>
         <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
         <Route
           path="/cliente"
