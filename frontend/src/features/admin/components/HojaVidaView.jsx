@@ -4,6 +4,8 @@ import { useHojasVida } from "../hooks/useHojasVida"
 import HojaVidaCard from "./HojaVidaCard"
 import HojaVidaSummary from "./HojaVidaSummary"
 import NuevoRegistroModal from "./NuevoRegistroModal"
+import EditarHojaVidaModal from "./EditarHojaVidaModal"
+import ConfirmDialog from "./ConfirmDialog"
 
 const FILTROS = [
   { key: "todos", label: "Todas", countKey: "total" },
@@ -21,9 +23,12 @@ function IconPlus() {
 }
 
 export default function HojaVidaView() {
-  const { hojas, loading, error, createHoja } = useHojasVida()
+  const { hojas, loading, error, createHoja, updateHoja, deleteHoja } = useHojasVida()
   const [filtro, setFiltro] = useState("todos")
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [hojaEditar, setHojaEditar] = useState(null)
+  const [hojaEliminar, setHojaEliminar] = useState(null)
+  const [eliminando, setEliminando] = useState(false)
 
   const counts = useMemo(
     () => ({
@@ -39,11 +44,28 @@ export default function HojaVidaView() {
     [hojas, filtro],
   )
 
-  // Si createHoja falla, propagamos para que NuevoRegistroModal muestre el error
-  // inline y NO se cierre (ese es su flujo interno). El toast solo corre en éxito.
   const handleCreate = async (data) => {
     await createHoja(data)
     toast.success("Registro creado")
+  }
+
+  // Si updateHoja falla, propagamos para que el modal muestre el error inline.
+  const handleGuardarEdicion = async (data) => {
+    await updateHoja(hojaEditar.idRegistro, data)
+    toast.success("Registro actualizado")
+  }
+
+  const handleEliminar = async () => {
+    setEliminando(true)
+    try {
+      await deleteHoja(hojaEliminar.idRegistro)
+      toast.success("Registro eliminado")
+      setHojaEliminar(null)
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || "No se pudo eliminar")
+    } finally {
+      setEliminando(false)
+    }
   }
 
   return (
@@ -115,7 +137,12 @@ export default function HojaVidaView() {
             ) : (
               <div className="space-y-4">
                 {visibles.map((hoja) => (
-                  <HojaVidaCard key={hoja.idRegistro} hoja={hoja} />
+                  <HojaVidaCard
+                    key={hoja.idRegistro}
+                    hoja={hoja}
+                    onEdit={setHojaEditar}
+                    onDelete={setHojaEliminar}
+                  />
                 ))}
               </div>
             )}
@@ -127,6 +154,24 @@ export default function HojaVidaView() {
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
         onCreate={handleCreate}
+      />
+
+      <EditarHojaVidaModal
+        isOpen={Boolean(hojaEditar)}
+        hoja={hojaEditar}
+        onClose={() => setHojaEditar(null)}
+        onSave={handleGuardarEdicion}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(hojaEliminar)}
+        titulo="Eliminar registro"
+        mensaje="¿Seguro que querés eliminar este registro de la hoja de vida? Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        tone="danger"
+        loading={eliminando}
+        onConfirm={handleEliminar}
+        onCancel={() => setHojaEliminar(null)}
       />
     </>
   )
