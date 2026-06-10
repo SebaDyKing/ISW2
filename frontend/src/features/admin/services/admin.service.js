@@ -28,8 +28,8 @@ export async function obtenerCotizacionesService() {
   return res.data;
 }
 
-export async function actualizarEstadoCotizacionService(id, estado) {
-  const res = await axios.patch(`${API}/cotizaciones/${id}/estado`, { estado }, {
+export async function actualizarEstadoCotizacionService(id, estado, motivo) {
+  const res = await axios.patch(`${API}/cotizaciones/${id}/estado`, { estado, motivo }, {
     headers: getAuthHeader(),
   });
   return res.data;

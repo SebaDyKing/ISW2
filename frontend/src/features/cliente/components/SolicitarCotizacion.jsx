@@ -42,17 +42,15 @@ function ModalConfirmacion({ estilo, onVolver }) {
         width: "100%", maxWidth: "420px", textAlign: "center",
         boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
       }}>
-        {/* Ícono check */}
         <div style={{
           width: "52px", height: "52px", borderRadius: "50%",
           background: estilo?.accentBg || "#EEEDFE",
           display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 1.25rem",
-          fontSize: "22px",
+          margin: "0 auto 1.25rem", fontSize: "22px",
+          color: estilo?.accentColor || "#534AB7",
         }}>
           ✓
         </div>
-
         <p style={{ fontSize: "17px", fontWeight: 600, color: "#0f172a", marginBottom: "8px" }}>
           Solicitud recibida
         </p>
@@ -61,7 +59,6 @@ function ModalConfirmacion({ estilo, onVolver }) {
           y se pondrá en contacto contigo a la brevedad posible para entregarte una propuesta
           adaptada a tus necesidades.
         </p>
-
         <button
           onClick={onVolver}
           style={{
@@ -94,6 +91,8 @@ function SolicitarCotizacion() {
   const [superficie, setSuperficie]               = useState("");
   const [frecuenciaDeseada, setFrecuenciaDeseada] = useState("");
   const [numPersonas, setNumPersonas]             = useState("");
+  const [medioContacto, setMedioContacto]         = useState("");
+  const [horarioContacto, setHorarioContacto]     = useState("");
   const [enviando, setEnviando]                   = useState(false);
   const [cargando, setCargando]                   = useState(true);
   const [modalVisible, setModalVisible]           = useState(false);
@@ -126,13 +125,12 @@ function SolicitarCotizacion() {
       return;
     }
 
-    // Construir comentario enriquecido para plan personalizado
     let comentarioFinal = comentarios;
     if (esPersonalizado) {
       const extras = [];
-      if (superficie)       extras.push(`Superficie aproximada: ${superficie} m²`);
+      if (superficie)        extras.push(`Superficie aproximada: ${superficie} m²`);
       if (frecuenciaDeseada) extras.push(`Frecuencia deseada: ${frecuenciaDeseada}`);
-      if (numPersonas)      extras.push(`Personas en el recinto: ${numPersonas}`);
+      if (numPersonas)       extras.push(`Personas en el recinto: ${numPersonas}`);
       if (extras.length > 0) {
         comentarioFinal = `${extras.join(" | ")}${comentarios.trim() ? ` | ${comentarios.trim()}` : ""}`;
       }
@@ -141,9 +139,11 @@ function SolicitarCotizacion() {
     setEnviando(true);
     try {
       await solicitarCotizacionService({
-        id_plan:        Number(planSeleccionado),
-        id_instalacion: Number(idInstalacion),
-        comentarios:    comentarioFinal,
+        id_plan:         Number(planSeleccionado),
+        id_instalacion:  Number(idInstalacion),
+        comentarios:     comentarioFinal,
+        medioContacto:   medioContacto   || null,
+        horarioContacto: horarioContacto || null,
       });
       setEstiloModal(estiloActual);
       setModalVisible(true);
@@ -304,64 +304,45 @@ function SolicitarCotizacion() {
 
             <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "1.25rem 0" }} />
 
-            {/* Sección de comentarios — diferenciada por tipo de plan */}
+            {/* Comentarios — diferenciados por plan */}
             {esPersonalizado ? (
-              /* ── Plan Personalizado ── */
               <div style={{ marginBottom: "1.25rem" }}>
                 <label style={labelStyle}>Detalles del servicio</label>
                 <p style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "12px" }}>
                   Para preparar una propuesta precisa, completa la siguiente información sobre tu instalación.
                 </p>
-
-                {/* Campos estructurados */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
                   <div>
                     <label style={{ ...labelStyle, fontSize: "12px" }}>Superficie aprox. (m²)</label>
                     <input
-                      type="number"
-                      min="1"
-                      value={superficie}
+                      type="number" min="1" value={superficie}
                       onChange={(e) => setSuperficie(e.target.value)}
-                      placeholder="Ej: 800"
-                      style={inputStyle}
+                      placeholder="Ej: 800" style={inputStyle}
                     />
                   </div>
                   <div>
                     <label style={{ ...labelStyle, fontSize: "12px" }}>Personas en el recinto</label>
                     <input
-                      type="number"
-                      min="1"
-                      value={numPersonas}
+                      type="number" min="1" value={numPersonas}
                       onChange={(e) => setNumPersonas(e.target.value)}
-                      placeholder="Ej: 50"
-                      style={inputStyle}
+                      placeholder="Ej: 50" style={inputStyle}
                     />
                   </div>
                 </div>
-
                 <div style={{ marginBottom: "12px" }}>
                   <label style={{ ...labelStyle, fontSize: "12px" }}>Frecuencia deseada</label>
-                  <select
-                    value={frecuenciaDeseada}
-                    onChange={(e) => setFrecuenciaDeseada(e.target.value)}
-                    style={inputStyle}
-                  >
+                  <select value={frecuenciaDeseada} onChange={(e) => setFrecuenciaDeseada(e.target.value)} style={inputStyle}>
                     <option value="">Selecciona una frecuencia</option>
-                    {FRECUENCIAS_PERSONALIZADO.map((f) => (
-                      <option key={f} value={f}>{f}</option>
-                    ))}
+                    {FRECUENCIAS_PERSONALIZADO.map((f) => <option key={f} value={f}>{f}</option>)}
                   </select>
                 </div>
-
-                {/* Chips */}
                 <label style={{ ...labelStyle, fontSize: "12px" }}>
                   Comentarios <span style={{ fontWeight: 400, color: "#94a3b8" }}>(requerido)</span>
                 </label>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
                   {CHIPS_PERSONALIZADO.map((chip) => (
                     <span
-                      key={chip}
-                      onClick={() => handleChip(chip)}
+                      key={chip} onClick={() => handleChip(chip)}
                       style={{ fontSize: "12px", padding: "4px 10px", border: "1px solid #e2e8f0", borderRadius: "20px", cursor: "pointer", color: "#64748b", background: "#f8fafc", userSelect: "none" }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#185FA5"; e.currentTarget.style.color = "#0C447C"; e.currentTarget.style.background = "#E6F1FB"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "#f8fafc"; }}
@@ -370,13 +351,12 @@ function SolicitarCotizacion() {
                     </span>
                   ))}
                 </div>
-
                 <div style={{ position: "relative" }}>
                   <textarea
                     value={comentarios}
                     onChange={(e) => { if (e.target.value.length <= MAX_CHARS) setComentarios(e.target.value); }}
                     rows={4}
-                    placeholder="Describe el tipo de instalación, requerimientos especiales, horarios preferidos y cualquier detalle relevante para la propuesta..."
+                    placeholder="Describe el tipo de instalación, requerimientos especiales, horarios preferidos y cualquier detalle relevante..."
                     style={{ ...inputStyle, resize: "vertical", paddingBottom: "28px", lineHeight: "1.5" }}
                   />
                   <span style={{ position: "absolute", bottom: "8px", right: "10px", fontSize: "11px", color: contadorColor }}>
@@ -385,7 +365,6 @@ function SolicitarCotizacion() {
                 </div>
               </div>
             ) : (
-              /* ── Planes Fijos (Básico / Estándar) ── */
               <div style={{ marginBottom: "1.25rem" }}>
                 <label style={labelStyle}>
                   Comentarios <span style={{ fontWeight: 400, color: "#94a3b8" }}>(opcional)</span>
@@ -404,6 +383,39 @@ function SolicitarCotizacion() {
                 </div>
               </div>
             )}
+
+            <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "1.25rem 0" }} />
+
+            {/* Preferencias de contacto */}
+            <div style={{ marginBottom: "1.25rem" }}>
+              <label style={labelStyle}>
+                Preferencias de contacto{" "}
+                <span style={{ fontWeight: 400, color: "#94a3b8" }}>(opcional)</span>
+              </label>
+              <p style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "12px" }}>
+                Indícanos cómo y cuándo prefieres que te contactemos una vez revisada tu solicitud.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label style={{ ...labelStyle, fontSize: "12px" }}>Medio preferido</label>
+                  <select value={medioContacto} onChange={(e) => setMedioContacto(e.target.value)} style={inputStyle}>
+                    <option value="">Sin preferencia</option>
+                    <option>WhatsApp</option>
+                    <option>Llamada</option>
+                    <option>Correo electrónico</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ ...labelStyle, fontSize: "12px" }}>Horario preferido</label>
+                  <select value={horarioContacto} onChange={(e) => setHorarioContacto(e.target.value)} style={inputStyle}>
+                    <option value="">Sin preferencia</option>
+                    <option>Mañana (9:00 - 13:00)</option>
+                    <option>Tarde (13:00 - 18:00)</option>
+                    <option>Indiferente</option>
+                  </select>
+                </div>
+              </div>
+            </div>
 
             {/* Resumen */}
             {(planActual || instalacionActual) && (
@@ -432,6 +444,14 @@ function SolicitarCotizacion() {
                         {comentarios.trim() ? "Incluidos" : "Sin comentarios"}
                       </span>
                     </div>
+                    {(medioContacto || horarioContacto) && (
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                        <span style={{ color: "#64748b" }}>Contacto</span>
+                        <span style={{ fontWeight: 500, color: "#0f172a" }}>
+                          {[medioContacto, horarioContacto].filter(Boolean).join(" · ")}
+                        </span>
+                      </div>
+                    )}
                     <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "8px", display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
                       <span style={{ color: "#64748b" }}>Precio</span>
                       <span style={{ fontWeight: 500, color: "#0f172a" }}>A cotizar</span>
@@ -457,7 +477,6 @@ function SolicitarCotizacion() {
               {enviando ? "Enviando..." : "Enviar solicitud →"}
             </button>
 
-            {/* Contacto */}
             <p style={{ textAlign: "center", fontSize: "12px", color: "#94a3b8", marginTop: "1rem" }}>
               ¿Tienes dudas? Contáctate con nuestro equipo de ventas.
             </p>
@@ -470,22 +489,12 @@ function SolicitarCotizacion() {
 }
 
 const labelStyle = {
-  display: "block",
-  fontSize: "13px",
-  fontWeight: 500,
-  color: "#64748b",
-  marginBottom: "8px",
+  display: "block", fontSize: "13px", fontWeight: 500, color: "#64748b", marginBottom: "8px",
 };
 
 const inputStyle = {
-  width: "100%",
-  padding: "9px 12px",
-  border: "1px solid #e2e8f0",
-  borderRadius: "8px",
-  fontSize: "13px",
-  background: "#fff",
-  color: "#0f172a",
-  outline: "none",
+  width: "100%", padding: "9px 12px", border: "1px solid #e2e8f0",
+  borderRadius: "8px", fontSize: "13px", background: "#fff", color: "#0f172a", outline: "none",
 };
 
 export default SolicitarCotizacion;

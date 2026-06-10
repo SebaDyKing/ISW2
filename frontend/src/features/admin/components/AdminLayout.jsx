@@ -216,8 +216,8 @@ function AdminLayout() {
           <span className="font-semibold text-slate-900">CleanPro</span>
         </div>
 
-        <main>
-          <Outlet />
+        <main className="p-6">
+        <Outlet />
         </main>
       </div>
     </div>
