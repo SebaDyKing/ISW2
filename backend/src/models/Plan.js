@@ -16,18 +16,26 @@ export const Plan = new EntitySchema({
       type: "varchar",
       length: 50,
     },
-    cantidadEmpleados: {
-      name: "cantidad_empleados",
-      type: "int",
+    descripcion: {
+      type: "varchar",
+      length: 255,
+      nullable: true,
     },
-    cantidadProductos: {
-      name: "cantidad_productos",
-      type: "int",
+    frecuencia: {
+      type: "varchar",
+      length: 100,
+      nullable: true,
     },
-    precio: {
-      type: "decimal",
-      precision: 10,
-      scale: 2,
+    idealPara: {
+      name: "ideal_para",
+      type: "varchar",
+      length: 150,
+      nullable: true,
+    },
+    esPersonalizado: {
+      name: "es_personalizado",
+      type: "boolean",
+      default: false,
     },
   },
 

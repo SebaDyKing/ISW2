@@ -4,7 +4,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 function getAuthHeader() {
   const token = localStorage.getItem("token");
-  return { Authorization: `Bearer ${token}` };
+  return { Authorization: `Bearer ${token}` };  
 }
 
 export async function obtenerPlanesService() {
@@ -23,5 +23,5 @@ export async function obtenerMisInstalacionesService() {
   const res = await axios.get(`${API}/instalaciones/mis-instalaciones`, {
     headers: getAuthHeader(),
   });
-  return res.data;
+  return res.data.data;
 }
