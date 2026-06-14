@@ -4,8 +4,8 @@ import { useMisLicencias } from "../hooks/useMisLicencias"
 import { getPdfUrl } from "../services/licenciaMedica.service"
 import MiLicenciaCard from "./MiLicenciaCard"
 import SubirLicenciaModal from "./SubirLicenciaModal"
-import LicenciasMedicasSummary from "../../admin/components/LicenciasMedicasSummary"
-import PdfPreviewModal from "../../admin/components/PdfPreviewModal"
+import LicenciasMedicasSummary from "../../../components/shared/LicenciasMedicasSummary"
+import PdfPreviewModal from "../../../components/shared/PdfPreviewModal"
 
 function IconPlus() {
   return (
