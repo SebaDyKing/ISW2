@@ -59,5 +59,15 @@ export const Empleado = new EntitySchema({
       target: "ReporteCliente",
       inverseSide: "empleado",
     },
+    instalacion: {
+      type: "many-to-one",
+      target: "Instalacion",
+      inverseSide: "empleados",
+      nullable: true,
+      joinColumn: {
+        name: "id_instalacion",
+        referencedColumnName: "idInstalacion",
+      },
+    },
   },
 });

@@ -3,12 +3,12 @@ import ContratoRow from '../ContratoRow/ContratoRow'
 import { useContratosTable } from './useContratosTable'
 import styles from './ContratosTable.module.css'
 
-const COLUMNAS = ['TRABAJADOR', 'INSTALACIÓN & ROL', 'CONTRATO', 'PERÍODO', 'ESTADO']
+const COLUMNAS = ['TRABAJADOR', 'INSTALACIÓN & ROL', 'CONTRATO', 'PERÍODO', 'ESTADO', 'ACCIONES']
 
 function SkeletonRow() {
   return (
     <tr className={styles.skeletonRow}>
-      {Array.from({ length: 5 }).map((_, i) => (
+      {Array.from({ length: 6 }).map((_, i) => (
         <td key={i} className={styles.skeletonCell}>
           <div className={styles.skeletonDiv} />
         </td>
@@ -17,7 +17,7 @@ function SkeletonRow() {
   )
 }
 
-export default function ContratosTable({ contratos = [], loading = false, error = null, onSearch }) {
+export default function ContratosTable({ contratos = [], loading = false, error = null, onSearch, onDelete, onAnexo }) {
   const { search, handleSearch } = useContratosTable(onSearch)
 
   return (
@@ -61,14 +61,14 @@ export default function ContratosTable({ contratos = [], loading = false, error 
             {loading && Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
             {!loading && error && (
               <tr>
-                <td colSpan={5} className={styles.errorRow}>
+                <td colSpan={6} className={styles.errorRow}>
                   <p className={styles.errorText}>{error}</p>
                 </td>
               </tr>
             )}
             {!loading && !error && contratos.length === 0 && (
               <tr>
-                <td colSpan={5} className={styles.emptyRow}>
+                <td colSpan={6} className={styles.emptyRow}>
                   {search
                     ? <>No se encontraron resultados para <span className={styles.highlightText}>"{search}"</span></>
                     : 'No hay contratos registrados'}
@@ -76,7 +76,7 @@ export default function ContratosTable({ contratos = [], loading = false, error 
               </tr>
             )}
             {!loading && !error && contratos.map((contrato) => (
-              <ContratoRow key={contrato.id} contrato={contrato} />
+              <ContratoRow key={contrato.id} contrato={contrato} onDelete={onDelete} onAnexo={onAnexo} />
             ))}
           </tbody>
         </table>

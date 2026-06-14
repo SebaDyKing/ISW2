@@ -57,9 +57,9 @@ export const Instalacion = new EntitySchema({
       target: "SupervisorInstalacion",
       inverseSide: "instalacion",
     },
-    contratos: {
+    empleados: {
       type: "one-to-many",
-      target: "Contrato",
+      target: "Empleado",
       inverseSide: "instalacion",
     },
   },

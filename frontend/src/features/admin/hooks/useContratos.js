@@ -9,14 +9,14 @@ export function useContratos() {
   const fetchContratos = useCallback(async (params) => {
     try {
       setError(null)
-      const { data } = await contratosService.getAll(params)
+      const response = await contratosService.getAll(params)
       
-      const contratosMapeados = data.data.map(c => ({
+      const contratosMapeados = response.data.map(c => ({
         id: c.idContrato,
         codigo: `CT-${String(c.idContrato).padStart(4, '0')}`,
-        nombre: c.empleado ? `${c.empleado.nombre} ${c.empleado.apellido}` : 'Sin empleado',
+        nombre: c.empleado?.usuario ? `${c.empleado.usuario.nombre} ${c.empleado.usuario.apellido}` : 'Sin empleado',
         rut: c.empleado?.rut || 'Sin RUT',
-        instalacion: c.instalacion?.nombre || 'Sin instalación',
+        instalacion: c.empleado?.instalacion?.nombre || 'Sin instalación',
         rol: c.cargo,
         tipoContrato: c.tipo,
         periodoInicio: c.fechaInicio,
@@ -37,5 +37,14 @@ export function useContratos() {
     fetchContratos()
   }, [fetchContratos])
 
-  return { contratos, loading, error, refetch: fetchContratos }
+  const deleteContrato = useCallback(async (id) => {
+    try {
+      await contratosService.delete(id)
+      await fetchContratos()
+    } catch (err) {
+      setError(err?.response?.data?.message ?? 'Error al eliminar el contrato')
+    }
+  }, [fetchContratos])
+
+  return { contratos, loading, error, refetch: fetchContratos, deleteContrato }
 }

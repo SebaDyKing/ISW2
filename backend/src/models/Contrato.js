@@ -60,15 +60,6 @@ export const Contrato = new EntitySchema({
         referencedColumnName: "idEmpleado",
       },
     },
-    instalacion: {
-      type: "many-to-one",
-      target: "Instalacion",
-      inverseSide: "contratos",
-      joinColumn: {
-        name: "id_instalacion",
-        referencedColumnName: "idInstalacion",
-      },
-    },
     asistencias: {
       type: "one-to-many",
       target: "Asistencia",

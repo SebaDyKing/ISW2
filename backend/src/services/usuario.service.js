@@ -166,3 +166,34 @@ export async function eliminarUsuarioService(idAEliminar, idAdminSolicitante) {
     throw error;
   }
 }
+
+export async function trasladarEmpleadoService(idEmpleado, idInstalacion) {
+  try {
+    const empleadoRepo = AppDataSource.getRepository(Empleado);
+    const empleado = await empleadoRepo.findOne({ 
+      where: { idEmpleado: parseInt(idEmpleado, 10) },
+      relations: ["instalacion"]
+    });
+    if (!empleado) throw new Error("Empleado no encontrado");
+
+    if (idInstalacion) {
+      const idInstalacionNum = parseInt(idInstalacion, 10);
+      if (empleado.instalacion && empleado.instalacion.idInstalacion === idInstalacionNum) {
+        throw new Error("El trabajador ya está asignado en ese lugar");
+      }
+
+      const instalacionRepo = AppDataSource.getRepository("Instalacion");
+      const instalacion = await instalacionRepo.findOne({ where: { idInstalacion: idInstalacionNum } });
+      if (!instalacion) throw new Error("Instalación no encontrada");
+      empleado.instalacion = instalacion;
+    } else {
+      empleado.instalacion = null;
+    }
+
+    await empleadoRepo.save(empleado);
+    return empleado;
+  } catch (error) {
+    console.error("Error en trasladarEmpleadoService:", error);
+    throw error;
+  }
+}

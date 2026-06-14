@@ -14,7 +14,7 @@ export default function AdminDashboard() {
   }
 
   const { metricas, alertas, historial } = data
-
+  
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -35,20 +35,32 @@ export default function AdminDashboard() {
           </div>
           <div className={styles.cardBody}>
             <h2 className={styles.cardValue}>{metricas.personalActivo}</h2>
-            <p className={`${styles.cardTrend} text-indigo-600`}>
-              <svg className={styles.trendIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-              +5 este mes
-            </p>
+
           </div>
         </div>
 
-        {/* Instalaciones */}
+        {/* Instalaciones Totales */}
         <div className={`${styles.metricCard} ${styles.borderSlate}`}>
           <div className={styles.cardHeader}>
-            <span className={styles.cardLabel}>Instalaciones</span>
+            <span className={styles.cardLabel}>Instalaciones Totales</span>
             <div className={`${styles.iconBox} ${styles.bgSlate}`}>
               <svg className={styles.iconSm} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+          </div>
+          <div className={styles.cardBody}>
+            <h2 className={styles.cardValue}>{metricas.instalacionesTotales ?? 0}</h2>
+          </div>
+        </div>
+
+        {/* Instalaciones Activas */}
+        <div className={`${styles.metricCard} ${styles.borderSlate}`}>
+          <div className={styles.cardHeader}>
+            <span className={styles.cardLabel}>Instalaciones Activas</span>
+            <div className={`${styles.iconBox} ${styles.bgSlate}`}>
+              <svg className={styles.iconSm} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
           </div>
@@ -84,10 +96,6 @@ export default function AdminDashboard() {
           </div>
           <div className={styles.cardBody}>
             <h2 className={styles.cardValue}>{metricas.asistenciaHoy}%</h2>
-            <p className={`${styles.cardTrend} text-emerald-600`}>
-              <svg className={styles.trendIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-              +2% vs ayer
-            </p>
           </div>
         </div>
       </div>
@@ -119,7 +127,9 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <p className={styles.alertItemMessage}>{alerta.mensaje}</p>
-                      <p className={styles.alertItemTime}>Hace un momento</p>
+                      <p className={styles.alertItemTime}>
+                        {alerta.FechaCreacion ? new Date(alerta.FechaCreacion).toLocaleString() : 'Recientemente'}
+                      </p>
                     </div>
                   </div>
                   <svg className={styles.chevronIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,16 +1,15 @@
-import { useNuevoContratoModal } from './useNuevoContratoModal'
+import { useAnexoModal } from './useAnexoModal'
 import { TIPOS_CONTRATO, LEY_LABORAL_CHILE } from '../../constants/contratos.constants'
-import styles from './NuevoContratoModal.module.css'
-export default function NuevoContratoModal({ onClose, onSuccess }) {
+import styles from './AnexoModal.module.css'
+
+export default function AnexoModal({ contrato, onClose, onSuccess }) {
   const {
     form,
-    empleados,
     loading,
-    loadingOptions,
     error,
     handleChange,
     submit,
-  } = useNuevoContratoModal({
+  } = useAnexoModal(contrato, {
     onSuccess: () => {
       onSuccess?.()
       onClose()
@@ -37,8 +36,8 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
               </svg>
             </div>
             <div>
-              <p className={styles.headerTitle}>Nuevo Contrato</p>
-              <p className={styles.headerSubtitle}>Completa los datos del contrato</p>
+              <p className={styles.headerTitle}>Anexo de Contrato</p>
+              <p className={styles.headerSubtitle}>Modifica las condiciones actuales para generar un anexo</p>
             </div>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>
@@ -52,57 +51,11 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
         <form onSubmit={submit}>
           <div className={styles.body}>
 
-            {/* Asignación */}
-            <p className={styles.sectionLabel}>Asignación</p>
+            {/* Condiciones Laborales */}
+            <p className={styles.sectionLabel}>Condiciones Laborales</p>
 
             <div className={styles.row}>
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Empleado <span className={styles.required}>*</span>
-                </label>
-                <select
-                  name="idEmpleado"
-                  value={form.idEmpleado}
-                  onChange={handleChange}
-                  required
-                  disabled={loadingOptions}
-                  className={`${styles.select} ${loadingOptions ? styles.selectDisabled : ''}`}
-                >
-                  <option value="">Seleccionar...</option>
-                  {empleados.map((e) => (
-                    <option key={e.idEmpleado} value={e.idEmpleado}>
-                      {e.nombre} {e.apellido}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.divider} />
-
-            {/* Contrato */}
-            <p className={styles.sectionLabel}>Contrato</p>
-
-            <div className={styles.row}>
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Tipo <span className={styles.required}>*</span>
-                </label>
-                <select
-                  name="tipo"
-                  value={form.tipo}
-                  onChange={handleChange}
-                  required
-                  className={styles.select}
-                >
-                  <option value="">Seleccionar...</option>
-                  {TIPOS_CONTRATO.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.field}>
+              <div className={styles.fieldFull}>
                 <label className={styles.label}>
                   Cargo <span className={styles.required}>*</span>
                 </label>
@@ -157,22 +110,26 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
 
             <div className={styles.divider} />
 
-            {/* Período */}
-            <p className={styles.sectionLabel}>Período</p>
+            {/* Duración */}
+            <p className={styles.sectionLabel}>Duración del Contrato</p>
 
             <div className={styles.row}>
               <div className={styles.field}>
                 <label className={styles.label}>
-                  Fecha Inicio <span className={styles.required}>*</span>
+                  Tipo <span className={styles.required}>*</span>
                 </label>
-                <input
-                  type="date"
-                  name="fechaInicio"
-                  value={form.fechaInicio}
+                <select
+                  name="tipo"
+                  value={form.tipo}
                   onChange={handleChange}
                   required
-                  className={styles.input}
-                />
+                  className={styles.select}
+                >
+                  <option value="">Seleccionar...</option>
+                  {TIPOS_CONTRATO.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
               </div>
 
               <div className={styles.field}>
@@ -184,7 +141,6 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
                   name="fechaFin"
                   value={form.fechaFin}
                   onChange={handleChange}
-                  min={form.fechaInicio || undefined}
                   required={isPlazoFijo}
                   className={styles.input}
                 />
@@ -209,13 +165,13 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
             <button type="button" className={styles.btnCancel} onClick={onClose}>
               Cancelar
             </button>
-            <button type="submit" className={styles.btnSubmit} disabled={loading || loadingOptions}>
+            <button type="submit" className={styles.btnSubmit} disabled={loading}>
               {loading ? <span className={styles.spinner} /> : (
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
               )}
-              {loading ? 'Creando...' : 'Crear Contrato'}
+              {loading ? 'Generando...' : 'Guardar y Generar PDF'}
             </button>
           </div>
         </form>

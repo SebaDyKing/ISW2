@@ -15,6 +15,7 @@ import { LicenciaMedica } from '../models/LicenciaMedica.js';
 import { HojaVida } from '../models/HojaVida.js';
 import { ReporteCliente } from '../models/ReporteCliente.js';
 import { SolicitudCotizacion } from '../models/SolicitudCotizacion.js';
+import { Alertas } from '../models/Alertas.js';
 
 /**
  * Configuración de la fuente de datos (DataSource) de TypeORM.
@@ -35,7 +36,7 @@ export const AppDataSource = new DataSource({
     Cliente, Plan, ClientePlan, Instalacion,
     SupervisorInstalacion, Contrato, Asistencia,
     LicenciaMedica, HojaVida, ReporteCliente,
-    SolicitudCotizacion
+    SolicitudCotizacion, Alertas
   ],
   synchronize: true,
   logging: false,

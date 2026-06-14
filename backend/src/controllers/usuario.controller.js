@@ -1,6 +1,6 @@
 "use strict";
 import { usuarioBodyValidation, usuarioUpdateValidation } from "../validations/usuario.validation.js";
-import { crearUsuarioService, obtenerUsuariosService, obtenerUsuarioPorIdService, actualizarUsuarioService, eliminarUsuarioService, obtenerEmpleadosService } from "../services/usuario.service.js";
+import { crearUsuarioService, obtenerUsuariosService, obtenerUsuarioPorIdService, actualizarUsuarioService, eliminarUsuarioService, obtenerEmpleadosService, trasladarEmpleadoService } from "../services/usuario.service.js";
 
 export const crearUsuario = async (req, res) => {
   try {
@@ -110,5 +110,31 @@ export const eliminarUsuario = async (req, res) => {
       return res.status(404).json({ message: error.message });
     }
     res.status(500).json({ message: "Error interno al eliminar el usuario." });
+  }
+};
+
+export const trasladarEmpleado = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { idInstalacion } = req.body;
+    
+    if (!idInstalacion) {
+      return res.status(400).json({ message: "El ID de la instalación es requerido para el traslado" });
+    }
+
+    const empleadoActualizado = await trasladarEmpleadoService(id, idInstalacion);
+
+    res.status(200).json({
+      message: "Traslado de empleado realizado con éxito",
+      data: empleadoActualizado
+    });
+  } catch (error) {
+    if (error.message === "El trabajador ya está asignado en ese lugar") {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message === "Empleado no encontrado" || error.message === "Instalación no encontrada") {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: "Error interno al realizar el traslado" });
   }
 };

@@ -41,6 +41,11 @@ export async function getInstalaciones() {
 }
 
 export async function getDashboard() {
-  const res = await api.get('/dashboard');
+  const res = await api.get(`/dashboard?t=${new Date().getTime()}`);
+  return res;
+}
+
+export async function trasladarEmpleado(idEmpleado, idInstalacion) {
+  const res = await api.put(`/usuarios/empleados/${idEmpleado}/traslado`, { idInstalacion });
   return res;
 }

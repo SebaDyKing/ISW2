@@ -89,3 +89,90 @@ export const generateContractPDF = async (formData, employeeData, facilityData) 
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
+
+export const AnexoDocument = ({ contratoAnterior, contratoNuevo }) => {
+  const currentDate = new Date().toLocaleDateString('es-CL');
+  
+  // Extraemos las modificaciones comparando el anterior con el nuevo
+  const modificaciones = [];
+  if (contratoAnterior.cargo !== contratoNuevo.cargo) {
+    modificaciones.push(`El cargo del trabajador se modifica a: ${contratoNuevo.cargo}.`);
+  }
+  if (parseFloat(contratoAnterior.sueldo) !== parseFloat(contratoNuevo.sueldo)) {
+    modificaciones.push(`La remuneración mensual se modifica a: $${Number(contratoNuevo.sueldo).toLocaleString('es-CL')} CLP.`);
+  }
+  if (parseInt(contratoAnterior.jornadaHoras, 10) !== parseInt(contratoNuevo.jornadaHoras, 10)) {
+    modificaciones.push(`La jornada laboral se ajusta a: ${contratoNuevo.jornadaHoras} horas semanales.`);
+  }
+  if (contratoAnterior.tipo !== contratoNuevo.tipo) {
+    modificaciones.push(`El tipo de contrato pasa a ser: ${contratoNuevo.tipo.replace('_', ' ')}.`);
+  }
+  if (contratoNuevo.tipo === 'Plazo Fijo' && contratoAnterior.fechaFin !== contratoNuevo.fechaFin) {
+    modificaciones.push(`La fecha de término del contrato se establece para el: ${contratoNuevo.fechaFin}.`);
+  }
+
+  const nombreEmpleado = contratoAnterior.nombre || 'Trabajador';
+  const rutEmpleado = contratoAnterior.rut || 'RUT Desconocido';
+
+  return (
+    <Document>
+      <Page size="LETTER" style={styles.page}>
+        <Text style={styles.title}>ANEXO DE CONTRATO DE TRABAJO</Text>
+        
+        <Text style={styles.paragraph}>
+          En Santiago, a {currentDate}, entre la empresa CleanPro SpA, y don/doña {nombreEmpleado}, RUT {rutEmpleado}, en adelante "el Trabajador", se ha convenido el siguiente anexo al contrato de trabajo vigente:
+        </Text>
+
+        <Text style={styles.paragraph}>
+          PRIMERO: Las partes acuerdan modificar las condiciones del contrato de trabajo en los siguientes términos:
+        </Text>
+
+        {modificaciones.length > 0 ? modificaciones.map((mod, i) => (
+          <Text key={i} style={styles.paragraph}>- {mod}</Text>
+        )) : (
+          <Text style={styles.paragraph}>- No se registraron modificaciones sustanciales.</Text>
+        )}
+
+        <Text style={styles.paragraph}>
+          SEGUNDO: En todo lo no modificado expresamente por el presente anexo, el contrato original mantiene su plena vigencia y vigor legal entre las partes.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
+        </Text>
+
+        <View style={styles.signatures}>
+          <View>
+            <View style={styles.signatureLine}>
+              <Text>EL EMPLEADOR</Text>
+            </View>
+          </View>
+          <View>
+            <View style={styles.signatureLine}>
+              <Text>EL TRABAJADOR</Text>
+            </View>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
+export const generateAnexoPDF = async (contratoAnterior, contratoNuevo) => {
+  const doc = <AnexoDocument contratoAnterior={contratoAnterior} contratoNuevo={contratoNuevo} />;
+  
+  const asPdf = pdf([]);
+  asPdf.updateContainer(doc);
+  
+  const blob = await asPdf.toBlob();
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  const codigo = contratoAnterior.codigo || 'XXXX';
+  link.download = `Anexo_${codigo}_${new Date().toISOString().split('T')[0]}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
