@@ -1,6 +1,6 @@
 "use strict";
 import { Router } from "express";
-import uploadMiddleware from "../middlewares/upload.middleware.js";
+import uploadMiddleware from "../middleware/upload.middleware.js";
 import { authMiddleware } from "../middleware/authentication.js";
 import {
   getLicenciasMedicasController,
