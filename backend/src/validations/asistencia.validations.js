@@ -20,6 +20,14 @@ export const asistenciaBodyValidation = Joi.object({
     "number.min": "La longitud mínima es -180",
     "number.max": "La longitud máxima es 180",
   }),
+  fechaDispositivo: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({
+    "any.required": "La fecha del dispositivo es obligatoria",
+    "string.pattern.base": "La fecha debe tener el formato YYYY-MM-DD",
+  }),
+  horaDispositivo: Joi.string().pattern(/^\d{2}:\d{2}(:\d{2})?$/).required().messages({
+    "any.required": "La hora del dispositivo es obligatoria",
+    "string.pattern.base": "La hora debe tener el formato HH:mm o HH:mm:ss",
+  }),
 });
 
 export function validateAsistenciaBody(input) {

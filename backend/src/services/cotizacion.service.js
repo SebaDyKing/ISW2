@@ -6,32 +6,23 @@ import { Instalacion } from "../models/Instalacion.js";
 import { enviarCorreoSolicitudRecibida, enviarCorreoEstadoCotizacion } from "../utils/email.js";
 
 export async function crearCotizacionService(datosCotizacion) {
-  const { id_usuario, comentarios, id_plan, id_instalacion } = datosCotizacion;
+  const { id_usuario, comentarios, id_plan, id_instalacion, medioContacto, horarioContacto } = datosCotizacion;
 
-  const clienteRepo = AppDataSource.getRepository(Cliente);
-  const cotizacionRepo = AppDataSource.getRepository(SolicitudCotizacion);
+  const clienteRepo     = AppDataSource.getRepository(Cliente);
+  const cotizacionRepo  = AppDataSource.getRepository(SolicitudCotizacion);
   const instalacionRepo = AppDataSource.getRepository(Instalacion);
 
   const clienteActual = await clienteRepo.findOne({
     where: { usuario: { idUsuario: id_usuario } },
     relations: ["usuario"]
   });
-
-  if (!clienteActual) {
-    throw new Error("Perfil de cliente no encontrado para este usuario.");
-  }
+  if (!clienteActual) throw new Error("Perfil de cliente no encontrado para este usuario.");
 
   const instalacionValida = await instalacionRepo.findOne({
-    where: {
-      idInstalacion: id_instalacion,
-      cliente: { idCliente: clienteActual.idCliente }
-    },
+    where: { idInstalacion: id_instalacion, cliente: { idCliente: clienteActual.idCliente } },
     relations: ["cliente"]
   });
-
-  if (!instalacionValida) {
-    throw new Error("La instalación indicada no existe o no pertenece a tu cuenta.");
-  }
+  if (!instalacionValida) throw new Error("La instalación indicada no existe o no pertenece a tu cuenta.");
 
   const cotizacionPendiente = await cotizacionRepo.findOne({
     where: {
@@ -40,22 +31,20 @@ export async function crearCotizacionService(datosCotizacion) {
       instalacion: { idInstalacion: id_instalacion }
     }
   });
-
-  if (cotizacionPendiente) {
-    throw new Error("Esta instalación ya tiene una cotización pendiente. Espera a que sea respondida.");
-  }
+  if (cotizacionPendiente) throw new Error("Esta instalación ya tiene una cotización pendiente. Espera a que sea respondida.");
 
   const nuevaSolicitud = cotizacionRepo.create({
-    comentarios: comentarios || null,
+    comentarios:     comentarios     || null,
+    medioContacto:   medioContacto   || null,
+    horarioContacto: horarioContacto || null,
     estado: "Pendiente",
-    cliente: clienteActual,
+    cliente:    clienteActual,
     instalacion: instalacionValida,
     plan: { idPlan: id_plan }
   });
 
   const solicitudGuardada = await cotizacionRepo.save(nuevaSolicitud);
 
-  // Envío en segundo plano — no bloquea la respuesta
   enviarCorreoSolicitudRecibida(clienteActual.usuario.correo, clienteActual.nombreEmpresa)
     .catch((err) => console.error("Error enviando correo de solicitud:", err));
 
@@ -92,18 +81,16 @@ export async function obtenerMisCotizacionesService(id_usuario) {
   }
 }
 
-export async function actualizarEstadoService(idSolicitud, nuevoEstado) {
+export async function actualizarEstadoService(idSolicitud, nuevoEstado, motivo) {
   const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
 
   const cotizacion = await repositorio.findOne({
     where: { idSolicitud: parseInt(idSolicitud) }
   });
-
-  if (!cotizacion) {
-    throw new Error("Cotización no encontrada.");
-  }
+  if (!cotizacion) throw new Error("Cotización no encontrada.");
 
   cotizacion.estado = nuevoEstado;
+  cotizacion.motivo = motivo || null;
   const cotizacionActualizada = await repositorio.save(cotizacion);
 
   const cotizacionConCliente = await repositorio.findOne({
@@ -111,11 +98,13 @@ export async function actualizarEstadoService(idSolicitud, nuevoEstado) {
     relations: ["cliente", "cliente.usuario"]
   });
 
-  // Envío en segundo plano — no bloquea la respuesta
   enviarCorreoEstadoCotizacion(
     cotizacionConCliente.cliente.usuario.correo,
     cotizacionConCliente.cliente.nombreEmpresa,
-    nuevoEstado
+    nuevoEstado,
+    motivo,
+    cotizacionConCliente.medioContacto,
+    cotizacionConCliente.horarioContacto,
   ).catch((err) => console.error("Error enviando correo de estado:", err));
 
   return cotizacionActualizada;

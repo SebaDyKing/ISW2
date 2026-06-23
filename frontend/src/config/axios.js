@@ -4,6 +4,7 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json'
   },
 });
 
@@ -23,7 +24,7 @@ api.interceptors.request.use(
 
 // Interceptor para manejar errores globales (ej. token expirado)
 api.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
       // Opcional: Redirigir al login si el token expira

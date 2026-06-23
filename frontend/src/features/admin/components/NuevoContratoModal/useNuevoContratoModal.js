@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { contratosService } from '../../services/contratosService'
-import { adminService } from '../../services/adminService'
+import { contratosService } from '../../services/contrato.service'
+import { getEmpleados, getInstalaciones } from '../../services/admin.service'
 import { generateContractPDF } from '../../utils/pdfGenerator'
 
 const INITIAL_FORM = {
@@ -28,8 +28,8 @@ export function useNuevoContratoModal({ onSuccess } = {}) {
       try {
         setLoadingOptions(true)
         const [empRes, instRes] = await Promise.all([
-          adminService.getEmpleados(),
-          adminService.getInstalaciones()
+          getEmpleados(),
+          getInstalaciones()
         ])
         setEmpleados(empRes.data)
         setInstalaciones(instRes.data)

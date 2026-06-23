@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { handleErrorClient } from "../Handlers/responseHanders.js";
+import { JWT_SECRET } from "../config/configEnv.js";
 
 /**
  * @brief Middleware que verifica que el usuario haya iniciado sesión (Token válido).
@@ -16,7 +17,7 @@ export const authMiddleware = (req, res, next) => {
 
     try {
         // Usamos la firma del archivo .env
-        const payload = jwt.verify(token, process.env.JWT_SECRET); 
+        const payload = jwt.verify(token, JWT_SECRET); 
         
         // Guardamos los datos del usuario en la request para que el Controlador los use
         req.user = payload; 
@@ -32,7 +33,8 @@ export const authMiddleware = (req, res, next) => {
 export const autorizeEntities = (...allowedRoles) => {
     return (req, res, next) => {
         // Validamos si el rol/entidad del usuario está en la lista de permitidos
-        if (!req.user || !allowedRoles.includes(req.user.rol)) { 
+        const roleOrEntity = req.user?.rol || req.user?.entity;
+        if (!req.user || !allowedRoles.includes(roleOrEntity)) { 
             return handleErrorClient(res, 403, "No tienes permisos de seguridad para acceder a esta ruta.");
         }
         next();

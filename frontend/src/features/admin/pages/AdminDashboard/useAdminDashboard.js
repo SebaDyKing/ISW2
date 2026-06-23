@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { adminService } from '../../services/adminService'
+import { getDashboard } from '../../services/admin.service'
 
 export function useAdminDashboard() {
   const [data, setData] = useState({
@@ -12,7 +12,7 @@ export function useAdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await adminService.getDashboard()
+        const res = await getDashboard()
         setData(res.data.data)
       } catch (err) {
         console.error("Error cargando dashboard:", err)

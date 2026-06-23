@@ -3,8 +3,8 @@ import toast from "react-hot-toast"
 import { useLicenciasMedicas } from "../hooks/useLicenciasMedicas"
 import { getPdfUrl } from "../services/licenciaMedica.service"
 import LicenciaMedicaCard from "./LicenciaMedicaCard"
-import LicenciasMedicasSummary from "./LicenciasMedicasSummary"
-import PdfPreviewModal from "./PdfPreviewModal"
+import LicenciasMedicasSummary from "../../../components/shared/LicenciasMedicasSummary"
+import PdfPreviewModal from "../../../components/shared/PdfPreviewModal"
 import ConfirmDialog from "./ConfirmDialog"
 
 const FILTROS = [

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { contratosService } from '../services/contratosService'
+import { contratosService } from '../services/contrato.service'
 
 export function useContratos() {
   const [contratos, setContratos] = useState([])

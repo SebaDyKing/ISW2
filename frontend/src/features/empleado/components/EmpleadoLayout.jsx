@@ -12,28 +12,6 @@ function IconLogo() {
   );
 }
 
-function IconUsuarios() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-function IconCotizaciones() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <path d="M14 2v6h6" />
-      <path d="M12 18v-6" />
-      <path d="M9.5 13.5a1.5 1.5 0 0 1 1.5-1.5h1a1.3 1.3 0 0 1 0 2.6h-1a1.3 1.3 0 0 0 0 2.6h1a1.5 1.5 0 0 0 1.5-1.4" />
-    </svg>
-  );
-}
-
 function IconLicencia() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -56,35 +34,12 @@ function IconHojaVida() {
   );
 }
 
-function IconDashboard() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="9" rx="1" />
-      <rect x="14" y="3" width="7" height="5" rx="1" />
-      <rect x="14" y="12" width="7" height="9" rx="1" />
-      <rect x="3" y="16" width="7" height="5" rx="1" />
-    </svg>
-  );
-}
-
 function IconMenu() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="3" y1="6" x2="21" y2="6" />
       <line x1="3" y1="12" x2="21" y2="12" />
       <line x1="3" y1="18" x2="21" y2="18" />
-    </svg>
-  );
-}
-
-function IconContratos() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-      <polyline points="10 9 9 9 8 9" />
     </svg>
   );
 }
@@ -98,18 +53,24 @@ function IconClose() {
   );
 }
 
+function IconAsistencia() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12 7 12 12 15 14" />
+    </svg>
+  );
+}
+
 const NAV = [
-  { to: "/admin/dashboard",    label: "Dashboard",         icon: IconDashboard },
-  { to: "/admin/usuarios",     label: "Usuarios",          icon: IconUsuarios },
-  { to: "/admin/contratos",    label: "Contratos",         icon: IconContratos },
-  { to: "/admin/cotizaciones", label: "Cotizaciones",      icon: IconCotizaciones },
-  { to: "/admin/licencias",    label: "Licencias Médicas", icon: IconLicencia },
-  { to: "/admin/hojas-vida",   label: "Hojas de Vida",     icon: IconHojaVida },
+  { to: "/empleado/asistencia", label: "Marcar Asistencia", icon: IconAsistencia },
+  { to: "/empleado/licencias", label: "Mis Licencias", icon: IconLicencia },
+  { to: "/empleado/hoja-vida", label: "Mi Hoja de Vida", icon: IconHojaVida },
 ];
 
-function AdminLayout() {
+function EmpleadoLayout() {
   const navigate = useNavigate();
-  const [usuario, setUsuario] = useState({ nombreMostrar: "Admin", rol: "" });
+  const [usuario, setUsuario] = useState({ nombreMostrar: "Empleado", rol: "" });
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -123,7 +84,7 @@ function AdminLayout() {
     navigate("/login");
   }
 
-  const inicial = (usuario.nombreMostrar || "A").charAt(0).toUpperCase();
+  const inicial = (usuario.nombreMostrar || "E").charAt(0).toUpperCase();
 
   return (
     <div className="min-h-screen lg:flex bg-slate-50">
@@ -136,21 +97,20 @@ function AdminLayout() {
         />
       )}
 
-      {/* Sidebar: drawer deslizable en mobile, fijo en desktop (lg+) */}
+      {/* Sidebar: drawer en mobile, fijo en desktop (lg+) */}
       <aside
         className={`w-64 shrink-0 bg-slate-900 text-slate-300 flex flex-col border-r border-white/5
           fixed top-0 left-0 z-50 h-screen transition-transform duration-300
           lg:sticky lg:z-auto lg:translate-x-0
           ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        {/* Marca */}
         <div className="px-5 py-5 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-slate-700 grid place-items-center text-white shrink-0">
             <IconLogo />
           </div>
           <div className="leading-tight">
             <div className="font-bold text-white">CleanPro</div>
-            <div className="text-[10px] tracking-widest text-slate-500">PANEL ADMIN</div>
+            <div className="text-[10px] tracking-widest text-slate-500">PORTAL EMPLEADO</div>
           </div>
           <button
             onClick={() => setOpen(false)}
@@ -161,7 +121,6 @@ function AdminLayout() {
           </button>
         </div>
 
-        {/* Navegación */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
@@ -182,7 +141,6 @@ function AdminLayout() {
           ))}
         </nav>
 
-        {/* Usuario + cerrar sesión */}
         <div className="border-t border-white/5 p-3 space-y-2">
           <div className="flex items-center gap-3 px-2 py-2 rounded-lg" title={usuario.nombreCompleto}>
             <div className="w-9 h-9 rounded-full bg-slate-700 grid place-items-center text-white text-xs font-semibold shrink-0">
@@ -202,7 +160,6 @@ function AdminLayout() {
         </div>
       </aside>
 
-      {/* Contenido */}
       <div className="flex-1 min-w-0">
         {/* Topbar: solo mobile. Botón hamburguesa para abrir el menú */}
         <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-slate-200 flex items-center gap-3 px-4 h-14">
@@ -216,12 +173,12 @@ function AdminLayout() {
           <span className="font-semibold text-slate-900">CleanPro</span>
         </div>
 
-        <main className="p-6">
-        <Outlet />
+        <main>
+          <Outlet />
         </main>
       </div>
     </div>
   );
 }
 
-export default AdminLayout;
+export default EmpleadoLayout;

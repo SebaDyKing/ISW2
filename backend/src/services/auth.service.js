@@ -4,6 +4,8 @@ import { Usuario } from "../models/Usuario.js";
 import { Cliente } from "../models/Cliente.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { JWT_SECRET } from "../config/configEnv.js";
+// ... (rest of imports remains)
 
 export async function registrarUsuarioService(datosRegistro) {
   const { nombre, apellido, rut, correo, password, nombre_empresa, telefono } = datosRegistro;
@@ -66,7 +68,7 @@ export async function loginService(correo, password) {
   };
 
   // Firmamos el token con el secreto del .env (expira en 8 horas)
-  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "8h" });
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "8h" });
 
   return { 
     token, 
