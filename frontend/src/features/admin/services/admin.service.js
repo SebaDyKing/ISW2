@@ -15,8 +15,8 @@ export async function obtenerCotizacionesService() {
   return res;
 }
 
-export async function actualizarEstadoCotizacionService(id, estado) {
-  const res = await api.patch(`/cotizaciones/${id}/estado`, { estado });
+export async function actualizarEstadoCotizacionService(id, estado, motivo) {
+  const res = await api.patch(`/cotizaciones/${id}/estado`, { estado, motivo });
   return res;
 }
 

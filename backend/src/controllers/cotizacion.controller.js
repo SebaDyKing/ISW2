@@ -16,14 +16,17 @@ export const crearSolicitud = async (req, res) => {
         detalle: error.details[0].message
       });
     }
-    const { comentarios, id_plan, id_instalacion } = value;
+
+    const { comentarios, id_plan, id_instalacion, medioContacto, horarioContacto } = value;
     const idUsuario = req.user.idUsuario;
 
     const nuevaCotizacion = await crearCotizacionService({
       id_usuario: idUsuario,
       comentarios,
       id_plan,
-      id_instalacion
+      id_instalacion,
+      medioContacto,
+      horarioContacto,
     });
 
     res.status(201).json({
@@ -33,9 +36,9 @@ export const crearSolicitud = async (req, res) => {
   } catch (error) {
     console.error("Error al crear solicitud:", error);
     if (
-      error.message.includes("Ya tienes") ||
+      error.message.includes("Ya tienes")     ||
       error.message.includes("Esta instalación") ||
-      error.message.includes("no pertenece") ||
+      error.message.includes("no pertenece")  ||
       error.message.includes("no encontrado")
     ) {
       return res.status(400).json({ message: error.message });
@@ -72,7 +75,7 @@ export const obtenerMisCotizaciones = async (req, res) => {
 export const actualizarEstado = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado } = req.body;
+    const { estado, motivo } = req.body;
 
     const estadosValidos = ["Pendiente", "Aprobada", "Rechazada"];
     if (!estadosValidos.includes(estado)) {
@@ -81,7 +84,7 @@ export const actualizarEstado = async (req, res) => {
       });
     }
 
-    const cotizacionActualizada = await actualizarEstadoService(id, estado);
+    const cotizacionActualizada = await actualizarEstadoService(id, estado, motivo);
     res.status(200).json({
       message: "Estado de cotización actualizado correctamente",
       data: cotizacionActualizada

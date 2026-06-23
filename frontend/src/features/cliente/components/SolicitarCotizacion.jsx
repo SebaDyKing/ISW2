@@ -1,13 +1,78 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { obtenerMisInstalacionesService, solicitarCotizacionService } from "../services/cliente.service";
+import { obtenerMisInstalacionesService, solicitarCotizacionService, obtenerPlanesService } from "../services/cliente.service";
 
-const PLANES = [
-  { id: 1, label: "Básico",   bg: "#f1efff", color: "#534AB7", border: "#534AB7" },
-  { id: 2, label: "Estándar", bg: "#e1f5ee", color: "#0F6E56", border: "#0F6E56" },
-  { id: 3, label: "Premium",  bg: "#faeeda", color: "#854F0B", border: "#854F0B" },
+const PLAN_ESTILOS = [
+  { accentBg: "#EEEDFE", accentColor: "#534AB7", borderColor: "#534AB7", tagBg: "#CECBF6", tagColor: "#3C3489" },
+  { accentBg: "#E1F5EE", accentColor: "#0F6E56", borderColor: "#0F6E56", tagBg: "#9FE1CB", tagColor: "#085041" },
+  { accentBg: "#E6F1FB", accentColor: "#185FA5", borderColor: "#185FA5", tagBg: "#B5D4F4", tagColor: "#0C447C" },
 ];
+
+const CHIPS_PERSONALIZADO = [
+  "Superficie > 500 m²",
+  "Más de un piso",
+  "Fuera de horario laboral",
+  "Acceso restringido",
+  "Servicio urgente",
+  "Requiere productos certificados",
+  "Personal con credenciales",
+];
+
+const FRECUENCIAS_PERSONALIZADO = [
+  "Diaria",
+  "Interdiaria",
+  "Semanal",
+  "Quincenal",
+  "Mensual",
+  "A convenir",
+];
+
+const MAX_CHARS = 500;
+
+function ModalConfirmacion({ estilo, onVolver }) {
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(15,23,42,0.4)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 50, padding: "1rem",
+    }}>
+      <div style={{
+        background: "#fff", borderRadius: "12px", padding: "2rem",
+        width: "100%", maxWidth: "420px", textAlign: "center",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+      }}>
+        <div style={{
+          width: "52px", height: "52px", borderRadius: "50%",
+          background: estilo?.accentBg || "#EEEDFE",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          margin: "0 auto 1.25rem", fontSize: "22px",
+          color: estilo?.accentColor || "#534AB7",
+        }}>
+          ✓
+        </div>
+        <p style={{ fontSize: "17px", fontWeight: 600, color: "#0f172a", marginBottom: "8px" }}>
+          Solicitud recibida
+        </p>
+        <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "1.75rem" }}>
+          Hemos recibido tu solicitud de cotización correctamente. Nuestro equipo la revisará
+          y se pondrá en contacto contigo a la brevedad posible para entregarte una propuesta
+          adaptada a tus necesidades.
+        </p>
+        <button
+          onClick={onVolver}
+          style={{
+            width: "100%", padding: "10px", borderRadius: "8px", border: "none",
+            background: estilo?.accentColor || "#534AB7",
+            color: "#fff", fontSize: "14px", fontWeight: 500, cursor: "pointer",
+          }}
+        >
+          Volver al inicio
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function SolicitarCotizacion() {
   const location = useLocation();
@@ -18,37 +83,70 @@ function SolicitarCotizacion() {
     Number(sessionStorage.getItem("planPreseleccionado")) ||
     null;
 
-  const [instalaciones, setInstalaciones]       = useState([]);
-  const [planSeleccionado, setPlanSeleccionado] = useState(planInicial);
-  const [idInstalacion, setIdInstalacion]       = useState("");
-  const [comentarios, setComentarios]           = useState("");
-  const [enviando, setEnviando]                 = useState(false);
-  const [cargando, setCargando]                 = useState(true);
+  const [planes, setPlanes]                       = useState([]);
+  const [instalaciones, setInstalaciones]         = useState([]);
+  const [planSeleccionado, setPlanSeleccionado]   = useState(planInicial);
+  const [idInstalacion, setIdInstalacion]         = useState("");
+  const [comentarios, setComentarios]             = useState("");
+  const [superficie, setSuperficie]               = useState("");
+  const [frecuenciaDeseada, setFrecuenciaDeseada] = useState("");
+  const [numPersonas, setNumPersonas]             = useState("");
+  const [medioContacto, setMedioContacto]         = useState("");
+  const [horarioContacto, setHorarioContacto]     = useState("");
+  const [enviando, setEnviando]                   = useState(false);
+  const [cargando, setCargando]                   = useState(true);
+  const [modalVisible, setModalVisible]           = useState(false);
+  const [estiloModal, setEstiloModal]             = useState(null);
 
   useEffect(() => {
     sessionStorage.removeItem("planPreseleccionado");
-    obtenerMisInstalacionesService()
-      .then((res) => setInstalaciones(res.data))
-      .catch(() => toast.error("No se pudieron cargar tus instalaciones."))
+    Promise.all([
+      obtenerPlanesService(),
+      obtenerMisInstalacionesService(),
+    ])
+      .then(([planesData, instalacionesData]) => {
+        setPlanes(planesData);
+        setInstalaciones(instalacionesData);
+      })
+      .catch(() => toast.error("Error al cargar los datos."))
       .finally(() => setCargando(false));
   }, []);
+
+  const handleChip = (texto) => {
+    setComentarios((prev) => prev ? `${prev} ${texto}.` : `${texto}.`);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!planSeleccionado) { toast.error("Debes seleccionar un plan."); return; }
     if (!idInstalacion)    { toast.error("Debes seleccionar una instalación."); return; }
+    if (esPersonalizado && !comentarios.trim()) {
+      toast.error("El plan personalizado requiere que describas tus necesidades en comentarios.");
+      return;
+    }
+
+    let comentarioFinal = comentarios;
+    if (esPersonalizado) {
+      const extras = [];
+      if (superficie)        extras.push(`Superficie aproximada: ${superficie} m²`);
+      if (frecuenciaDeseada) extras.push(`Frecuencia deseada: ${frecuenciaDeseada}`);
+      if (numPersonas)       extras.push(`Personas en el recinto: ${numPersonas}`);
+      if (extras.length > 0) {
+        comentarioFinal = `${extras.join(" | ")}${comentarios.trim() ? ` | ${comentarios.trim()}` : ""}`;
+      }
+    }
 
     setEnviando(true);
     try {
       await solicitarCotizacionService({
-        id_plan:        Number(planSeleccionado),
-        id_instalacion: Number(idInstalacion),
-        comentarios,
+        id_plan:         Number(planSeleccionado),
+        id_instalacion:  Number(idInstalacion),
+        comentarios:     comentarioFinal,
+        medioContacto:   medioContacto   || null,
+        horarioContacto: horarioContacto || null,
       });
-      toast.success("Solicitud enviada correctamente.");
-      setComentarios("");
-      setIdInstalacion("");
-      navigate("/");
+      setEstiloModal(estiloActual);
+      setModalVisible(true);
     } catch (error) {
       toast.error(error.response?.data?.message || "Error al enviar la solicitud.");
     } finally {
@@ -56,114 +154,347 @@ function SolicitarCotizacion() {
     }
   };
 
-  if (cargando) return <p style={{ padding: "2rem", fontSize: "14px", color: "#64748b" }}>Cargando...</p>;
+  if (cargando) return (
+    <p style={{ padding: "2rem", fontSize: "14px", color: "#64748b" }}>Cargando...</p>
+  );
 
-  const inputStyle = {
-    width: "100%", padding: ".55rem .75rem",
-    border: "1px solid #e2e8f0", borderRadius: "6px",
-    fontSize: "13px", background: "#fff",
-  };
+  const planIndex         = planes.findIndex((p) => p.idPlan === Number(planSeleccionado));
+  const planActual        = planIndex >= 0 ? planes[planIndex] : null;
+  const estiloActual      = planIndex >= 0 ? (PLAN_ESTILOS[planIndex] || PLAN_ESTILOS[0]) : null;
+  const esPersonalizado   = planActual?.esPersonalizado;
+  const instalacionActual = instalaciones.find((i) => i.idInstalacion === Number(idInstalacion));
+  const charsRestantes    = MAX_CHARS - comentarios.length;
+  const contadorColor     = charsRestantes < 100 ? "#854F0B" : "#94a3b8";
+  const pasoActual        = !planSeleccionado ? 1 : !idInstalacion ? 2 : !comentarios ? 3 : 4;
+  const btnDeshabilitado  = enviando || instalaciones.length === 0 || (esPersonalizado && !comentarios.trim());
 
   return (
-    <div style={{ maxWidth: "860px", margin: "0 auto", padding: "3rem 2rem", display: "flex", justifyContent: "center" }}>
-      <div style={{
-        background: "#fff", border: "1px solid #e2e8f0",
-        borderRadius: "10px", padding: "1.75rem", maxWidth: "500px",
-      }}>
+    <>
+      {modalVisible && (
+        <ModalConfirmacion
+          estilo={estiloModal}
+          onVolver={() => navigate("/")}
+        />
+      )}
 
-        <button
-          onClick={() => navigate("/")}
-          style={{
-            background: "none", border: "none", padding: 0,
-            fontSize: "13px", color: "#64748b", cursor: "pointer",
-            marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "4px",
-          }}
-        >
-          ← Volver
-        </button>
+      <div style={{ minHeight: "100vh", background: "#f8fafc", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "3rem 1rem" }}>
+        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "2rem", width: "100%", maxWidth: "500px" }}>
 
-        <p style={{ fontSize: "17px", fontWeight: 500, marginBottom: ".25rem" }}>Solicitar cotización</p>
-        <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "1.5rem" }}>Completa los datos para enviar tu solicitud</p>
+          {/* Volver */}
+          <button
+            onClick={() => navigate("/")}
+            style={{ background: "none", border: "none", padding: 0, fontSize: "13px", color: "#64748b", cursor: "pointer", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "6px" }}
+          >
+            ← Volver
+          </button>
 
-        <form onSubmit={handleSubmit}>
+          {/* Encabezado */}
+          <p style={{ fontSize: "18px", fontWeight: 500, marginBottom: "4px", color: "#0f172a" }}>
+            Solicitar cotización
+          </p>
+          <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "1.5rem" }}>
+            Completa los datos para enviar tu solicitud al equipo de CleanPro.
+          </p>
 
-          {/* Pills de plan */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ fontSize: "13px", fontWeight: 500, color: "#64748b", display: "block", marginBottom: ".35rem" }}>Plan</label>
-            <div style={{ display: "flex", gap: ".5rem" }}>
-              {PLANES.map((p) => {
-                const activo = Number(planSeleccionado) === p.id;
+          {/* Stepper */}
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "1.75rem" }}>
+            {["Plan", "Instalación", "Comentarios", "Confirmar"].map((paso, i) => {
+              const num      = i + 1;
+              const activo   = num === pasoActual;
+              const completo = num < pasoActual;
+              return (
+                <div key={paso} style={{ display: "flex", alignItems: "center", flex: i < 3 ? 1 : "none" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                    <div style={{
+                      width: "24px", height: "24px", borderRadius: "50%",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "11px", fontWeight: 500,
+                      background: completo ? "#534AB7" : activo ? "#EEEDFE" : "#f1f5f9",
+                      color:      completo ? "#fff"    : activo ? "#534AB7" : "#94a3b8",
+                      border:     activo   ? "1px solid #534AB7" : "1px solid transparent",
+                    }}>
+                      {completo ? "✓" : num}
+                    </div>
+                    <span style={{ fontSize: "11px", color: activo ? "#534AB7" : completo ? "#334155" : "#94a3b8", fontWeight: activo ? 500 : 400, whiteSpace: "nowrap" }}>
+                      {paso}
+                    </span>
+                  </div>
+                  {i < 3 && (
+                    <div style={{ flex: 1, height: "1px", background: completo ? "#534AB7" : "#e2e8f0", margin: "0 6px", marginBottom: "18px" }} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <form onSubmit={handleSubmit}>
+
+            {/* Planes */}
+            <label style={labelStyle}>Plan de servicio</label>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+              {planes.map((p, i) => {
+                const estilo = PLAN_ESTILOS[i] || PLAN_ESTILOS[0];
+                const activo = Number(planSeleccionado) === p.idPlan;
                 return (
                   <div
-                    key={p.id}
-                    onClick={() => setPlanSeleccionado(p.id)}
+                    key={p.idPlan}
+                    onClick={() => { setPlanSeleccionado(p.idPlan); setComentarios(""); setSuperficie(""); setFrecuenciaDeseada(""); setNumPersonas(""); }}
                     style={{
-                      flex: 1, padding: ".45rem", borderRadius: "6px", textAlign: "center",
-                      fontSize: "12px", cursor: "pointer",
-                      border: activo ? `1px solid ${p.border}` : "1px solid #e2e8f0",
-                      background: activo ? p.bg : "transparent",
-                      color: activo ? p.color : "#64748b",
-                      fontWeight: activo ? 500 : 400,
+                      border: activo ? `1px solid ${estilo.borderColor}` : "1px solid #e2e8f0",
+                      background: activo ? estilo.accentBg : "transparent",
+                      borderRadius: "8px", padding: "12px 8px",
+                      textAlign: "center", cursor: "pointer", transition: "all .15s",
                     }}
                   >
-                    {p.label}
+                    <p style={{ fontSize: "13px", fontWeight: 500, marginBottom: "4px", color: activo ? estilo.accentColor : "#334155" }}>
+                      {p.tipo}
+                    </p>
+                    <p style={{ fontSize: "11px", color: "#94a3b8" }}>
+                      {p.esPersonalizado ? "A convenir" : p.frecuencia}
+                    </p>
                   </div>
                 );
               })}
             </div>
-          </div>
 
-          <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "1.25rem 0" }} />
-
-          {/* Instalación */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ fontSize: "13px", fontWeight: 500, color: "#64748b", display: "block", marginBottom: ".35rem" }}>Instalación</label>
-            {instalaciones.length === 0 ? (
-              <p style={{ fontSize: "13px", color: "#ef4444" }}>No tienes instalaciones registradas. Contacta al administrador.</p>
-            ) : (
-              <select value={idInstalacion} onChange={(e) => setIdInstalacion(e.target.value)} style={inputStyle}>
-                <option value="" disabled>Selecciona una instalación</option>
-                {instalaciones.map((inst) => (
-                  <option key={inst.idInstalacion} value={inst.idInstalacion}>
-                    {inst.nombre} — {inst.direccion}
-                  </option>
-                ))}
-              </select>
+            {/* Detalle del plan seleccionado */}
+            {planActual && estiloActual && (
+              <div style={{
+                marginTop: "10px", padding: "12px 14px",
+                background: estiloActual.accentBg,
+                borderRadius: "8px", borderLeft: `3px solid ${estiloActual.borderColor}`,
+              }}>
+                <p style={{ fontSize: "12px", fontWeight: 500, color: estiloActual.accentColor, marginBottom: "4px" }}>
+                  Ideal para: {planActual.idealPara}
+                </p>
+                <p style={{ fontSize: "12px", color: estiloActual.accentColor, opacity: 0.85 }}>
+                  {planActual.descripcion}
+                </p>
+              </div>
             )}
-          </div>
 
-          {/* Comentarios */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ fontSize: "13px", fontWeight: 500, color: "#64748b", display: "block", marginBottom: ".35rem" }}>
-              Comentarios <span style={{ fontWeight: 400 }}>(opcional)</span>
-            </label>
-            <textarea
-              value={comentarios}
-              onChange={(e) => setComentarios(e.target.value)}
-              rows={3}
-              placeholder="Detalles adicionales para esta cotización..."
-              style={{ ...inputStyle, resize: "vertical" }}
-            />
-          </div>
+            <p style={{ fontSize: "11px", color: "#94a3b8", marginTop: "8px" }}>
+              * Todos los planes se cotizan a medida. Los valores finales serán informados por nuestro equipo.
+            </p>
 
-          <button
-            type="submit"
-            disabled={enviando || instalaciones.length === 0}
-            style={{
-              width: "100%", padding: ".6rem",
-              border: "1px solid #cbd5e1", borderRadius: "6px",
-              background: "transparent", fontSize: "13px", fontWeight: 500,
-              cursor: enviando ? "not-allowed" : "pointer",
-              opacity: enviando ? 0.6 : 1,
-              marginTop: ".5rem",
-            }}
-          >
-            {enviando ? "Enviando..." : "Enviar solicitud"}
-          </button>
-        </form>
+            <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "1.25rem 0" }} />
+
+            {/* Instalación */}
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={labelStyle}>Instalación</label>
+              {instalaciones.length === 0 ? (
+                <p style={{ fontSize: "13px", color: "#ef4444" }}>
+                  No tienes instalaciones registradas. Contacta al administrador.
+                </p>
+              ) : (
+                <select
+                  value={idInstalacion}
+                  onChange={(e) => setIdInstalacion(e.target.value)}
+                  style={inputStyle}
+                >
+                  <option value="" disabled>Selecciona una instalación</option>
+                  {instalaciones.map((inst) => (
+                    <option key={inst.idInstalacion} value={inst.idInstalacion}>
+                      {inst.nombre} — {inst.direccion}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "1.25rem 0" }} />
+
+            {/* Comentarios — diferenciados por plan */}
+            {esPersonalizado ? (
+              <div style={{ marginBottom: "1.25rem" }}>
+                <label style={labelStyle}>Detalles del servicio</label>
+                <p style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "12px" }}>
+                  Para preparar una propuesta precisa, completa la siguiente información sobre tu instalación.
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: "12px" }}>Superficie aprox. (m²)</label>
+                    <input
+                      type="number" min="1" value={superficie}
+                      onChange={(e) => setSuperficie(e.target.value)}
+                      placeholder="Ej: 800" style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: "12px" }}>Personas en el recinto</label>
+                    <input
+                      type="number" min="1" value={numPersonas}
+                      onChange={(e) => setNumPersonas(e.target.value)}
+                      placeholder="Ej: 50" style={inputStyle}
+                    />
+                  </div>
+                </div>
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ ...labelStyle, fontSize: "12px" }}>Frecuencia deseada</label>
+                  <select value={frecuenciaDeseada} onChange={(e) => setFrecuenciaDeseada(e.target.value)} style={inputStyle}>
+                    <option value="">Selecciona una frecuencia</option>
+                    {FRECUENCIAS_PERSONALIZADO.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+                <label style={{ ...labelStyle, fontSize: "12px" }}>
+                  Comentarios <span style={{ fontWeight: 400, color: "#94a3b8" }}>(requerido)</span>
+                </label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+                  {CHIPS_PERSONALIZADO.map((chip) => (
+                    <span
+                      key={chip} onClick={() => handleChip(chip)}
+                      style={{ fontSize: "12px", padding: "4px 10px", border: "1px solid #e2e8f0", borderRadius: "20px", cursor: "pointer", color: "#64748b", background: "#f8fafc", userSelect: "none" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#185FA5"; e.currentTarget.style.color = "#0C447C"; e.currentTarget.style.background = "#E6F1FB"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "#f8fafc"; }}
+                    >
+                      + {chip}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ position: "relative" }}>
+                  <textarea
+                    value={comentarios}
+                    onChange={(e) => { if (e.target.value.length <= MAX_CHARS) setComentarios(e.target.value); }}
+                    rows={4}
+                    placeholder="Describe el tipo de instalación, requerimientos especiales, horarios preferidos y cualquier detalle relevante..."
+                    style={{ ...inputStyle, resize: "vertical", paddingBottom: "28px", lineHeight: "1.5" }}
+                  />
+                  <span style={{ position: "absolute", bottom: "8px", right: "10px", fontSize: "11px", color: contadorColor }}>
+                    {comentarios.length} / {MAX_CHARS}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ marginBottom: "1.25rem" }}>
+                <label style={labelStyle}>
+                  Comentarios <span style={{ fontWeight: 400, color: "#94a3b8" }}>(opcional)</span>
+                </label>
+                <div style={{ position: "relative" }}>
+                  <textarea
+                    value={comentarios}
+                    onChange={(e) => { if (e.target.value.length <= MAX_CHARS) setComentarios(e.target.value); }}
+                    rows={4}
+                    placeholder="Describe detalles adicionales relevantes para tu cotización..."
+                    style={{ ...inputStyle, resize: "vertical", paddingBottom: "28px", lineHeight: "1.5" }}
+                  />
+                  <span style={{ position: "absolute", bottom: "8px", right: "10px", fontSize: "11px", color: contadorColor }}>
+                    {comentarios.length} / {MAX_CHARS}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "1.25rem 0" }} />
+
+            {/* Preferencias de contacto */}
+            <div style={{ marginBottom: "1.25rem" }}>
+              <label style={labelStyle}>
+                Preferencias de contacto{" "}
+                <span style={{ fontWeight: 400, color: "#94a3b8" }}>(opcional)</span>
+              </label>
+              <p style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "12px" }}>
+                Indícanos cómo y cuándo prefieres que te contactemos una vez revisada tu solicitud.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label style={{ ...labelStyle, fontSize: "12px" }}>Medio preferido</label>
+                  <select value={medioContacto} onChange={(e) => setMedioContacto(e.target.value)} style={inputStyle}>
+                    <option value="">Sin preferencia</option>
+                    <option>WhatsApp</option>
+                    <option>Llamada</option>
+                    <option>Correo electrónico</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ ...labelStyle, fontSize: "12px" }}>Horario preferido</label>
+                  <select value={horarioContacto} onChange={(e) => setHorarioContacto(e.target.value)} style={inputStyle}>
+                    <option value="">Sin preferencia</option>
+                    <option>Mañana (9:00 - 13:00)</option>
+                    <option>Tarde (13:00 - 18:00)</option>
+                    <option>Indiferente</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Resumen */}
+            {(planActual || instalacionActual) && (
+              <>
+                <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "1.25rem 0" }} />
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 14px", marginBottom: "1.25rem" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 500, color: "#94a3b8", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Resumen de solicitud
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Plan</span>
+                      <span style={{ fontWeight: 500, color: estiloActual?.accentColor || "#0f172a" }}>
+                        {planActual ? planActual.tipo : "—"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Instalación</span>
+                      <span style={{ fontWeight: 500, color: "#0f172a" }}>
+                        {instalacionActual ? instalacionActual.nombre : "—"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Comentarios</span>
+                      <span style={{ fontWeight: 500, color: "#0f172a" }}>
+                        {comentarios.trim() ? "Incluidos" : "Sin comentarios"}
+                      </span>
+                    </div>
+                    {(medioContacto || horarioContacto) && (
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                        <span style={{ color: "#64748b" }}>Contacto</span>
+                        <span style={{ fontWeight: 500, color: "#0f172a" }}>
+                          {[medioContacto, horarioContacto].filter(Boolean).join(" · ")}
+                        </span>
+                      </div>
+                    )}
+                    <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "8px", display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Precio</span>
+                      <span style={{ fontWeight: 500, color: "#0f172a" }}>A cotizar</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Botón enviar */}
+            <button
+              type="submit"
+              disabled={btnDeshabilitado}
+              style={{
+                width: "100%", padding: "10px", borderRadius: "8px", border: "none",
+                background: btnDeshabilitado ? "#94a3b8" : "#534AB7",
+                color: "#fff", fontSize: "14px", fontWeight: 500,
+                cursor: btnDeshabilitado ? "not-allowed" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                transition: "background .15s",
+              }}
+            >
+              {enviando ? "Enviando..." : "Enviar solicitud →"}
+            </button>
+
+            <p style={{ textAlign: "center", fontSize: "12px", color: "#94a3b8", marginTop: "1rem" }}>
+              ¿Tienes dudas? Contáctate con nuestro equipo de ventas.
+            </p>
+
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
+
+const labelStyle = {
+  display: "block", fontSize: "13px", fontWeight: 500, color: "#64748b", marginBottom: "8px",
+};
+
+const inputStyle = {
+  width: "100%", padding: "9px 12px", border: "1px solid #e2e8f0",
+  borderRadius: "8px", fontSize: "13px", background: "#fff", color: "#0f172a", outline: "none",
+};
 
 export default SolicitarCotizacion;

@@ -30,10 +30,28 @@ export async function seedDatabase() {
 
   const planRepo = AppDataSource.getRepository(Plan);
   const planes = await planRepo.save([
-    { tipo: "Básico",    cantidadEmpleados: 2,  cantidadProductos: 5,  precio: 150000 },
-    { tipo: "Estándar", cantidadEmpleados: 5,  cantidadProductos: 15, precio: 300000 },
-    { tipo: "Premium",  cantidadEmpleados: 10, cantidadProductos: 30, precio: 500000 },
-  ]);
+  {
+    tipo: "Básico",
+    descripcion: "Limpieza general periódica para mantener tus instalaciones en óptimas condiciones.",
+    frecuencia: "Semanal",
+    idealPara: "Oficinas y locales pequeños",
+    esPersonalizado: false,
+  },
+  {
+    tipo: "Estándar",
+    descripcion: "Limpieza profunda con desinfección certificada y mayor cobertura de áreas.",
+    frecuencia: "Diaria o interdiaria",
+    idealPara: "Empresas medianas y edificios",
+    esPersonalizado: false,
+  },
+  {
+    tipo: "Personalizado",
+    descripcion: "Servicio diseñado completamente a medida según las necesidades específicas de tu empresa.",
+    frecuencia: "A convenir",
+    idealPara: "Plantas industriales, hospitales, colegios",
+    esPersonalizado: true,
+  },
+]);
 
   // 5 usuarios base
   const usuarios = await usuarioRepo.save([
