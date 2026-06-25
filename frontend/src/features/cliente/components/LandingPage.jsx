@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { obtenerPlanesService } from "../services/cliente.service";
+import api from "../../../config/axios";
 
 const PLAN_ESTILOS = [
   { bg: "#EEEDFE", color: "#534AB7", border: "#534AB7", tagBg: "#CECBF6", tagColor: "#3C3489" },
@@ -14,7 +15,8 @@ function LandingPage() {
   const [error, setError]       = useState(null);
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
+  // Sesión activa si existe el objeto usuario en localStorage
+  const usuario = localStorage.getItem("usuario");
 
   useEffect(() => {
     obtenerPlanesService()
@@ -24,7 +26,7 @@ function LandingPage() {
   }, []);
 
   const handleSolicitarPlan = (idPlan) => {
-    if (!token) {
+    if (!usuario) {
       sessionStorage.setItem("planPreseleccionado", idPlan);
       navigate("/login");
     } else {
@@ -32,9 +34,14 @@ function LandingPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (_) {}
+    finally {
+      localStorage.removeItem("usuario");
+      navigate("/");
+    }
   };
 
   if (cargando) return <p style={{ padding: "2rem", fontSize: "14px", color: "#64748b" }}>Cargando planes...</p>;
@@ -43,7 +50,6 @@ function LandingPage() {
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto", padding: "3rem 2rem" }}>
 
-      {/* Encabezado */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2.5rem" }}>
         <div>
           <h1 style={{ fontSize: "20px", fontWeight: 500, marginBottom: "4px" }}>Planes de limpieza</h1>
@@ -51,7 +57,7 @@ function LandingPage() {
             Elige el plan de referencia que mejor se adapte a tu empresa. Todos los precios son cotizados a medida.
           </p>
         </div>
-        {!token ? (
+        {!usuario ? (
           <button
             onClick={() => navigate("/login")}
             style={{ padding: ".45rem 1rem", border: "1px solid #cbd5e1", borderRadius: "6px", background: "transparent", fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap" }}
@@ -68,7 +74,6 @@ function LandingPage() {
         )}
       </div>
 
-      {/* Cards de planes */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: "1rem" }}>
         {planes.map((plan, i) => {
           const estilo = PLAN_ESTILOS[i] || PLAN_ESTILOS[0];
@@ -85,7 +90,6 @@ function LandingPage() {
                 gap: ".75rem",
               }}
             >
-              {/* Tag del tipo */}
               <span style={{
                 fontSize: "11px", fontWeight: 500, padding: "3px 10px",
                 borderRadius: "20px", width: "fit-content",
@@ -96,28 +100,21 @@ function LandingPage() {
 
               <hr style={{ border: "none", borderTop: "1px solid #e2e8f0" }} />
 
-              {/* Descripción */}
               <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5" }}>
                 {plan.descripcion}
               </p>
 
-              {/* Frecuencia e ideal para */}
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <p style={{ fontSize: "13px", color: "#64748b", display: "flex", alignItems: "flex-start", gap: "8px" }}>
                   <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: estilo.border, flexShrink: 0, marginTop: "6px", display: "inline-block" }} />
-                  <span>
-                    <strong style={{ fontWeight: 500, color: "#334155" }}>Frecuencia:</strong> {plan.frecuencia}
-                  </span>
+                  <span><strong style={{ fontWeight: 500, color: "#334155" }}>Frecuencia:</strong> {plan.frecuencia}</span>
                 </p>
                 <p style={{ fontSize: "13px", color: "#64748b", display: "flex", alignItems: "flex-start", gap: "8px" }}>
                   <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: estilo.border, flexShrink: 0, marginTop: "6px", display: "inline-block" }} />
-                  <span>
-                    <strong style={{ fontWeight: 500, color: "#334155" }}>Ideal para:</strong> {plan.idealPara}
-                  </span>
+                  <span><strong style={{ fontWeight: 500, color: "#334155" }}>Ideal para:</strong> {plan.idealPara}</span>
                 </p>
               </div>
 
-              {/* Botón */}
               <button
                 onClick={() => handleSolicitarPlan(plan.idPlan)}
                 style={{
@@ -143,11 +140,9 @@ function LandingPage() {
         })}
       </div>
 
-      {/* Nota al pie */}
       <p style={{ textAlign: "center", fontSize: "12px", color: "#94a3b8", marginTop: "2rem" }}>
         * Todos los planes son referenciales. Nuestro equipo preparará una cotización personalizada según tus necesidades.
       </p>
-
     </div>
   );
 }

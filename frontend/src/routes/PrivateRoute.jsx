@@ -1,26 +1,21 @@
 import { Navigate } from "react-router-dom";
 
 function PrivateRoute({ children, allowedRoles }) {
-  const token = localStorage.getItem("token");
+  const raw = localStorage.getItem("usuario");
 
-  if (!token) return <Navigate to="/login" replace />;
+  if (!raw) return <Navigate to="/login" replace />;
 
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
+    const usuario = JSON.parse(raw);
 
-    if (payload.exp * 1000 < Date.now()) {
-      localStorage.removeItem("token");
-      return <Navigate to="/login" replace />;
-    }
-
-    if (allowedRoles && !allowedRoles.includes(payload.rol)) {
+    if (allowedRoles && !allowedRoles.includes(usuario.rol)) {
       return <Navigate to="/login" replace />;
     }
 
     return children;
 
   } catch {
-    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
     return <Navigate to="/login" replace />;
   }
 }

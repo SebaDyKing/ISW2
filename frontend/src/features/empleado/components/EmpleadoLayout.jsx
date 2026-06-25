@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import api from "../../../config/axios";
 
 function IconLogo() {
   return (
@@ -78,10 +79,14 @@ function EmpleadoLayout() {
     if (userGuardado) setUsuario(JSON.parse(userGuardado));
   }, []);
 
-  function cerrarSesion() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
-    navigate("/login");
+  async function cerrarSesion() {
+    try {
+      await api.post("/auth/logout");
+    } catch (_) {}
+    finally {
+      localStorage.removeItem("usuario");
+      navigate("/login");
+    }
   }
 
   const inicial = (usuario.nombreMostrar || "E").charAt(0).toUpperCase();

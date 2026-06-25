@@ -15,38 +15,29 @@ function LoginForm() {
     setCargando(true);
     try {
       const data = await loginService(correo, password);
-      
-      localStorage.setItem("token", data.token);
 
-      const nombreReal = data.usuario.nombre || "Usuario";
-      const apellidoReal = data.usuario.apellido || "";
-      
+      const nombreReal     = data.usuario.nombre   || "Usuario";
+      const apellidoReal   = data.usuario.apellido || "";
       const nombreCompleto = `${nombreReal} ${apellidoReal}`.trim();
-      
       const inicialApellido = apellidoReal ? `${apellidoReal.charAt(0).toUpperCase()}.` : "";
-      const nombreMostrar = `${nombreReal} ${inicialApellido}`.trim();
+      const nombreMostrar  = `${nombreReal} ${inicialApellido}`.trim();
 
-      const datosUsuario = {
-        nombreCompleto: nombreCompleto,
-        nombreMostrar: nombreMostrar,
-        rol: data.usuario.rol
-      };
-      
-      localStorage.setItem("usuario", JSON.stringify(datosUsuario));
+      localStorage.setItem("usuario", JSON.stringify({
+        idUsuario: data.usuario.id,
+        nombreCompleto,
+        nombreMostrar,
+        rol: data.usuario.rol,
+      }));
 
       toast.success("¡Bienvenido!");
 
-      const payload = JSON.parse(atob(data.token.split(".")[1]));
-      if (payload.rol === "administrador")   navigate("/admin");
-      else if (payload.rol === "empleado")   navigate("/empleado");
-      else if (payload.rol === "supervisor") navigate("/supervisor");
+      const rol = data.usuario.rol;
+      if      (rol === "administrador") navigate("/admin");
+      else if (rol === "empleado")      navigate("/empleado");
+      else if (rol === "supervisor")    navigate("/supervisor");
       else {
         const planGuardado = sessionStorage.getItem("planPreseleccionado");
-        if (planGuardado) {
-          navigate("/cliente/cotizar");
-        } else {
-          navigate("/cliente");
-        }
+        navigate(planGuardado ? "/cliente/cotizar" : "/cliente");
       }
 
     } catch (error) {
@@ -72,9 +63,7 @@ function LoginForm() {
         </h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Correo
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Correo</label>
             <input
               type="email"
               value={correo}
@@ -85,9 +74,7 @@ function LoginForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contraseña
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
             <input
               type={verPassword ? "text" : "password"}
               value={password}
@@ -116,9 +103,7 @@ function LoginForm() {
         </form>
         <p className="text-sm text-center text-gray-500 mt-4">
           ¿No tienes cuenta?{" "}
-          <a href="/registro" className="text-blue-600 hover:underline">
-            Regístrate aquí
-          </a>
+          <a href="/registro" className="text-blue-600 hover:underline">Regístrate aquí</a>
         </p>
       </div>
     </div>

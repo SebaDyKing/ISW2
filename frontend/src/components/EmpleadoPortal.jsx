@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MarcarAsistencia from "./MarcarAsistencia";
+import api from "../config/axios";
 
 export default function EmpleadoPortal() {
   const navigate = useNavigate();
@@ -8,19 +9,17 @@ export default function EmpleadoPortal() {
   const [initials, setInitials] = useState("JP");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    const storedUser = localStorage.getItem("usuario");
+    if (!storedUser) {
       navigate("/login");
       return;
     }
 
     try {
-      const storedUser = JSON.parse(localStorage.getItem("usuario") || "{}");
-      if (storedUser.nombreCompleto) {
-        setUser(storedUser);
-        
-        // Calcular iniciales a partir del nombre completo
-        const parts = storedUser.nombreCompleto.split(" ");
+      const parsed = JSON.parse(storedUser);
+      if (parsed.nombreCompleto) {
+        setUser(parsed);
+        const parts = parsed.nombreCompleto.split(" ");
         const init = parts.map(p => p[0]).join("").slice(0, 2).toUpperCase();
         setInitials(init || "EM");
       }
@@ -29,19 +28,21 @@ export default function EmpleadoPortal() {
     }
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
-    localStorage.removeItem("idContrato");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (_) {}
+    finally {
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("idContrato");
+      navigate("/login");
+    }
   };
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans">
-      {/* SIDEBAR FIJO A LA IZQUIERDA */}
       <aside className="w-64 bg-slate-950 text-white flex flex-col justify-between p-6 shrink-0 border-r border-slate-900">
         <div className="space-y-8">
-          {/* LOGO */}
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-base shadow-md shadow-indigo-600/30">
               C
@@ -54,7 +55,6 @@ export default function EmpleadoPortal() {
             </div>
           </div>
 
-          {/* MENÚ DE NAVEGACIÓN */}
           <nav className="space-y-1">
             <button className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-900/60 hover:text-white transition-all cursor-not-allowed">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,7 +86,6 @@ export default function EmpleadoPortal() {
           </nav>
         </div>
 
-        {/* PERFIL Y CERRAR SESION */}
         <div className="space-y-4">
           <button
             onClick={handleLogout}
@@ -98,7 +97,6 @@ export default function EmpleadoPortal() {
             <span>Cerrar Sesión</span>
           </button>
 
-          {/* PERFIL DEL EMPLEADO */}
           <div className="flex items-center space-x-3 pt-4 border-t border-slate-900">
             <div className="w-9 h-9 rounded-full bg-indigo-600/20 border border-indigo-600/30 flex items-center justify-center font-bold text-xs text-indigo-400">
               {initials}
@@ -113,7 +111,6 @@ export default function EmpleadoPortal() {
         </div>
       </aside>
 
-      {/* ÁREA DE CONTENIDO PRINCIPAL */}
       <main className="flex-1 flex flex-col">
         <MarcarAsistencia idContratoProp={1} />
       </main>

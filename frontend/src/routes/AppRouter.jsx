@@ -16,13 +16,20 @@ import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizac
 import MarcarAsistencia from "../components/MarcarAsistencia";
 import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
 import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
+import api from "../config/axios";
 
 function PanelClienteProximamente() {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (_) {
+      // si falla igual limpiamos el lado cliente
+    } finally {
+      localStorage.removeItem("usuario");
+      navigate("/");
+    }
   };
 
   return (
@@ -50,20 +57,11 @@ function AppRouter() {
     <BrowserRouter>
       <Toaster position="top-right" />
       <Routes>
-        {/* Pública */}
         <Route path="/"         element={<LandingPage />} />
         <Route path="/login"    element={<LoginForm />} />
         <Route path="/registro" element={<RegisterForm />} />
 
-        {/* Admin */}
-        <Route
-          path="/admin"
-          element={
-            <PrivateRoute allowedRoles={["administrador"]}>
-              <AdminLayout />
-            </PrivateRoute>
-          }
-        >
+        <Route path="/admin" element={<PrivateRoute allowedRoles={["administrador"]}><AdminLayout /></PrivateRoute>}>
           <Route index               element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios"     element={<UsuariosTable />} />
           <Route path="contratos"    element={<ContratosPage />} />
@@ -73,41 +71,18 @@ function AppRouter() {
           <Route path="hojas-vida"   element={<HojaVidaView />} />
         </Route>
 
-        {/* Cliente */}
-        <Route
-          path="/cliente/cotizar"
-          element={
-            <PrivateRoute allowedRoles={["cliente"]}>
-              <SolicitarCotizacion />
-            </PrivateRoute>
-          }
-        />
+        <Route path="/cliente/cotizar" element={<PrivateRoute allowedRoles={["cliente"]}><SolicitarCotizacion /></PrivateRoute>} />
 
-        {/* Empleado */}
-        <Route
-          path="/empleado"
-          element={
-            <PrivateRoute allowedRoles={["empleado"]}>
-              <EmpleadoLayout />
-            </PrivateRoute>
-          }
-        >
-          <Route index element={<Navigate to="asistencia" replace />} />
+        <Route path="/empleado" element={<PrivateRoute allowedRoles={["empleado"]}><EmpleadoLayout /></PrivateRoute>}>
+          <Route index             element={<Navigate to="asistencia" replace />} />
           <Route path="asistencia" element={<MarcarAsistencia />} />
-          <Route path="licencias" element={<MisLicenciasView />} />
-          <Route path="hoja-vida" element={<MisHojasVidaView />} />
+          <Route path="licencias"  element={<MisLicenciasView />} />
+          <Route path="hoja-vida"  element={<MisHojasVidaView />} />
         </Route>
-        <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
-        <Route
-          path="/cliente"
-          element={
-            <PrivateRoute allowedRoles={["cliente"]}>
-              <PanelClienteProximamente />
-            </PrivateRoute>
-          }
-        />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
+        <Route path="/cliente"    element={<PrivateRoute allowedRoles={["cliente"]}><PanelClienteProximamente /></PrivateRoute>} />
+        <Route path="*"           element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
