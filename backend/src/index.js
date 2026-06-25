@@ -9,6 +9,7 @@ import { HOST, PORT } from "./config/configEnv.js";
 import { routerApi } from "./routes/index.routes.js";
 import { seedDatabase } from "./config/seed.js";
 import authRouter from "./routes/auth.routes.js";
+import { iniciarJobVencimiento } from "./jobs/vencimientoJob.js";
 
 const app = express();
 
@@ -35,6 +36,7 @@ connectDB()
   .then(async () => {
     await seedDatabase();
     routerApi(app);
+    iniciarJobVencimiento(); 
     app.listen(PORT, () => {
       console.log(`Servidor iniciado en ${HOST}:${PORT}`);
     });

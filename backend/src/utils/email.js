@@ -4,6 +4,7 @@ import { EMAIL_USER } from "../config/configEnv.js";
 
 const transporter = mailer.transporter;
 
+// ── Helpers visuales  ────────────────────────────────────────────
 const baseStyle = `
   font-family: 'Segoe UI', Arial, sans-serif;
   max-width: 600px;
@@ -38,7 +39,7 @@ function bloque(contenido) {
   return `<div style="padding: 24px 32px;">${contenido}</div>`;
 }
 
-function infoBox(color, items) {
+function infoBox(items) {
   const filas = items.map(([label, valor]) => `
     <tr>
       <td style="padding: 7px 12px; font-size: 13px; color: #64748b; white-space: nowrap;">${label}</td>
@@ -61,7 +62,24 @@ function destacado(color, texto) {
   `;
 }
 
-export async function enviarCorreoSolicitudRecibida(correoDestino, nombreEmpresa) {
+// ── Helpers de fecha ───────────────────────────────────────────────────────────
+function formatearFechaLimite(fecha) {
+  return new Date(fecha).toLocaleString("es-CL", {
+    weekday: "long",
+    day:     "numeric",
+    month:   "long",
+    year:    "numeric",
+    hour:    "2-digit",
+    minute:  "2-digit",
+  });
+}
+
+// ── Correos ───────────────────────────────────────────────────────────────────
+export async function enviarCorreoSolicitudRecibida(correoDestino, nombreEmpresa, fechaLimite, horasHabilesLimite) {
+  const plazoTexto = fechaLimite
+    ? `el <strong>${formatearFechaLimite(fechaLimite)}</strong>`
+    : "a la brevedad";
+
   await transporter.sendMail({
     from: `"CleanPro" <${EMAIL_USER}>`,
     to: correoDestino,
@@ -73,11 +91,12 @@ export async function enviarCorreoSolicitudRecibida(correoDestino, nombreEmpresa
           <p style="font-size: 15px; color: #0f172a; font-weight: 600; margin: 0 0 8px;">Hola, ${nombreEmpresa} 👋</p>
           <p style="font-size: 14px; color: #475569; line-height: 1.7; margin: 0 0 16px;">
             Recibimos tu solicitud de cotización y ya está en manos de nuestro equipo.
-            La revisaremos a la brevedad y te informaremos sobre su estado por este mismo correo.
           </p>
-          <p style="font-size: 14px; color: #475569; line-height: 1.7; margin: 0;">
-            Si tienes alguna consulta mientras tanto, no dudes en escribirnos.
-          </p>
+          ${infoBox([
+            ["Plazo de respuesta", `${horasHabilesLimite} horas hábiles`],
+            ["Te notificaremos antes del", formatearFechaLimite(fechaLimite)],
+          ])}
+          ${destacado("#534AB7", "Si tienes alguna consulta mientras tanto, no dudes en responder este correo.")}
         `)}
         ${footer()}
       </div>
@@ -86,7 +105,7 @@ export async function enviarCorreoSolicitudRecibida(correoDestino, nombreEmpresa
 }
 
 export async function enviarCorreoEstadoCotizacion(correoDestino, nombreEmpresa, estado, motivo, medioContacto, horarioContacto) {
-  const esAprobada = estado === "Aprobada";
+  const esAprobada  = estado === "Aprobada";
   const colorHeader = esAprobada ? "#16a34a" : "#dc2626";
   const titulo      = esAprobada ? "Tu cotización fue aprobada" : "Tu cotización no pudo ser aprobada";
 
@@ -94,9 +113,9 @@ export async function enviarCorreoEstadoCotizacion(correoDestino, nombreEmpresa,
     <p style="font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 4px;">
       Cómo te contactaremos
     </p>
-    ${infoBox(colorHeader, [
-      ...(medioContacto   ? [["Medio",    medioContacto]]   : []),
-      ...(horarioContacto ? [["Horario",  horarioContacto]] : []),
+    ${infoBox([
+      ...(medioContacto   ? [["Medio",   medioContacto]]   : []),
+      ...(horarioContacto ? [["Horario", horarioContacto]] : []),
     ])}
   ` : "";
 
@@ -122,7 +141,7 @@ export async function enviarCorreoEstadoCotizacion(correoDestino, nombreEmpresa,
     </p>
     ${seccionMotivo}
     <p style="font-size: 14px; color: #475569; line-height: 1.7; margin: 16px 0 0;">
-      Si lo deseas, puedes enviar una nueva solicitud en cualquier momento o contactarnos directamente para buscar una solución.
+      Si lo deseas, puedes enviar una nueva solicitud en cualquier momento o contactarnos directamente.
     </p>
   `;
 
@@ -134,6 +153,36 @@ export async function enviarCorreoEstadoCotizacion(correoDestino, nombreEmpresa,
       <div style="${baseStyle}">
         ${header(colorHeader, titulo)}
         ${bloque(cuerpo)}
+        ${footer()}
+      </div>
+    `,
+  });
+}
+
+// notificación al admin cuando una solicitud vence
+export async function enviarCorreoVencimientoAdmin(correoAdmin, cotizacion) {
+  await transporter.sendMail({
+    from: `"CleanPro" <${EMAIL_USER}>`,
+    to: correoAdmin,
+    subject: `⚠️ Solicitud vencida — ${cotizacion.cliente?.nombreEmpresa || "Cliente"}`,
+    html: `
+      <div style="${baseStyle}">
+        ${header("#b45309", "Solicitud sin respuesta")}
+        ${bloque(`
+          <p style="font-size: 15px; color: #0f172a; font-weight: 600; margin: 0 0 8px;">
+            Una solicitud venció sin ser resuelta
+          </p>
+          <p style="font-size: 14px; color: #475569; line-height: 1.7; margin: 0 0 16px;">
+            El plazo de respuesta expiró y el estado fue marcado automáticamente como <strong>Vencida</strong>.
+          </p>
+          ${infoBox([
+            ["Cliente",        cotizacion.cliente?.nombreEmpresa || "—"],
+            ["Instalación",    cotizacion.instalacion?.nombre    || "—"],
+            ["Plan",           cotizacion.plan?.tipo             || "—"],
+            ["Venció el",      formatearFechaLimite(cotizacion.fechaLimite)],
+          ])}
+          ${destacado("#b45309", "Ingresa al panel de administración para gestionar esta solicitud.")}
+        `)}
         ${footer()}
       </div>
     `,

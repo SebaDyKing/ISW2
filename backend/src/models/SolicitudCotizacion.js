@@ -11,6 +11,8 @@ export const SolicitudCotizacion = new EntitySchema({
     medioContacto:   { type: "varchar", length: 50,  nullable: true },
     horarioContacto: { type: "varchar", length: 50,  nullable: true },
     fechaCreacion:   { type: "timestamp", createDate: true },
+    fechaLimite:        { type: "timestamp", nullable: true },
+    horasHabilesLimite: { type: "int", default: 24 },
   },
   relations: {
     cliente: {

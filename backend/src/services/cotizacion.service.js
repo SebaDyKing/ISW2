@@ -4,6 +4,9 @@ import { SolicitudCotizacion } from "../models/SolicitudCotizacion.js";
 import { Cliente } from "../models/Cliente.js";
 import { Instalacion } from "../models/Instalacion.js";
 import { enviarCorreoSolicitudRecibida, enviarCorreoEstadoCotizacion } from "../utils/email.js";
+import { agregarHorasHabiles } from "../utils/businessHours.js"; // ← nuevo
+
+const HORAS_HABILES_LIMITE = 24; // configurable 
 
 export async function crearCotizacionService(datosCotizacion) {
   const { id_usuario, comentarios, id_plan, id_instalacion, medioContacto, horarioContacto } = datosCotizacion;
@@ -33,30 +36,44 @@ export async function crearCotizacionService(datosCotizacion) {
   });
   if (cotizacionPendiente) throw new Error("Esta instalación ya tiene una cotización pendiente. Espera a que sea respondida.");
 
+  // ── Calcular fecha límite ───────────────────────────────────────────────────
+  const ahora = new Date();
+  const fechaLimite = agregarHorasHabiles(ahora, HORAS_HABILES_LIMITE);
+  // ───────────────────────────────────────────────────────────────────────────
+
   const nuevaSolicitud = cotizacionRepo.create({
-    comentarios:     comentarios     || null,
-    medioContacto:   medioContacto   || null,
-    horarioContacto: horarioContacto || null,
-    estado: "Pendiente",
-    cliente:    clienteActual,
+    comentarios:        comentarios     || null,
+    medioContacto:      medioContacto   || null,
+    horarioContacto:    horarioContacto || null,
+    estado:             "Pendiente",
+    fechaLimite,                          
+    horasHabilesLimite: HORAS_HABILES_LIMITE, 
+    cliente:     clienteActual,
     instalacion: instalacionValida,
-    plan: { idPlan: id_plan }
+    plan:        { idPlan: id_plan }
   });
 
   const solicitudGuardada = await cotizacionRepo.save(nuevaSolicitud);
 
-  enviarCorreoSolicitudRecibida(clienteActual.usuario.correo, clienteActual.nombreEmpresa)
-    .catch((err) => console.error("Error enviando correo de solicitud:", err));
+  // Pasar fechaLimite al correo
+  enviarCorreoSolicitudRecibida(
+    clienteActual.usuario.correo,
+    clienteActual.nombreEmpresa,
+    fechaLimite,              
+    HORAS_HABILES_LIMITE      
+  ).catch((err) => console.error("Error enviando correo de solicitud:", err));
 
   delete solicitudGuardada.cliente.usuario.passwordHash;
   return solicitudGuardada;
 }
 
+// obtenerCotizacionesService — ordenar por fechaLimite ascendente
+// para que el admin vea primero las más urgentes
 export async function obtenerCotizacionesService() {
   try {
     const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
     return await repositorio.find({
-      order: { fechaCreacion: "DESC" },
+      order: { fechaLimite: "ASC" }, 
       relations: ["cliente", "plan", "instalacion"]
     });
   } catch (error) {

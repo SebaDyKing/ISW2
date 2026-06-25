@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { obtenerCotizacionesService, actualizarEstadoCotizacionService } from "../services/admin.service";
 import toast from "react-hot-toast";
 
@@ -6,9 +6,9 @@ const BADGE = {
   pendiente: { bg: "#fef9c3", color: "#854d0e" },
   aprobada:  { bg: "#dcfce7", color: "#166534" },
   rechazada: { bg: "#fee2e2", color: "#991b1b" },
+  vencida:   { bg: "#f3e8ff", color: "#6b21a8" },
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
 function formatFecha(ts, opts = { day: "2-digit", month: "short", year: "numeric" }) {
   return ts ? new Date(ts).toLocaleDateString("es-CL", opts) : "—";
 }
@@ -17,6 +17,50 @@ function mesAnio(ts) {
   if (!ts) return "";
   const d = new Date(ts);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// ── Countdown ─────────────────────────────────────────────────────────────────
+function TiempoRestante({ fechaLimite, estado }) {
+  const calcularSegundos = () =>
+    Math.max(0, Math.floor((new Date(fechaLimite) - Date.now()) / 1000));
+
+  const [segundos, setSegundos] = useState(calcularSegundos);
+  const intervaloRef = useRef(null);
+
+  useEffect(() => {
+    intervaloRef.current = setInterval(() => setSegundos(calcularSegundos()), 1000);
+    return () => clearInterval(intervaloRef.current);
+  }, [fechaLimite]);
+
+  if (estado !== "Pendiente" || !fechaLimite)
+    return <span style={{ color: "#94a3b8", fontSize: "12px" }}>—</span>;
+
+  if (segundos <= 0)
+    return <span style={{ fontSize: "12px", fontWeight: 600, color: "#6b21a8" }}>Vencida</span>;
+
+  const color =
+    segundos < 3600     ? "#dc2626" :
+    segundos < 4 * 3600 ? "#d97706" : "#16a34a";
+
+  if (segundos >= 86400) {
+    const dias    = Math.floor(segundos / 86400);
+    const horas   = Math.floor((segundos % 86400) / 3600);
+    const minutos = Math.floor((segundos % 3600) / 60);
+    return (
+      <span style={{ fontSize: "12px", fontWeight: 600, color, fontVariantNumeric: "tabular-nums" }}>
+        {dias}d {horas}h {minutos}m
+      </span>
+    );
+  }
+
+  const horas   = Math.floor(segundos / 3600);
+  const minutos = Math.floor((segundos % 3600) / 60);
+  const segs    = segundos % 60;
+  return (
+    <span style={{ fontSize: "12px", fontWeight: 600, color, fontVariantNumeric: "tabular-nums" }}>
+      {String(horas).padStart(2, "0")}:{String(minutos).padStart(2, "0")}:{String(segs).padStart(2, "0")}
+    </span>
+  );
 }
 
 // ── Modal detalle ──────────────────────────────────────────────────────────────
@@ -29,7 +73,6 @@ function ModalDetalle({ cotizacion, onCerrar, onResolver }) {
     <div style={overlayStyle}>
       <div style={{ background: "#fff", borderRadius: "12px", width: "100%", maxWidth: "480px", boxShadow: "0 20px 60px rgba(0,0,0,0.15)", display: "flex", flexDirection: "column", maxHeight: "90vh" }}>
 
-        {/* Header */}
         <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
           <div>
             <p style={{ fontSize: "15px", fontWeight: 600, color: "#0f172a", marginBottom: "2px" }}>Detalle de solicitud</p>
@@ -40,15 +83,12 @@ function ModalDetalle({ cotizacion, onCerrar, onResolver }) {
           </span>
         </div>
 
-        {/* Body scrolleable */}
         <div style={{ padding: "1.25rem 1.5rem", display: "flex", flexDirection: "column", gap: "1rem", overflowY: "auto" }}>
-
           <Seccion titulo="Cliente">
             <Fila label="Empresa"  valor={cotizacion.cliente?.nombreEmpresa || "—"} />
             <Fila label="Teléfono" valor={cotizacion.cliente?.telefono      || "—"} />
           </Seccion>
 
-          {/* Nueva Sección: Preferencias de contacto */}
           {(cotizacion.medioContacto || cotizacion.horarioContacto) && (
             <Seccion titulo="Preferencias de contacto">
               {cotizacion.medioContacto   && <Fila label="Medio"   valor={cotizacion.medioContacto} />}
@@ -65,6 +105,21 @@ function ModalDetalle({ cotizacion, onCerrar, onResolver }) {
             <Fila label="Tipo"       valor={cotizacion.plan?.tipo       || "—"} />
             <Fila label="Frecuencia" valor={cotizacion.plan?.frecuencia || "—"} />
           </Seccion>
+
+          {cotizacion.fechaLimite && (
+            <Seccion titulo="Plazo de respuesta">
+              <Fila
+                label="Vence el"
+                valor={formatFecha(cotizacion.fechaLimite, {
+                  weekday: "long", day: "numeric", month: "long",
+                  year: "numeric", hour: "2-digit", minute: "2-digit"
+                })}
+              />
+              <div style={{ marginTop: "4px" }}>
+                <TiempoRestante fechaLimite={cotizacion.fechaLimite} estado={cotizacion.estado} />
+              </div>
+            </Seccion>
+          )}
 
           {cotizacion.comentarios && (
             <Seccion titulo="Comentarios del cliente">
@@ -83,7 +138,6 @@ function ModalDetalle({ cotizacion, onCerrar, onResolver }) {
           )}
         </div>
 
-        {/* Footer */}
         <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #e2e8f0", display: "flex", gap: "8px", justifyContent: "flex-end", flexShrink: 0 }}>
           <button onClick={onCerrar} style={btnSecundario}>Cerrar</button>
           {cotizacion.estado === "Pendiente" && (
@@ -117,8 +171,6 @@ function ModalResolver({ cotizacion, onCerrar, onConfirmar, cargando }) {
         </div>
 
         <div style={{ padding: "1.25rem 1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-
-          {/* Botones Aprobar / Rechazar */}
           <div>
             <label style={labelStyle}>Resolución</label>
             <div style={{ display: "flex", gap: "8px" }}>
@@ -128,9 +180,9 @@ function ModalResolver({ cotizacion, onCerrar, onConfirmar, cargando }) {
                 return (
                   <button key={op} type="button" onClick={() => setEstado(op)} style={{
                     flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px", fontWeight: 500, cursor: "pointer", transition: "all .15s",
-                    border:      activo ? `1px solid ${esAprob ? "#16a34a" : "#dc2626"}` : "1px solid #e2e8f0",
-                    background:  activo ? (esAprob ? "#dcfce7" : "#fee2e2") : "#f8fafc",
-                    color:       activo ? (esAprob ? "#166534" : "#991b1b") : "#64748b",
+                    border:     activo ? `1px solid ${esAprob ? "#16a34a" : "#dc2626"}` : "1px solid #e2e8f0",
+                    background: activo ? (esAprob ? "#dcfce7" : "#fee2e2") : "#f8fafc",
+                    color:      activo ? (esAprob ? "#166534" : "#991b1b") : "#64748b",
                   }}>
                     {esAprob ? "✓ Aprobar" : "✕ Rechazar"}
                   </button>
@@ -139,7 +191,6 @@ function ModalResolver({ cotizacion, onCerrar, onConfirmar, cargando }) {
             </div>
           </div>
 
-          {/* Motivo */}
           <div>
             <label style={labelStyle}>
               Motivo <span style={{ fontWeight: 400, color: "#94a3b8" }}>(mín. 10 caracteres)</span>
@@ -149,8 +200,8 @@ function ModalResolver({ cotizacion, onCerrar, onConfirmar, cargando }) {
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
               placeholder={estado === "Aprobada"
-                ? "Ej: La solicitud cumple con los requisitos. Nos contactaremos para coordinar el inicio del servicio."
-                : "Ej: La zona indicada no cuenta con cobertura de servicio en este momento."}
+                ? "Ej: La solicitud cumple con los requisitos..."
+                : "Ej: La zona indicada no cuenta con cobertura..."}
               style={{ ...inputStyle, resize: "vertical", lineHeight: "1.5" }}
             />
             <p style={{ fontSize: "11px", color: motivo.trim().length < 10 ? "#f59e0b" : "#94a3b8", marginTop: "4px" }}>
@@ -203,11 +254,11 @@ function Fila({ label, valor }) {
 
 // ── Tabla principal ────────────────────────────────────────────────────────────
 const COLS = [
-  { key: "cliente",      label: "Cliente"     },
-  { key: "instalacion",  label: "Instalación" },
-  { key: "plan",         label: "Plan"        },
-  { key: "estado",       label: "Estado"      },
-  { key: "fechaCreacion",label: "Fecha"       },
+  { key: "cliente",       label: "Cliente"          },
+  { key: "instalacion",   label: "Instalación"      },
+  { key: "plan",          label: "Plan"             },
+  { key: "estado",        label: "Estado"           },
+  { key: "fechaCreacion", label: "Fecha"            },
 ];
 
 function CotizacionesTable() {
@@ -217,15 +268,10 @@ function CotizacionesTable() {
   const [modalDetalle, setModalDetalle]     = useState(null);
   const [modalResolver, setModalResolver]   = useState(null);
 
-  // Filtros
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroPlan,    setFiltroPlan]    = useState("");
   const [filtroEstado,  setFiltroEstado]  = useState("");
   const [filtroMes,     setFiltroMes]     = useState("");
-
-  // Ordenamiento
-  const [sortKey, setSortKey]   = useState("fechaCreacion");
-  const [sortDir, setSortDir]   = useState("desc");
 
   async function cargar() {
     try {
@@ -265,16 +311,14 @@ function CotizacionesTable() {
 
   useEffect(() => { cargar(); }, []);
 
-  // Opciones únicas para selectores
-  const planesUnicos  = useMemo(() => [...new Set(cotizaciones.map(c => c.plan?.tipo).filter(Boolean))], [cotizaciones]);
-  const mesesUnicos   = useMemo(() => [...new Set(cotizaciones.map(c => mesAnio(c.fechaCreacion)).filter(Boolean))].sort().reverse(), [cotizaciones]);
+  const planesUnicos = useMemo(() => [...new Set(cotizaciones.map(c => c.plan?.tipo).filter(Boolean))], [cotizaciones]);
+  const mesesUnicos  = useMemo(() => [...new Set(cotizaciones.map(c => mesAnio(c.fechaCreacion)).filter(Boolean))].sort().reverse(), [cotizaciones]);
 
-  // Contadores resumen
   const pendientes = cotizaciones.filter(c => c.estado === "Pendiente").length;
   const aprobadas  = cotizaciones.filter(c => c.estado === "Aprobada").length;
   const rechazadas = cotizaciones.filter(c => c.estado === "Rechazada").length;
+  const vencidas   = cotizaciones.filter(c => c.estado === "Vencida").length;
 
-  // Filtrado + ordenamiento
   const filas = useMemo(() => {
     let lista = [...cotizaciones];
 
@@ -283,26 +327,16 @@ function CotizacionesTable() {
     if (filtroEstado)  lista = lista.filter(c => c.estado === filtroEstado);
     if (filtroMes)     lista = lista.filter(c => mesAnio(c.fechaCreacion) === filtroMes);
 
+    // Siempre por fechaLimite ascendente (más urgentes primero), nulls al final
     lista.sort((a, b) => {
-      let va, vb;
-      if (sortKey === "cliente")       { va = a.cliente?.nombreEmpresa || ""; vb = b.cliente?.nombreEmpresa || ""; }
-      else if (sortKey === "plan")     { va = a.plan?.tipo || ""; vb = b.plan?.tipo || ""; }
-      else if (sortKey === "estado")   { va = a.estado || ""; vb = b.estado || ""; }
-      else if (sortKey === "instalacion") { va = a.instalacion?.nombre || ""; vb = b.instalacion?.nombre || ""; }
-      else                             { va = a.fechaCreacion || ""; vb = b.fechaCreacion || ""; }
-
-      if (va < vb) return sortDir === "asc" ? -1 : 1;
-      if (va > vb) return sortDir === "asc" ? 1 : -1;
-      return 0;
+      if (!a.fechaLimite && !b.fechaLimite) return 0;
+      if (!a.fechaLimite) return 1;
+      if (!b.fechaLimite) return -1;
+      return new Date(a.fechaLimite) - new Date(b.fechaLimite);
     });
 
     return lista;
-  }, [cotizaciones, filtroCliente, filtroPlan, filtroEstado, filtroMes, sortKey, sortDir]);
-
-  function toggleSort(key) {
-    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
-    else { setSortKey(key); setSortDir("asc"); }
-  }
+  }, [cotizaciones, filtroCliente, filtroPlan, filtroEstado, filtroMes]);
 
   function limpiarFiltros() {
     setFiltroCliente(""); setFiltroPlan(""); setFiltroEstado(""); setFiltroMes("");
@@ -331,15 +365,14 @@ function CotizacionesTable() {
       )}
 
       <div>
-        {/* Encabezado */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem", flexWrap: "wrap", gap: "8px" }}>
           <div>
             <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a", marginBottom: "4px" }}>Cotizaciones</h1>
-            {/* Contador resumen */}
             <div style={{ display: "flex", gap: "12px", fontSize: "12px" }}>
               <span style={{ color: "#854d0e", fontWeight: 500 }}>● {pendientes} pendiente{pendientes !== 1 ? "s" : ""}</span>
               <span style={{ color: "#166534", fontWeight: 500 }}>● {aprobadas} aprobada{aprobadas !== 1 ? "s" : ""}</span>
               <span style={{ color: "#991b1b", fontWeight: 500 }}>● {rechazadas} rechazada{rechazadas !== 1 ? "s" : ""}</span>
+              <span style={{ color: "#6b21a8", fontWeight: 500 }}>● {vencidas} vencida{vencidas !== 1 ? "s" : ""}</span>
             </div>
           </div>
         </div>
@@ -359,7 +392,9 @@ function CotizacionesTable() {
           </select>
           <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} style={{ ...inputStyle, maxWidth: "150px" }}>
             <option value="">Todos los estados</option>
-            {["Pendiente", "Aprobada", "Rechazada"].map(e => <option key={e} value={e}>{e}</option>)}
+            {["Pendiente", "Aprobada", "Rechazada", "Vencida"].map(e => (
+              <option key={e} value={e}>{e}</option>
+            ))}
           </select>
           <select value={filtroMes} onChange={(e) => setFiltroMes(e.target.value)} style={{ ...inputStyle, maxWidth: "160px" }}>
             <option value="">Todos los meses</option>
@@ -382,26 +417,23 @@ function CotizacionesTable() {
             <thead>
               <tr style={{ background: "#f1f5f9", textAlign: "left" }}>
                 {COLS.map(col => (
-                  <th
-                    key={col.key}
-                    onClick={() => toggleSort(col.key)}
-                    style={{ padding: "0.75rem 1rem", color: "#475569", fontWeight: 600, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}
-                  >
-                    {col.label}{" "}
-                    <span style={{ color: sortKey === col.key ? "#534AB7" : "#cbd5e1", fontSize: "11px" }}>
-                      {sortKey === col.key ? (sortDir === "asc" ? "↑" : "↓") : "↕"}
-                    </span>
+                  <th key={col.key} style={{ padding: "0.75rem 1rem", color: "#475569", fontWeight: 600, whiteSpace: "nowrap" }}>
+                    {col.label}
                   </th>
                 ))}
+                <th style={{ padding: "0.75rem 1rem", color: "#475569", fontWeight: 600, whiteSpace: "nowrap" }}>
+                  Tiempo restante
+                </th>
                 <th style={{ padding: "0.75rem 1rem" }} />
               </tr>
             </thead>
             <tbody>
               {filas.map((c, i) => {
-                const estadoN   = c.estado?.toLowerCase();
-                const badge     = BADGE[estadoN] ?? { bg: "#f1f5f9", color: "#475569" };
-                const bloqueado = actualizandoId === c.idSolicitud;
+                const estadoN    = c.estado?.toLowerCase();
+                const badge      = BADGE[estadoN] ?? { bg: "#f1f5f9", color: "#475569" };
+                const bloqueado  = actualizandoId === c.idSolicitud;
                 const esPendiente = c.estado === "Pendiente";
+                const esVencida   = c.estado === "Vencida";
 
                 return (
                   <tr
@@ -411,7 +443,9 @@ function CotizacionesTable() {
                       background: i % 2 === 0 ? "#fff" : "#f8fafc",
                       opacity: bloqueado ? 0.6 : 1,
                       transition: "opacity .2s",
-                      borderLeft: esPendiente ? "3px solid #f59e0b" : "3px solid transparent",
+                      borderLeft: esVencida   ? "3px solid #6b21a8" :
+                                  esPendiente ? "3px solid #f59e0b" :
+                                  "3px solid transparent",
                     }}
                   >
                     <td style={{ padding: "0.75rem 1rem", color: "#0f172a", fontWeight: 500 }}>
@@ -430,6 +464,9 @@ function CotizacionesTable() {
                     </td>
                     <td style={{ padding: "0.75rem 1rem", color: "#64748b", fontSize: "13px" }}>
                       {formatFecha(c.fechaCreacion)}
+                    </td>
+                    <td style={{ padding: "0.75rem 1rem" }}>
+                      <TiempoRestante fechaLimite={c.fechaLimite} estado={c.estado} />
                     </td>
                     <td style={{ padding: "0.75rem 1rem" }}>
                       <button
@@ -468,21 +505,17 @@ const overlayStyle = {
   display: "flex", alignItems: "center", justifyContent: "center",
   zIndex: 50, padding: "1rem",
 };
-
 const labelStyle = {
   display: "block", fontSize: "13px", fontWeight: 500, color: "#64748b", marginBottom: "8px",
 };
-
 const inputStyle = {
   width: "100%", padding: "8px 12px", border: "1px solid #e2e8f0",
   borderRadius: "8px", fontSize: "13px", background: "#fff", color: "#0f172a", outline: "none",
 };
-
 const btnPrimario = {
   padding: "8px 16px", borderRadius: "8px", border: "none",
   background: "#534AB7", color: "#fff", fontSize: "13px", fontWeight: 500, cursor: "pointer",
 };
-
 const btnSecundario = {
   padding: "8px 16px", borderRadius: "8px", border: "1px solid #e2e8f0",
   background: "#fff", color: "#475569", fontSize: "13px", fontWeight: 500, cursor: "pointer",

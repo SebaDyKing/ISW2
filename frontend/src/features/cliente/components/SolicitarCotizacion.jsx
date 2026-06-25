@@ -29,6 +29,8 @@ const FRECUENCIAS_PERSONALIZADO = [
 ];
 
 const MAX_CHARS = 500;
+const MAX_SUPERFICIE = 99999;
+const MAX_PERSONAS   = 9999;
 
 function ModalConfirmacion({ estilo, onVolver }) {
   return (
@@ -56,8 +58,7 @@ function ModalConfirmacion({ estilo, onVolver }) {
         </p>
         <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "1.75rem" }}>
           Hemos recibido tu solicitud de cotización correctamente. Nuestro equipo la revisará
-          y se pondrá en contacto contigo a la brevedad posible para entregarte una propuesta
-          adaptada a tus necesidades.
+          y te notificaremos por correo en un plazo máximo de <strong style={{ color: "#0f172a" }}>24 horas hábiles</strong>.
         </p>
         <button
           onClick={onVolver}
@@ -114,6 +115,20 @@ function SolicitarCotizacion() {
 
   const handleChip = (texto) => {
     setComentarios((prev) => prev ? `${prev} ${texto}.` : `${texto}.`);
+  };
+
+  const handleSuperficie = (e) => {
+    const raw = e.target.value;
+    if (raw === "") { setSuperficie(""); return; }
+    const num = Math.min(Math.max(1, parseInt(raw, 10) || 1), MAX_SUPERFICIE);
+    setSuperficie(String(num));
+  };
+
+  const handleNumPersonas = (e) => {
+    const raw = e.target.value;
+    if (raw === "") { setNumPersonas(""); return; }
+    const num = Math.min(Math.max(1, parseInt(raw, 10) || 1), MAX_PERSONAS);
+    setNumPersonas(String(num));
   };
 
   const handleSubmit = async (e) => {
@@ -304,7 +319,7 @@ function SolicitarCotizacion() {
 
             <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "1.25rem 0" }} />
 
-            {/* Comentarios — diferenciados por plan */}
+            {/* Comentarios */}
             {esPersonalizado ? (
               <div style={{ marginBottom: "1.25rem" }}>
                 <label style={labelStyle}>Detalles del servicio</label>
@@ -313,19 +328,33 @@ function SolicitarCotizacion() {
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
                   <div>
-                    <label style={{ ...labelStyle, fontSize: "12px" }}>Superficie aprox. (m²)</label>
+                    <label style={{ ...labelStyle, fontSize: "12px" }}>
+                      Superficie aprox. (m²)
+                      <span style={{ fontWeight: 400, color: "#94a3b8" }}> máx. {MAX_SUPERFICIE.toLocaleString("es-CL")}</span>
+                    </label>
                     <input
-                      type="number" min="1" value={superficie}
-                      onChange={(e) => setSuperficie(e.target.value)}
-                      placeholder="Ej: 800" style={inputStyle}
+                      type="number"
+                      min="1"
+                      max={MAX_SUPERFICIE}
+                      value={superficie}
+                      onChange={handleSuperficie}
+                      placeholder="Ej: 800"
+                      style={inputStyle}
                     />
                   </div>
                   <div>
-                    <label style={{ ...labelStyle, fontSize: "12px" }}>Personas en el recinto</label>
+                    <label style={{ ...labelStyle, fontSize: "12px" }}>
+                      Personas en el recinto
+                      <span style={{ fontWeight: 400, color: "#94a3b8" }}> máx. {MAX_PERSONAS.toLocaleString("es-CL")}</span>
+                    </label>
                     <input
-                      type="number" min="1" value={numPersonas}
-                      onChange={(e) => setNumPersonas(e.target.value)}
-                      placeholder="Ej: 50" style={inputStyle}
+                      type="number"
+                      min="1"
+                      max={MAX_PERSONAS}
+                      value={numPersonas}
+                      onChange={handleNumPersonas}
+                      placeholder="Ej: 50"
+                      style={inputStyle}
                     />
                   </div>
                 </div>
