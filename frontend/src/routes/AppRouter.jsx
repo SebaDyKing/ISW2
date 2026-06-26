@@ -81,7 +81,7 @@ function AppRouter() {
         </Route>
 
         <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
-        <Route path="/cliente"    element={<PrivateRoute allowedRoles={["cliente"]}><PanelClienteProximamente /></PrivateRoute>} />
+        <Route path="/cliente" element={<PrivateRoute allowedRoles={["cliente"]}><Navigate to="/cliente/cotizar" replace /></PrivateRoute>} />
         <Route path="*"           element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
