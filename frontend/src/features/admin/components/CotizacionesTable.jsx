@@ -9,6 +9,8 @@ const BADGE = {
   vencida:   { bg: "#f3e8ff", color: "#6b21a8" },
 };
 
+const FILAS_POR_PAGINA = 10;
+
 function formatFecha(ts, opts = { day: "2-digit", month: "short", year: "numeric" }) {
   return ts ? new Date(ts).toLocaleDateString("es-CL", opts) : "—";
 }
@@ -252,13 +254,51 @@ function Fila({ label, valor }) {
   );
 }
 
+// ── Paginación ─────────────────────────────────────────────────────────────────
+function Paginacion({ paginaActual, totalPaginas, onChange }) {
+  if (totalPaginas <= 1) return null;
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", marginTop: "1rem" }}>
+      <button
+        onClick={() => onChange(paginaActual - 1)}
+        disabled={paginaActual === 1}
+        style={btnPag(paginaActual === 1)}
+      >
+        ‹ Anterior
+      </button>
+      {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(n => (
+        <button
+          key={n}
+          onClick={() => onChange(n)}
+          style={{
+            padding: "5px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 600,
+            border: n === paginaActual ? "1px solid #534AB7" : "1px solid #e2e8f0",
+            background: n === paginaActual ? "#534AB7" : "#fff",
+            color: n === paginaActual ? "#fff" : "#475569",
+            cursor: "pointer",
+          }}
+        >
+          {n}
+        </button>
+      ))}
+      <button
+        onClick={() => onChange(paginaActual + 1)}
+        disabled={paginaActual === totalPaginas}
+        style={btnPag(paginaActual === totalPaginas)}
+      >
+        Siguiente ›
+      </button>
+    </div>
+  );
+}
+
 // ── Tabla principal ────────────────────────────────────────────────────────────
 const COLS = [
-  { key: "cliente",       label: "Cliente"          },
-  { key: "instalacion",   label: "Instalación"      },
-  { key: "plan",          label: "Plan"             },
-  { key: "estado",        label: "Estado"           },
-  { key: "fechaCreacion", label: "Fecha"            },
+  { key: "cliente",       label: "Cliente"     },
+  { key: "instalacion",   label: "Instalación" },
+  { key: "plan",          label: "Plan"        },
+  { key: "estado",        label: "Estado"      },
+  { key: "fechaCreacion", label: "Fecha"       },
 ];
 
 function CotizacionesTable() {
@@ -267,6 +307,7 @@ function CotizacionesTable() {
   const [actualizandoId, setActualizandoId] = useState(null);
   const [modalDetalle, setModalDetalle]     = useState(null);
   const [modalResolver, setModalResolver]   = useState(null);
+  const [pagina, setPagina]                 = useState(1);
 
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroPlan,    setFiltroPlan]    = useState("");
@@ -311,6 +352,9 @@ function CotizacionesTable() {
 
   useEffect(() => { cargar(); }, []);
 
+  // Resetear página al cambiar filtros
+  useEffect(() => { setPagina(1); }, [filtroCliente, filtroPlan, filtroEstado, filtroMes]);
+
   const planesUnicos = useMemo(() => [...new Set(cotizaciones.map(c => c.plan?.tipo).filter(Boolean))], [cotizaciones]);
   const mesesUnicos  = useMemo(() => [...new Set(cotizaciones.map(c => mesAnio(c.fechaCreacion)).filter(Boolean))].sort().reverse(), [cotizaciones]);
 
@@ -319,15 +363,13 @@ function CotizacionesTable() {
   const rechazadas = cotizaciones.filter(c => c.estado === "Rechazada").length;
   const vencidas   = cotizaciones.filter(c => c.estado === "Vencida").length;
 
-  const filas = useMemo(() => {
+  const filasFiltradas = useMemo(() => {
     let lista = [...cotizaciones];
-
     if (filtroCliente) lista = lista.filter(c => c.cliente?.nombreEmpresa?.toLowerCase().includes(filtroCliente.toLowerCase()));
     if (filtroPlan)    lista = lista.filter(c => c.plan?.tipo === filtroPlan);
     if (filtroEstado)  lista = lista.filter(c => c.estado === filtroEstado);
     if (filtroMes)     lista = lista.filter(c => mesAnio(c.fechaCreacion) === filtroMes);
 
-    // Siempre por fechaLimite ascendente (más urgentes primero), nulls al final
     lista.sort((a, b) => {
       if (!a.fechaLimite && !b.fechaLimite) return 0;
       if (!a.fechaLimite) return 1;
@@ -338,11 +380,14 @@ function CotizacionesTable() {
     return lista;
   }, [cotizaciones, filtroCliente, filtroPlan, filtroEstado, filtroMes]);
 
+  const totalPaginas = Math.max(1, Math.ceil(filasFiltradas.length / FILAS_POR_PAGINA));
+  const paginaReal   = Math.min(pagina, totalPaginas);
+  const filasPagina  = filasFiltradas.slice((paginaReal - 1) * FILAS_POR_PAGINA, paginaReal * FILAS_POR_PAGINA);
+  const hayFiltros   = filtroCliente || filtroPlan || filtroEstado || filtroMes;
+
   function limpiarFiltros() {
     setFiltroCliente(""); setFiltroPlan(""); setFiltroEstado(""); setFiltroMes("");
   }
-
-  const hayFiltros = filtroCliente || filtroPlan || filtroEstado || filtroMes;
 
   if (cargando) return <p style={{ color: "#64748b" }}>Cargando...</p>;
 
@@ -428,7 +473,7 @@ function CotizacionesTable() {
               </tr>
             </thead>
             <tbody>
-              {filas.map((c, i) => {
+              {filasPagina.map((c, i) => {
                 const estadoN    = c.estado?.toLowerCase();
                 const badge      = BADGE[estadoN] ?? { bg: "#f1f5f9", color: "#475569" };
                 const bloqueado  = actualizandoId === c.idSolicitud;
@@ -482,16 +527,20 @@ function CotizacionesTable() {
             </tbody>
           </table>
 
-          {filas.length === 0 && (
+          {filasPagina.length === 0 && (
             <p style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>
               {hayFiltros ? "No hay cotizaciones que coincidan con los filtros." : "No hay cotizaciones registradas."}
             </p>
           )}
         </div>
 
-        {filas.length > 0 && cotizaciones.length > 0 && (
+        {/* Paginación + conteo */}
+        <Paginacion paginaActual={paginaReal} totalPaginas={totalPaginas} onChange={setPagina} />
+
+        {filasFiltradas.length > 0 && (
           <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "0.75rem", textAlign: "right" }}>
-            Mostrando {filas.length} de {cotizaciones.length} solicitudes
+            Mostrando {Math.min((paginaReal - 1) * FILAS_POR_PAGINA + 1, filasFiltradas.length)}–{Math.min(paginaReal * FILAS_POR_PAGINA, filasFiltradas.length)} de {filasFiltradas.length} solicitud{filasFiltradas.length !== 1 ? "es" : ""}
+            {hayFiltros && cotizaciones.length !== filasFiltradas.length && ` (${cotizaciones.length} en total)`}
           </p>
         )}
       </div>
@@ -520,5 +569,10 @@ const btnSecundario = {
   padding: "8px 16px", borderRadius: "8px", border: "1px solid #e2e8f0",
   background: "#fff", color: "#475569", fontSize: "13px", fontWeight: 500, cursor: "pointer",
 };
+const btnPag = (disabled) => ({
+  padding: "5px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: 500,
+  border: "1px solid #e2e8f0", background: "#fff", color: disabled ? "#cbd5e1" : "#475569",
+  cursor: disabled ? "not-allowed" : "pointer",
+});
 
 export default CotizacionesTable;
