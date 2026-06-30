@@ -2,6 +2,9 @@
 import { AppDataSource } from "../config/configDb.js";
 import { Usuario } from "../models/Usuario.js";
 import { Empleado } from "../models/Empleado.js";
+import { Cliente } from "../models/Cliente.js";
+import { Supervisor } from "../models/Supervisor.js";
+import { Administrador } from "../models/Administrador.js";
 import bcrypt from "bcrypt";
 
 export async function crearUsuarioService(datosUsuario) {
@@ -28,6 +31,24 @@ export async function crearUsuarioService(datosUsuario) {
     });
 
     const usuarioGuardado = await usuarioRepository.save(nuevoUsuario);
+
+    if (rol === "empleado") {
+      const empleadoRepo = AppDataSource.getRepository(Empleado);
+      await empleadoRepo.save(empleadoRepo.create({ usuario: usuarioGuardado, rut }));
+    } else if (rol === "supervisor") {
+      const supervisorRepo = AppDataSource.getRepository(Supervisor);
+      await supervisorRepo.save(supervisorRepo.create({ usuario: usuarioGuardado, rut }));
+    } else if (rol === "administrador") {
+      const adminRepo = AppDataSource.getRepository(Administrador);
+      await adminRepo.save(adminRepo.create({ usuario: usuarioGuardado }));
+    } else if (rol === "cliente") {
+      const clienteRepo = AppDataSource.getRepository(Cliente);
+      await clienteRepo.save(clienteRepo.create({ 
+        usuario: usuarioGuardado, 
+        nombreEmpresa: nombre, 
+        telefono: "Sin asignar" 
+      }));
+    }
 
     // 5. Por seguridad, no se devuelve el passwordHash al frontend
     const { passwordHash: _, ...usuarioSinPassword } = usuarioGuardado;

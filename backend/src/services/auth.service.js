@@ -39,14 +39,17 @@ export async function registrarUsuarioService(datosRegistro) {
   });
   await clienteRepo.save(nuevoCliente);
 
-  delete usuarioGuardado.passwordHash;
-  return usuarioGuardado;
+  const { passwordHash: _, ...usuarioSinPassword } = usuarioGuardado;
+  return usuarioSinPassword;
 }
 
 export async function loginService(correo, password) {
   const usuarioRepo = AppDataSource.getRepository(Usuario);
 
-  const usuario = await usuarioRepo.findOne({ where: { correo } });
+  const usuario = await usuarioRepo.findOne({
+    where: { correo },
+    select: ["idUsuario", "correo", "rol", "nombre", "apellido", "passwordHash"]
+  });
   if (!usuario) throw new Error("Credenciales incorrectas.");
 
   const passwordValida = await bcrypt.compare(password, usuario.passwordHash);

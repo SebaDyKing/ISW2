@@ -35,6 +35,7 @@ export const Usuario = new EntitySchema({
       name: "password_hash",
       type: "varchar",
       length: 255,
+      select: false,
     },
     createdAt: {
       name: "created_at",
