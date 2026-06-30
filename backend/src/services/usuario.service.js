@@ -129,13 +129,9 @@ try {
 
     if (!usuario) throw new Error("Usuario no encontrado");
 
-    // Si intenta actualizar el RUT
-    if (datosActualizar.rut) {
-      const rutOcupado = await usuarioRepository.findOne({ where: { rut: datosActualizar.rut } });
-      if (rutOcupado && rutOcupado.idUsuario !== idNumerico) {
-        throw new Error("El RUT ya está en uso por otra cuenta.");
-      }
-    }
+    // Por seguridad, aseguramos que el rut y el rol no puedan ser modificados
+    delete datosActualizar.rut;
+    delete datosActualizar.rol;
 
     // Si intenta actualizar el correo
     if (datosActualizar.correo) {

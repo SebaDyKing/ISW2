@@ -49,18 +49,12 @@ export const usuarioUpdateValidation = Joi.object({
     "string.max": "El apellido no puede superar los 50 caracteres.",
     "string.pattern.base": "El apellido solo puede contener letras.",
   }),
-  rut: Joi.string().max(12).pattern(rutRegex).messages({
-    "string.pattern.base": "El RUT debe tener el formato 12345678-9 (sin puntos).",
-  }),
   correo: Joi.string().email().max(150).messages({
     "string.email": "El formato del correo no es válido.",
   }),
   password: Joi.string().min(6).max(50).messages({
     "string.min": "La contraseña debe tener al menos 6 caracteres.",
     "string.max": "La contraseña no puede superar los 50 caracteres.",
-  }),
-  rol: Joi.string().valid("cliente", "empleado", "supervisor", "administrador").messages({
-    "any.only": "El rol debe ser cliente, empleado, supervisor o administrador.",
   }),
 }).min(1).messages({
   "object.min": "Debes proporcionar al menos un campo para actualizar.",

@@ -315,6 +315,8 @@ function UsuariosTable() {
     try {
       const payload = { ...form };
       if (!payload.password) delete payload.password;
+      delete payload.rut;
+      delete payload.rol;
       const res = await actualizarUsuarioService(modalEditar.idUsuario, payload);
       toast.success("Usuario actualizado");
       setUsuarios(prev => prev.map(u => u.idUsuario === modalEditar.idUsuario ? res.data : u));
@@ -360,10 +362,8 @@ function UsuariosTable() {
         <ModalForm titulo="Editar usuario" onClose={() => setModalEditar(null)}>
           <Campo label="Nombre"     value={form.nombre}   onChange={f("nombre")}   placeholder="Juan"                    maxLength={50} error={errores.nombre} />
           <Campo label="Apellido"   value={form.apellido} onChange={f("apellido")} placeholder="Pérez"                   maxLength={50} error={errores.apellido} />
-          <Campo label="RUT"        value={form.rut}      onChange={f("rut")}      placeholder="12345678-9"              maxLength={10} error={errores.rut} />
           <Campo label="Correo"     value={form.correo}   onChange={f("correo")}   placeholder="juan@ejemplo.cl"         maxLength={100} type="email"   error={errores.correo} />
           <Campo label="Nueva contraseña (opcional)" value={form.password} onChange={f("password")} placeholder="Dejar vacío para no cambiar" maxLength={64} type="password" error={errores.password} />
-          <CampoSelect label="Rol" value={form.rol} onChange={f("rol")} error={errores.rol} />
           <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "1rem", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
             <button onClick={() => setModalEditar(null)} style={btnSecundario}>Cancelar</button>
             <button onClick={handleEditar} disabled={guardando} style={{ ...btnPrimario, opacity: guardando ? 0.7 : 1, cursor: guardando ? "not-allowed" : "pointer" }}>
