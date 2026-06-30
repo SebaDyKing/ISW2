@@ -1,8 +1,10 @@
 import jwt from "jsonwebtoken";
 import { handleErrorClient } from "../Handlers/responseHanders.js";
 import { JWT_SECRET } from "../config/configEnv.js";
+import { AppDataSource } from "../config/configDb.js";
+import { Usuario } from "../models/Usuario.js";
 
-export const authMiddleware = (req, res, next) => {
+export const authMiddleware = async (req, res, next) => {
   const token = req.cookies?.accessToken;
 
   if (!token) {
@@ -11,6 +13,15 @@ export const authMiddleware = (req, res, next) => {
 
   try {
     const payload = jwt.verify(token, JWT_SECRET);
+    
+    // Verificación contra la DB para evitar sesiones zombie
+    const usuarioRepo = AppDataSource.getRepository(Usuario);
+    const usuarioActivo = await usuarioRepo.findOne({ where: { idUsuario: payload.idUsuario } });
+    
+    if (!usuarioActivo) {
+      return handleErrorClient(res, 401, "Acceso denegado. Cuenta inactiva o eliminada.");
+    }
+
     req.user = payload;
     next();
   } catch (error) {

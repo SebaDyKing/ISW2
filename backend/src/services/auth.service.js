@@ -80,6 +80,12 @@ export async function loginService(correo, password) {
 export async function refreshAccessTokenService(refreshToken) {
   const payload = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
 
+  const usuarioRepo = AppDataSource.getRepository(Usuario);
+  const usuarioExistente = await usuarioRepo.findOne({ where: { idUsuario: payload.idUsuario } });
+  if (!usuarioExistente) {
+    throw new Error("Usuario eliminado o inactivo");
+  }
+
   const newAccessToken = jwt.sign(
     { idUsuario: payload.idUsuario, rol: payload.rol, correo: payload.correo },
     JWT_SECRET,
