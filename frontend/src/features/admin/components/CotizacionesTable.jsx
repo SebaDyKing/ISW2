@@ -322,7 +322,8 @@ function CotizacionesTable() {
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroPlan,    setFiltroPlan]    = useState("");
   const [filtroEstado,  setFiltroEstado]  = useState("");
-  const [filtroMes,     setFiltroMes]     = useState("");
+  const [fechaDesde,    setFechaDesde]    = useState("");
+  const [fechaHasta,    setFechaHasta]    = useState("");
 
   async function cargar() {
     try {
@@ -383,13 +384,12 @@ function CotizacionesTable() {
   useEffect(() => { cargar(); }, []);
 
   // Resetear página al cambiar filtros o tabs
-  useEffect(() => { setPagina(1); }, [filtroCliente, filtroPlan, filtroEstado, filtroMes, activeTab]);
+  useEffect(() => { setPagina(1); }, [filtroCliente, filtroPlan, filtroEstado, fechaDesde, fechaHasta, activeTab]);
 
   // Limpiar filtro de estado al cambiar de pestaña
   useEffect(() => { setFiltroEstado(""); }, [activeTab]);
 
   const planesUnicos = useMemo(() => [...new Set(cotizaciones.map(c => c?.plan?.tipo).filter(Boolean))], [cotizaciones]);
-  const mesesUnicos  = useMemo(() => [...new Set(cotizaciones.map(c => c?.fechaCreacion ? mesAnio(c.fechaCreacion) : null).filter(Boolean))].sort().reverse(), [cotizaciones]);
 
   const pendientes = cotizaciones.filter(c => c?.estado === "Pendiente").length;
   const aprobadas  = cotizaciones.filter(c => c?.estado === "Aprobada").length;
@@ -409,7 +409,18 @@ function CotizacionesTable() {
     if (filtroCliente) lista = lista.filter(c => c.cliente?.nombreEmpresa?.toLowerCase().includes(filtroCliente.toLowerCase()));
     if (filtroPlan)    lista = lista.filter(c => c.plan?.tipo === filtroPlan);
     if (filtroEstado)  lista = lista.filter(c => c.estado === filtroEstado);
-    if (filtroMes)     lista = lista.filter(c => c.fechaCreacion && mesAnio(c.fechaCreacion) === filtroMes);
+    
+    if (fechaDesde || fechaHasta) {
+      lista = lista.filter(c => {
+        if (!c.fechaCreacion) return false;
+        // Se formatea fechaCreacion cortando la parte de la hora (YYYY-MM-DD)
+        const fechaCotizacionStr = new Date(c.fechaCreacion).toISOString().split("T")[0];
+        
+        if (fechaDesde && fechaCotizacionStr < fechaDesde) return false;
+        if (fechaHasta && fechaCotizacionStr > fechaHasta) return false;
+        return true;
+      });
+    }
 
     lista.sort((a, b) => {
       // Priorizar fechaLimite si existe
@@ -421,15 +432,15 @@ function CotizacionesTable() {
     });
 
     return lista;
-  }, [cotizaciones, filtroCliente, filtroPlan, filtroEstado, filtroMes, activeTab]);
+  }, [cotizaciones, filtroCliente, filtroPlan, filtroEstado, fechaDesde, fechaHasta, activeTab]);
 
   const totalPaginas = Math.max(1, Math.ceil(filasFiltradas.length / FILAS_POR_PAGINA));
   const paginaReal   = Math.min(pagina, totalPaginas);
   const filasPagina  = filasFiltradas.slice((paginaReal - 1) * FILAS_POR_PAGINA, paginaReal * FILAS_POR_PAGINA);
-  const hayFiltros   = filtroCliente || filtroPlan || filtroEstado || filtroMes;
+  const hayFiltros   = filtroCliente || filtroPlan || filtroEstado || fechaDesde || fechaHasta;
 
   function limpiarFiltros() {
-    setFiltroCliente(""); setFiltroPlan(""); setFiltroEstado(""); setFiltroMes("");
+    setFiltroCliente(""); setFiltroPlan(""); setFiltroEstado(""); setFechaDesde(""); setFechaHasta("");
   }
 
   if (cargando) return <p style={{ color: "#64748b" }}>Cargando...</p>;
@@ -510,14 +521,24 @@ function CotizacionesTable() {
               <option key={e} value={e}>{e}</option>
             ))}
           </select>
-          <select value={filtroMes} onChange={(e) => setFiltroMes(e.target.value)} style={{ ...inputStyle, maxWidth: "160px" }}>
-            <option value="">Todos los meses</option>
-            {mesesUnicos.map(m => {
-              const [anio, mes] = m.split("-");
-              const label = new Date(Number(anio), Number(mes) - 1).toLocaleDateString("es-CL", { month: "long", year: "numeric" });
-              return <option key={m} value={m}>{label}</option>;
-            })}
-          </select>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>Desde:</span>
+            <input 
+              type="date" 
+              value={fechaDesde} 
+              onChange={(e) => setFechaDesde(e.target.value)} 
+              style={{ ...inputStyle, padding: "7px 10px", width: "135px" }} 
+            />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>Hasta:</span>
+            <input 
+              type="date" 
+              value={fechaHasta} 
+              onChange={(e) => setFechaHasta(e.target.value)} 
+              style={{ ...inputStyle, padding: "7px 10px", width: "135px" }} 
+            />
+          </div>
           {hayFiltros && (
             <button onClick={limpiarFiltros} style={{ fontSize: "12px", color: "#534AB7", background: "none", border: "none", cursor: "pointer", fontWeight: 500, padding: "0 4px" }}>
               × Limpiar filtros
