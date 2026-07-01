@@ -385,6 +385,9 @@ function CotizacionesTable() {
   // Resetear página al cambiar filtros o tabs
   useEffect(() => { setPagina(1); }, [filtroCliente, filtroPlan, filtroEstado, filtroMes, activeTab]);
 
+  // Limpiar filtro de estado al cambiar de pestaña
+  useEffect(() => { setFiltroEstado(""); }, [activeTab]);
+
   const planesUnicos = useMemo(() => [...new Set(cotizaciones.map(c => c?.plan?.tipo).filter(Boolean))], [cotizaciones]);
   const mesesUnicos  = useMemo(() => [...new Set(cotizaciones.map(c => c?.fechaCreacion ? mesAnio(c.fechaCreacion) : null).filter(Boolean))].sort().reverse(), [cotizaciones]);
 
@@ -503,7 +506,7 @@ function CotizacionesTable() {
           </select>
           <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} style={{ ...inputStyle, maxWidth: "150px" }}>
             <option value="">Todos los estados</option>
-            {["Pendiente", "Aprobada", "Rechazada", "Vencida"].map(e => (
+            {(activeTab === "inbox" ? ["Pendiente", "Vencida"] : ["Aprobada", "Rechazada"]).map(e => (
               <option key={e} value={e}>{e}</option>
             ))}
           </select>
