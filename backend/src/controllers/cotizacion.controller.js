@@ -3,7 +3,8 @@ import {
   crearCotizacionService,
   obtenerCotizacionesService,
   obtenerMisCotizacionesService,
-  actualizarEstadoService
+  actualizarEstadoService,
+  reactivarCotizacionService
 } from "../services/cotizacion.service.js";
 import { cotizacionSchema } from "../validations/cotizacion.validation.js";
 
@@ -93,6 +94,24 @@ export const actualizarEstado = async (req, res) => {
     console.error("Error al actualizar estado:", error);
     if (error.message.includes("no encontrada")) {
       return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+export const reactivarSolicitud = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cotizacionReactivada = await reactivarCotizacionService(id);
+    
+    res.status(200).json({
+      message: "Cotización reactivada correctamente",
+      data: cotizacionReactivada
+    });
+  } catch (error) {
+    console.error("Error al reactivar solicitud:", error);
+    if (error.message.includes("no encontrada") || error.message.includes("Solo se pueden reactivar")) {
+      return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: "Error interno del servidor" });
   }

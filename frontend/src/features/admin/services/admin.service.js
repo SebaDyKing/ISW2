@@ -20,6 +20,11 @@ export async function actualizarEstadoCotizacionService(id, estado, motivo) {
   return res;
 }
 
+export async function reactivarCotizacionService(id) {
+  const res = await api.put(`/cotizaciones/${id}/reactivar`);
+  return res;
+}
+
 export async function crearUsuarioService(datos) {
   const res = await api.post(`/usuarios`, datos);
   return res;

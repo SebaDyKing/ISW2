@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { obtenerCotizacionesService, actualizarEstadoCotizacionService } from "../services/admin.service";
+import { obtenerCotizacionesService, actualizarEstadoCotizacionService, reactivarCotizacionService } from "../services/admin.service";
 import toast from "react-hot-toast";
 
 const BADGE = {
@@ -66,7 +66,7 @@ function TiempoRestante({ fechaLimite, estado }) {
 }
 
 // ── Modal detalle ──────────────────────────────────────────────────────────────
-function ModalDetalle({ cotizacion, onCerrar, onResolver }) {
+function ModalDetalle({ cotizacion, onCerrar, onResolver, onReactivar, actualizandoId }) {
   if (!cotizacion) return null;
   const estadoN = cotizacion.estado?.toLowerCase();
   const badge   = BADGE[estadoN] ?? { bg: "#f1f5f9", color: "#475569" };
@@ -141,10 +141,19 @@ function ModalDetalle({ cotizacion, onCerrar, onResolver }) {
         </div>
 
         <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #e2e8f0", display: "flex", gap: "8px", justifyContent: "flex-end", flexShrink: 0 }}>
-          <button onClick={onCerrar} style={btnSecundario}>Cerrar</button>
+          <button onClick={onCerrar} style={btnSecundario} disabled={actualizandoId === cotizacion.idSolicitud}>Cerrar</button>
           {cotizacion.estado === "Pendiente" && (
             <button onClick={() => onResolver(cotizacion)} style={btnPrimario}>
               Resolver solicitud →
+            </button>
+          )}
+          {cotizacion.estado === "Vencida" && (
+            <button 
+              onClick={() => onReactivar(cotizacion)} 
+              style={{ ...btnPrimario, background: "#8b5cf6" }}
+              disabled={actualizandoId === cotizacion.idSolicitud}
+            >
+              {actualizandoId === cotizacion.idSolicitud ? "Reactivando..." : "Reactivar cotización ↺"}
             </button>
           )}
         </div>
@@ -308,6 +317,7 @@ function CotizacionesTable() {
   const [modalDetalle, setModalDetalle]     = useState(null);
   const [modalResolver, setModalResolver]   = useState(null);
   const [pagina, setPagina]                 = useState(1);
+  const [activeTab, setActiveTab]           = useState("inbox"); // "inbox" o "history"
 
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroPlan,    setFiltroPlan]    = useState("");
@@ -350,10 +360,27 @@ function CotizacionesTable() {
     }).finally(() => setActualizandoId(null));
   }
 
+  async function handleReactivar(c) {
+    setActualizandoId(c.idSolicitud);
+    toast.promise(
+      reactivarCotizacionService(c.idSolicitud),
+      {
+        loading: "Reactivando cotización...",
+        success: "Cotización reactivada. Se ha notificado al cliente.",
+        error:   "Error al reactivar cotización.",
+      }
+    ).then((res) => {
+      setCotizaciones((prev) =>
+        prev.map((x) => x.idSolicitud === c.idSolicitud ? res.data.data : x)
+      );
+      setModalDetalle(null);
+    }).finally(() => setActualizandoId(null));
+  }
+
   useEffect(() => { cargar(); }, []);
 
-  // Resetear página al cambiar filtros
-  useEffect(() => { setPagina(1); }, [filtroCliente, filtroPlan, filtroEstado, filtroMes]);
+  // Resetear página al cambiar filtros o tabs
+  useEffect(() => { setPagina(1); }, [filtroCliente, filtroPlan, filtroEstado, filtroMes, activeTab]);
 
   const planesUnicos = useMemo(() => [...new Set(cotizaciones.map(c => c.plan?.tipo).filter(Boolean))], [cotizaciones]);
   const mesesUnicos  = useMemo(() => [...new Set(cotizaciones.map(c => mesAnio(c.fechaCreacion)).filter(Boolean))].sort().reverse(), [cotizaciones]);
@@ -365,20 +392,30 @@ function CotizacionesTable() {
 
   const filasFiltradas = useMemo(() => {
     let lista = [...cotizaciones];
+    
+    // Filtrar por pestaña
+    if (activeTab === "inbox") {
+      lista = lista.filter(c => c.estado === "Pendiente" || c.estado === "Vencida");
+    } else {
+      lista = lista.filter(c => c.estado === "Aprobada" || c.estado === "Rechazada");
+    }
+
     if (filtroCliente) lista = lista.filter(c => c.cliente?.nombreEmpresa?.toLowerCase().includes(filtroCliente.toLowerCase()));
     if (filtroPlan)    lista = lista.filter(c => c.plan?.tipo === filtroPlan);
     if (filtroEstado)  lista = lista.filter(c => c.estado === filtroEstado);
     if (filtroMes)     lista = lista.filter(c => mesAnio(c.fechaCreacion) === filtroMes);
 
     lista.sort((a, b) => {
-      if (!a.fechaLimite && !b.fechaLimite) return 0;
-      if (!a.fechaLimite) return 1;
-      if (!b.fechaLimite) return -1;
-      return new Date(a.fechaLimite) - new Date(b.fechaLimite);
+      // Priorizar fechaLimite si existe
+      if (a.fechaLimite && b.fechaLimite) return new Date(a.fechaLimite) - new Date(b.fechaLimite);
+      if (a.fechaLimite) return -1;
+      if (b.fechaLimite) return 1;
+      // Fallback a fecha de creación
+      return new Date(b.fechaCreacion) - new Date(a.fechaCreacion);
     });
 
     return lista;
-  }, [cotizaciones, filtroCliente, filtroPlan, filtroEstado, filtroMes]);
+  }, [cotizaciones, filtroCliente, filtroPlan, filtroEstado, filtroMes, activeTab]);
 
   const totalPaginas = Math.max(1, Math.ceil(filasFiltradas.length / FILAS_POR_PAGINA));
   const paginaReal   = Math.min(pagina, totalPaginas);
@@ -398,6 +435,8 @@ function CotizacionesTable() {
           cotizacion={modalDetalle}
           onCerrar={() => setModalDetalle(null)}
           onResolver={(c) => setModalResolver(c)}
+          onReactivar={handleReactivar}
+          actualizandoId={actualizandoId}
         />
       )}
       {modalResolver && (
@@ -415,11 +454,35 @@ function CotizacionesTable() {
             <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a", marginBottom: "4px" }}>Cotizaciones</h1>
             <div style={{ display: "flex", gap: "12px", fontSize: "12px" }}>
               <span style={{ color: "#854d0e", fontWeight: 500 }}>● {pendientes} pendiente{pendientes !== 1 ? "s" : ""}</span>
+              <span style={{ color: "#6b21a8", fontWeight: 500 }}>● {vencidas} vencida{vencidas !== 1 ? "s" : ""}</span>
               <span style={{ color: "#166534", fontWeight: 500 }}>● {aprobadas} aprobada{aprobadas !== 1 ? "s" : ""}</span>
               <span style={{ color: "#991b1b", fontWeight: 500 }}>● {rechazadas} rechazada{rechazadas !== 1 ? "s" : ""}</span>
-              <span style={{ color: "#6b21a8", fontWeight: 500 }}>● {vencidas} vencida{vencidas !== 1 ? "s" : ""}</span>
             </div>
           </div>
+        </div>
+
+        {/* Pestañas (Tabs) */}
+        <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", marginBottom: "1.25rem" }}>
+          <button
+            onClick={() => setActiveTab("inbox")}
+            style={{
+              padding: "10px 20px", fontSize: "14px", fontWeight: 600, background: "none", border: "none", cursor: "pointer",
+              borderBottom: activeTab === "inbox" ? "2px solid #534AB7" : "2px solid transparent",
+              color: activeTab === "inbox" ? "#534AB7" : "#64748b", transition: "all .2s"
+            }}
+          >
+            Bandeja de Entrada ({pendientes + vencidas})
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            style={{
+              padding: "10px 20px", fontSize: "14px", fontWeight: 600, background: "none", border: "none", cursor: "pointer",
+              borderBottom: activeTab === "history" ? "2px solid #534AB7" : "2px solid transparent",
+              color: activeTab === "history" ? "#534AB7" : "#64748b", transition: "all .2s"
+            }}
+          >
+            Historial ({aprobadas + rechazadas})
+          </button>
         </div>
 
         {/* Filtros */}

@@ -3,7 +3,7 @@ import { AppDataSource } from "../config/configDb.js";
 import { SolicitudCotizacion } from "../models/SolicitudCotizacion.js";
 import { Cliente } from "../models/Cliente.js";
 import { Instalacion } from "../models/Instalacion.js";
-import { enviarCorreoSolicitudRecibida, enviarCorreoEstadoCotizacion } from "../utils/email.js";
+import { enviarCorreoSolicitudRecibida, enviarCorreoEstadoCotizacion, enviarCorreoReactivacion } from "../utils/email.js";
 import { agregarHorasHabiles } from "../utils/businessHours.js"; // ← nuevo
 
 const HORAS_HABILES_LIMITE = 24; // configurable 
@@ -125,4 +125,32 @@ export async function actualizarEstadoService(idSolicitud, nuevoEstado, motivo) 
   ).catch((err) => console.error("Error enviando correo de estado:", err));
 
   return cotizacionActualizada;
+}
+
+export async function reactivarCotizacionService(idSolicitud) {
+  const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
+
+  const cotizacion = await repositorio.findOne({
+    where: { idSolicitud: parseInt(idSolicitud) },
+    relations: ["cliente", "cliente.usuario"]
+  });
+  if (!cotizacion) throw new Error("Cotización no encontrada.");
+  if (cotizacion.estado !== "Vencida") throw new Error("Solo se pueden reactivar cotizaciones vencidas.");
+
+  // Nuevo plazo: 24 horas hábiles desde AHORA
+  const ahora = new Date();
+  const nuevaFechaLimite = agregarHorasHabiles(ahora, HORAS_HABILES_LIMITE);
+
+  cotizacion.estado = "Pendiente";
+  cotizacion.fechaLimite = nuevaFechaLimite;
+  
+  const cotizacionReactivada = await repositorio.save(cotizacion);
+
+  enviarCorreoReactivacion(
+    cotizacion.cliente.usuario.correo,
+    cotizacion.cliente.nombreEmpresa,
+    nuevaFechaLimite
+  ).catch((err) => console.error("Error enviando correo de reactivación:", err));
+
+  return cotizacionReactivada;
 }

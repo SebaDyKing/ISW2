@@ -159,6 +159,34 @@ export async function enviarCorreoEstadoCotizacion(correoDestino, nombreEmpresa,
   });
 }
 
+// notificación al cliente cuando se reactiva una cotización
+export async function enviarCorreoReactivacion(correoDestino, nombreEmpresa, nuevaFechaLimite) {
+  await transporter.sendMail({
+    from: `"CleanPro" <${EMAIL_USER}>`,
+    to: correoDestino,
+    subject: "Actualización sobre tu solicitud de cotización",
+    html: `
+      <div style="${baseStyle}">
+        ${header("#534AB7", "Retomamos tu solicitud")}
+        ${bloque(`
+          <p style="font-size: 15px; color: #0f172a; font-weight: 600; margin: 0 0 8px;">Hola, ${nombreEmpresa}</p>
+          <p style="font-size: 14px; color: #475569; line-height: 1.7; margin: 0 0 16px;">
+            Te pedimos sinceras disculpas por la demora en nuestra respuesta. Hemos tenido un alto volumen de solicitudes, pero <strong>hemos retomado tu caso con prioridad máxima.</strong>
+          </p>
+          ${infoBox([
+            ["Nuevo plazo de respuesta", "Antes de 24 horas hábiles"],
+            ["Te notificaremos antes del", formatearFechaLimite(nuevaFechaLimite)],
+          ])}
+          <p style="font-size: 14px; color: #475569; line-height: 1.7; margin: 16px 0 0;">
+            Agradecemos enormemente tu paciencia. Nos pondremos en contacto contigo muy pronto.
+          </p>
+        `)}
+        ${footer()}
+      </div>
+    `,
+  });
+}
+
 // notificación al admin cuando una solicitud vence
 export async function enviarCorreoVencimientoAdmin(correoAdmin, cotizacion) {
   await transporter.sendMail({
