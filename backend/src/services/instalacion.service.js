@@ -16,3 +16,11 @@ export async function obtenerMisInstalacionesService(id_usuario) {
     order: { createdAt: "DESC" },
   });
 }
+
+export async function obtenerInstalacionesService() {
+  const instalacionRepo = AppDataSource.getRepository(Instalacion);
+  return await instalacionRepo.find({
+    relations: ["cliente", "cliente.usuario"],
+    order: { createdAt: "DESC" },
+  });
+}

@@ -7,6 +7,7 @@ import {
     updateContrato,
     updateEstadoContrato,
     deleteContrato,
+    getMisAsignacionesService,
 } from "../services/contrato.service.js";
 import {
     handleSuccess,
@@ -45,6 +46,19 @@ export const getByEmpleado = async (req, res) => {
             handleErrorClient(res, 404, error.message);
         } else {
             handleErrorServer(res, 500, "Error al obtener contratos del empleado", error.message);
+        }
+    }
+};
+
+export const getMisAsignaciones = async (req, res) => {
+    try {
+        const data = await getMisAsignacionesService(Number(req.user.idUsuario));
+        handleSuccess(res, 200, "Mis asignaciones obtenidas", data);
+    } catch (error) {
+        if (error.status === 404) {
+            handleErrorClient(res, 404, error.message);
+        } else {
+            handleErrorServer(res, 500, "Error al obtener asignaciones", error.message);
         }
     }
 };

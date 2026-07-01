@@ -2,7 +2,7 @@
 import { Router } from "express";
 import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
 import { getAll, getById, getByEmpleado, create,
-        update, updateEstado, remove,
+        update, updateEstado, remove, getMisAsignaciones
 } from "../controllers/contrato.controller.js";
 
 const router = Router();
@@ -10,6 +10,7 @@ const router = Router();
 // Lectura — admin y supervisor pueden ver
 router.get("/", authMiddleware, autorizeEntities("administrador", "supervisor"), getAll);
 router.get("/empleado/:id_empleado", authMiddleware, autorizeEntities("administrador", "supervisor"), getByEmpleado);
+router.get("/mis-asignaciones", authMiddleware, autorizeEntities("empleado"), getMisAsignaciones);
 router.get("/:id", authMiddleware, autorizeEntities("administrador", "supervisor"), getById);
 
 // Escritura — solo admin

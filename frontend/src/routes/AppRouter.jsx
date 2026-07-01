@@ -11,6 +11,7 @@ import HojaVidaView         from "../features/admin/components/HojaVidaView";
 import EmpleadoLayout  from "../features/empleado/components/EmpleadoLayout";
 import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
 import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
+import MisAsignacionesView from "../features/empleado/components/MisAsignacionesView";
 import LandingPage         from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
 import MarcarAsistencia from "../components/MarcarAsistencia";
@@ -76,6 +77,7 @@ function AppRouter() {
         <Route path="/empleado" element={<PrivateRoute allowedRoles={["empleado"]}><EmpleadoLayout /></PrivateRoute>}>
           <Route index             element={<Navigate to="asistencia" replace />} />
           <Route path="asistencia" element={<MarcarAsistencia />} />
+          <Route path="asignaciones" element={<MisAsignacionesView />} />
           <Route path="licencias"  element={<MisLicenciasView />} />
           <Route path="hoja-vida"  element={<MisHojasVidaView />} />
         </Route>

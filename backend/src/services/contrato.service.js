@@ -33,6 +33,18 @@ export async function getContratosByEmpleado(idEmpleado) {
     });
 }
 
+export async function getMisAsignacionesService(idUsuario) {
+    const empleado = await AppDataSource.getRepository("Empleado")
+        .findOne({ where: { usuario: { idUsuario } } });
+    if (!empleado) throw { status: 404, message: "Perfil de empleado no encontrado" };
+
+    return await getRepo().find({
+        where: { empleado: { idEmpleado: empleado.idEmpleado } },
+        relations: ["instalacion", "instalacion.cliente"],
+        order: { fechaInicio: "DESC" }
+    });
+}
+
 export async function createContrato(body) {
     const {
         idEmpleado, idInstalacion, tipo, cargo,

@@ -18,7 +18,7 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
     },
   })
 
-  const isPlazoFijo = form.tipo === 'plazo_fijo'
+  const isPlazoFijo = form.tipo === 'Plazo Fijo'
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) onClose()
