@@ -385,16 +385,16 @@ function CotizacionesTable() {
   // Resetear página al cambiar filtros o tabs
   useEffect(() => { setPagina(1); }, [filtroCliente, filtroPlan, filtroEstado, filtroMes, activeTab]);
 
-  const planesUnicos = useMemo(() => [...new Set(cotizaciones.map(c => c.plan?.tipo).filter(Boolean))], [cotizaciones]);
-  const mesesUnicos  = useMemo(() => [...new Set(cotizaciones.map(c => mesAnio(c.fechaCreacion)).filter(Boolean))].sort().reverse(), [cotizaciones]);
+  const planesUnicos = useMemo(() => [...new Set(cotizaciones.map(c => c?.plan?.tipo).filter(Boolean))], [cotizaciones]);
+  const mesesUnicos  = useMemo(() => [...new Set(cotizaciones.map(c => c?.fechaCreacion ? mesAnio(c.fechaCreacion) : null).filter(Boolean))].sort().reverse(), [cotizaciones]);
 
-  const pendientes = cotizaciones.filter(c => c.estado === "Pendiente").length;
-  const aprobadas  = cotizaciones.filter(c => c.estado === "Aprobada").length;
-  const rechazadas = cotizaciones.filter(c => c.estado === "Rechazada").length;
-  const vencidas   = cotizaciones.filter(c => c.estado === "Vencida").length;
+  const pendientes = cotizaciones.filter(c => c?.estado === "Pendiente").length;
+  const aprobadas  = cotizaciones.filter(c => c?.estado === "Aprobada").length;
+  const rechazadas = cotizaciones.filter(c => c?.estado === "Rechazada").length;
+  const vencidas   = cotizaciones.filter(c => c?.estado === "Vencida").length;
 
   const filasFiltradas = useMemo(() => {
-    let lista = [...cotizaciones];
+    let lista = [...cotizaciones].filter(Boolean); // Remover nulos o undefined
     
     // Filtrar por pestaña
     if (activeTab === "inbox") {
@@ -406,7 +406,7 @@ function CotizacionesTable() {
     if (filtroCliente) lista = lista.filter(c => c.cliente?.nombreEmpresa?.toLowerCase().includes(filtroCliente.toLowerCase()));
     if (filtroPlan)    lista = lista.filter(c => c.plan?.tipo === filtroPlan);
     if (filtroEstado)  lista = lista.filter(c => c.estado === filtroEstado);
-    if (filtroMes)     lista = lista.filter(c => mesAnio(c.fechaCreacion) === filtroMes);
+    if (filtroMes)     lista = lista.filter(c => c.fechaCreacion && mesAnio(c.fechaCreacion) === filtroMes);
 
     lista.sort((a, b) => {
       // Priorizar fechaLimite si existe
