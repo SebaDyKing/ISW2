@@ -118,22 +118,26 @@ function ModalConfirmarEliminar({ usuario, onCerrar, onConfirmar, cargando }) {
 }
 
 // ── Campos de formulario ───────────────────────────────────────────────────────
-function Campo({ label, type = "text", value, onChange, placeholder, error, maxLength }) {
+function Campo({ label, type = "text", value, onChange, placeholder, error, maxLength, actionButton }) {
   return (
     <div style={{ marginBottom: "1rem" }}>
       <label style={labelStyle}>{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        style={{
-          ...inputStyle,
-          border: `1px solid ${error ? "#f87171" : "#e2e8f0"}`,
-          boxShadow: error ? "0 0 0 3px rgba(248,113,113,0.15)" : "none",
-        }}
-      />
+      <div style={{ display: "flex", gap: "8px" }}>
+        <input
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          style={{
+            ...inputStyle,
+            flex: 1,
+            border: `1px solid ${error ? "#f87171" : "#e2e8f0"}`,
+            boxShadow: error ? "0 0 0 3px rgba(248,113,113,0.15)" : "none",
+          }}
+        />
+        {actionButton}
+      </div>
       {error && <p style={{ margin: "0.25rem 0 0", fontSize: "0.75rem", color: "#ef4444" }}>{error}</p>}
     </div>
   );
@@ -213,7 +217,8 @@ function UsuariosTable() {
 
   // Filtros
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
-  const [filtroRol,      setFiltroRol]      = useState("");
+  const [filtroBusquedaDebounced, setFiltroBusquedaDebounced] = useState("");
+  const [activeTab, setActiveTab]           = useState(""); // vacío = "Todos"
 
   async function cargar() {
     try {
@@ -228,6 +233,14 @@ function UsuariosTable() {
 
   useEffect(() => { cargar(); }, []);
 
+  // Debounce para búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFiltroBusquedaDebounced(filtroBusqueda);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [filtroBusqueda]);
+
   // Conteos por rol
   const conteos = useMemo(() => {
     const c = { administrador: 0, supervisor: 0, empleado: 0, cliente: 0 };
@@ -237,8 +250,8 @@ function UsuariosTable() {
 
   const filasFiltradas = useMemo(() => {
     let lista = [...usuarios];
-    if (filtroBusqueda) {
-      const q = filtroBusqueda.toLowerCase();
+    if (filtroBusquedaDebounced) {
+      const q = filtroBusquedaDebounced.toLowerCase();
       lista = lista.filter(u =>
         u.nombre?.toLowerCase().includes(q)   ||
         u.apellido?.toLowerCase().includes(q) ||
@@ -246,21 +259,21 @@ function UsuariosTable() {
         u.rut?.toLowerCase().includes(q)
       );
     }
-    if (filtroRol) lista = lista.filter(u => u.rol === filtroRol);
+    if (activeTab) lista = lista.filter(u => u.rol === activeTab);
     return lista;
-  }, [usuarios, filtroBusqueda, filtroRol]);
+  }, [usuarios, filtroBusquedaDebounced, activeTab]);
 
   const totalPaginas  = Math.max(1, Math.ceil(filasFiltradas.length / FILAS_POR_PAGINA));
   const paginaReal    = Math.min(pagina, totalPaginas);
   const filasPagina   = filasFiltradas.slice((paginaReal - 1) * FILAS_POR_PAGINA, paginaReal * FILAS_POR_PAGINA);
-  const hayFiltros    = filtroBusqueda || filtroRol;
+  const hayFiltros    = filtroBusqueda || activeTab;
 
-  function limpiarFiltros() { setFiltroBusqueda(""); setFiltroRol(""); setPagina(1); }
+  function limpiarFiltros() { setFiltroBusqueda(""); setActiveTab(""); setPagina(1); }
 
   function cambiarPagina(n) { setPagina(n); }
 
   // Resetear página cuando cambian filtros
-  useEffect(() => { setPagina(1); }, [filtroBusqueda, filtroRol]);
+  useEffect(() => { setPagina(1); }, [filtroBusquedaDebounced, activeTab]);
 
   async function confirmarEliminar() {
     const u = modalEliminar;
@@ -282,6 +295,18 @@ function UsuariosTable() {
     setForm({ nombre: u.nombre, apellido: u.apellido, rut: u.rut, correo: u.correo, password: "", rol: u.rol });
     setErrores({});
     setModalEditar(u);
+  }
+
+  function generarPassword() {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let pass = "";
+    for (let i = 0; i < 12; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    setForm(prev => ({ ...prev, password: pass }));
+    navigator.clipboard.writeText(pass).then(() => {
+      toast.success("Contraseña generada y copiada al portapapeles");
+    }).catch(() => {
+      toast.success("Contraseña generada (cópiala manualmente)");
+    });
   }
 
   const f = (field) => (e) => {
@@ -347,7 +372,24 @@ function UsuariosTable() {
           <Campo label="Apellido"   value={form.apellido} onChange={f("apellido")} placeholder="Pérez"               maxLength={50} error={errores.apellido} />
           <Campo label="RUT"        value={form.rut}      onChange={f("rut")}      placeholder="12345678-9"          maxLength={10} error={errores.rut} />
           <Campo label="Correo"     value={form.correo}   onChange={f("correo")}   placeholder="juan@ejemplo.cl"     maxLength={100} type="email"   error={errores.correo} />
-          <Campo label="Contraseña" value={form.password} onChange={f("password")} placeholder="Mínimo 6 caracteres" maxLength={64} type="password" error={errores.password} />
+          <Campo 
+            label="Contraseña" 
+            value={form.password} 
+            onChange={f("password")} 
+            placeholder="Mínimo 6 caracteres" 
+            maxLength={64} 
+            type="text" 
+            error={errores.password} 
+            actionButton={
+              <button 
+                type="button" 
+                onClick={generarPassword} 
+                style={{ padding: "0 12px", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px", fontWeight: 600, color: "#475569", cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                Generar
+              </button>
+            }
+          />
           <CampoSelect label="Rol" value={form.rol} onChange={f("rol")} error={errores.rol} />
           <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "1rem", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
             <button onClick={() => setModalCrear(false)} style={btnSecundario}>Cancelar</button>
@@ -363,7 +405,24 @@ function UsuariosTable() {
           <Campo label="Nombre"     value={form.nombre}   onChange={f("nombre")}   placeholder="Juan"                    maxLength={50} error={errores.nombre} />
           <Campo label="Apellido"   value={form.apellido} onChange={f("apellido")} placeholder="Pérez"                   maxLength={50} error={errores.apellido} />
           <Campo label="Correo"     value={form.correo}   onChange={f("correo")}   placeholder="juan@ejemplo.cl"         maxLength={100} type="email"   error={errores.correo} />
-          <Campo label="Nueva contraseña (opcional)" value={form.password} onChange={f("password")} placeholder="Dejar vacío para no cambiar" maxLength={64} type="password" error={errores.password} />
+          <Campo 
+            label="Nueva contraseña (opcional)" 
+            value={form.password} 
+            onChange={f("password")} 
+            placeholder="Dejar vacío para no cambiar" 
+            maxLength={64} 
+            type="text" 
+            error={errores.password} 
+            actionButton={
+              <button 
+                type="button" 
+                onClick={generarPassword} 
+                style={{ padding: "0 12px", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px", fontWeight: 600, color: "#475569", cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                Generar
+              </button>
+            }
+          />
           <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "1rem", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
             <button onClick={() => setModalEditar(null)} style={btnSecundario}>Cancelar</button>
             <button onClick={handleEditar} disabled={guardando} style={{ ...btnPrimario, opacity: guardando ? 0.7 : 1, cursor: guardando ? "not-allowed" : "pointer" }}>
@@ -390,6 +449,29 @@ function UsuariosTable() {
           </button>
         </div>
 
+        {/* Pestañas (Tabs) */}
+        <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", marginBottom: "1.25rem", overflowX: "auto" }}>
+          {[ 
+            {id: "", label: `Todos (${usuarios.length})`}, 
+            {id: "cliente", label: `Clientes (${conteos.cliente})`}, 
+            {id: "empleado", label: `Empleados (${conteos.empleado})`}, 
+            {id: "supervisor", label: `Supervisores (${conteos.supervisor})`}, 
+            {id: "administrador", label: `Administradores (${conteos.administrador})`} 
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: "10px 20px", fontSize: "14px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap",
+                borderBottom: activeTab === tab.id ? "2px solid #534AB7" : "2px solid transparent",
+                color: activeTab === tab.id ? "#534AB7" : "#64748b", transition: "all .2s"
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {/* Filtros */}
         <div style={{ display: "flex", gap: "8px", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
           <input
@@ -399,10 +481,6 @@ function UsuariosTable() {
             onChange={(e) => setFiltroBusqueda(e.target.value)}
             style={{ ...inputStyle, maxWidth: "260px" }}
           />
-          <select value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)} style={{ ...inputStyle, maxWidth: "160px" }}>
-            <option value="">Todos los roles</option>
-            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
           {hayFiltros && (
             <button onClick={limpiarFiltros} style={{ fontSize: "12px", color: "#534AB7", background: "none", border: "none", cursor: "pointer", fontWeight: 500, padding: "0 4px" }}>
               × Limpiar filtros
