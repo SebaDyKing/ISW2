@@ -371,7 +371,10 @@ function CotizacionesTable() {
       }
     ).then((res) => {
       setCotizaciones((prev) =>
-        prev.map((x) => x.idSolicitud === c.idSolicitud ? res.data.data : x)
+        prev.map((x) => x.idSolicitud === c.idSolicitud 
+          ? { ...x, estado: "Pendiente", fechaLimite: res.data.fechaLimite } 
+          : x
+        )
       );
       setModalDetalle(null);
     }).finally(() => setActualizandoId(null));
