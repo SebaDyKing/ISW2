@@ -1,9 +1,19 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAdminDashboard } from './useAdminDashboard'
 import styles from './AdminDashboard.module.css'
 
 export default function AdminDashboard() {
   const { data, loading } = useAdminDashboard()
+  const navigate = useNavigate()
+
+  const handleAlertClick = (alerta) => {
+    // Intentamos extraer el nombre del empleado del mensaje. 
+    // El formato del mensaje es "El empleado Nombre Apellido registrará..."
+    const match = alerta.mensaje.match(/El empleado (.+) registrará/)
+    const nombre = match ? match[1] : ''
+    navigate(`/admin/contratos?search=${encodeURIComponent(nombre)}`)
+  }
 
   if (loading) {
     return (
@@ -118,7 +128,11 @@ export default function AdminDashboard() {
               <p className={styles.emptyText}>No hay alertas pendientes.</p>
             ) : (
               alertas.map((alerta, idx) => (
-                <div key={alerta.idAlerta || idx} className={styles.alertItem}>
+                <div 
+                  key={alerta.idAlerta || idx} 
+                  className={`${styles.alertItem} cursor-pointer hover:bg-slate-50 transition-colors`}
+                  onClick={() => handleAlertClick(alerta)}
+                >
                   <div className={styles.alertItemContent}>
                     <div className={styles.alertItemIconBox}>
                       <svg className={styles.alertItemIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -132,7 +146,7 @@ export default function AdminDashboard() {
                       </p>
                     </div>
                   </div>
-                  <svg className={styles.chevronIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className={`${styles.chevronIcon} text-indigo-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>

@@ -17,7 +17,7 @@ function SkeletonRow() {
   )
 }
 
-export default function ContratosTable({ contratos = [], loading = false, error = null, onSearch, onDelete, onAnexo }) {
+export default function ContratosTable({ contratos = [], loading = false, error = null, onSearch, onAnexo, onFiniquitar, onIndefinido }) {
   const { search, handleSearch } = useContratosTable(onSearch)
 
   return (
@@ -76,7 +76,7 @@ export default function ContratosTable({ contratos = [], loading = false, error 
               </tr>
             )}
             {!loading && !error && contratos.map((contrato) => (
-              <ContratoRow key={contrato.id} contrato={contrato} onDelete={onDelete} onAnexo={onAnexo} />
+              <ContratoRow key={contrato.id} contrato={contrato} onAnexo={onAnexo} onFiniquitar={onFiniquitar} onIndefinido={onIndefinido} />
             ))}
           </tbody>
         </table>

@@ -64,3 +64,26 @@ export async function crearAlerta(idEmpleado, tipo, mensaje, agrupacion, idContr
 
     return alertaGuardada;
 }
+
+export async function resolverAlertasEmpleado(idEmpleado, agrupacion) {
+    if (!idEmpleado) return;
+    const repo = getRepo();
+    
+    // Buscar alertas pendientes para este empleado y agrupación
+    const alertas = await repo.find({
+        where: {
+            Empleado: { idEmpleado },
+            Agrupacion: agrupacion,
+            Estado: "PENDIENTE"
+        }
+    });
+
+    if (alertas.length === 0) return;
+
+    // Marcarlas como RESUELTO
+    for (const alerta of alertas) {
+        alerta.Estado = "RESUELTO";
+    }
+
+    await repo.save(alertas);
+}

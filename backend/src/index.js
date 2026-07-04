@@ -8,6 +8,7 @@ import { HOST, PORT } from "./config/configEnv.js";
 import { routerApi } from "./routes/index.routes.js";
 import { seedDatabase } from "./config/seed.js";
 import authRouter from "./routes/auth.routes.js";
+import { initCronJobs } from "./jobs/vencimientoContratos.job.js";
 
 const app = express();
 const allowedOrigins = [
@@ -32,6 +33,7 @@ connectDB()
   .then(async () => {
     await seedDatabase();
     routerApi(app);
+    initCronJobs();
 
     app.listen(PORT, () => {
       console.log(`Servidor iniciado en ${HOST}:${PORT}`);

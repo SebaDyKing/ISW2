@@ -5,6 +5,7 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
   const {
     form,
     empleados,
+    instalaciones,
     loading,
     loadingOptions,
     error,
@@ -72,6 +73,27 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
                   {empleados.map((e) => (
                     <option key={e.idEmpleado} value={e.idEmpleado}>
                       {e.nombre} {e.apellido}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  Instalación <span className={styles.required}>*</span>
+                </label>
+                <select
+                  name="idInstalacion"
+                  value={form.idInstalacion}
+                  onChange={handleChange}
+                  required
+                  disabled={loadingOptions}
+                  className={`${styles.select} ${loadingOptions ? styles.selectDisabled : ''}`}
+                >
+                  <option value="">Seleccionar...</option>
+                  {instalaciones?.map((i) => (
+                    <option key={i.idInstalacion} value={i.idInstalacion}>
+                      {i.nombre}
                     </option>
                   ))}
                 </select>
@@ -150,6 +172,81 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
                   required
                   min={1}
                   max={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL}
+                  className={styles.input}
+                />
+              </div>
+            </div>
+
+            <div className={styles.divider} />
+
+            {/* Datos Personales */}
+            <p className={styles.sectionLabel}>Datos Personales del Contrato</p>
+            
+            <div className={styles.row}>
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  Nacionalidad <span className={styles.required}>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="nacionalidad"
+                  value={form.nacionalidad}
+                  onChange={handleChange}
+                  placeholder="Ej: Chilena"
+                  required
+                  maxLength={100}
+                  className={styles.input}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  Estado Civil <span className={styles.required}>*</span>
+                </label>
+                <select
+                  name="estadoCivil"
+                  value={form.estadoCivil}
+                  onChange={handleChange}
+                  required
+                  className={styles.select}
+                >
+                  <option value="">Seleccione...</option>
+                  <option value="Soltero/a">Soltero/a</option>
+                  <option value="Casado/a">Casado/a</option>
+                  <option value="Divorciado/a">Divorciado/a</option>
+                  <option value="Viudo/a">Viudo/a</option>
+                  <option value="Acuerdo de Unión Civil">Acuerdo de Unión Civil</option>
+                </select>
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  Fecha Nacimiento <span className={styles.required}>*</span>
+                </label>
+                <input
+                  type="date"
+                  name="fechaNacimiento"
+                  value={form.fechaNacimiento}
+                  onChange={handleChange}
+                  required
+                  className={styles.input}
+                />
+              </div>
+            </div>
+
+            <div className={styles.row}>
+              <div className={styles.field} style={{ flex: 1 }}>
+                <label className={styles.label}>
+                  Domicilio <span className={styles.required}>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="domicilio"
+                  value={form.domicilio}
+                  onChange={handleChange}
+                  placeholder="Ej: Pasaje Los Aromos 123, Concepción"
+                  required
+                  maxLength={255}
                   className={styles.input}
                 />
               </div>

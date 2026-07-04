@@ -42,6 +42,27 @@ export const Contrato = new EntitySchema({
       type: "varchar",
       length: 20,
     },
+    nacionalidad: {
+      type: "varchar",
+      length: 100,
+      nullable: true,
+    },
+    estadoCivil: {
+      name: "estado_civil",
+      type: "varchar",
+      length: 50,
+      nullable: true,
+    },
+    fechaNacimiento: {
+      name: "fecha_nacimiento",
+      type: "date",
+      nullable: true,
+    },
+    domicilio: {
+      type: "varchar",
+      length: 255,
+      nullable: true,
+    },
     createdAt: {
       name: "created_at",
       type: "timestamp",
@@ -64,6 +85,15 @@ export const Contrato = new EntitySchema({
       type: "one-to-many",
       target: "Asistencia",
       inverseSide: "contrato",
+    },
+    instalacion: {
+      type: "many-to-one",
+      target: "Instalacion",
+      nullable: true,
+      joinColumn: {
+        name: "id_instalacion",
+        referencedColumnName: "idInstalacion",
+      },
     },
   },
 });

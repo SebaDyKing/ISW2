@@ -16,7 +16,7 @@ export function useContratos() {
         codigo: `CT-${String(c.idContrato).padStart(4, '0')}`,
         nombre: c.empleado?.usuario ? `${c.empleado.usuario.nombre} ${c.empleado.usuario.apellido}` : 'Sin empleado',
         rut: c.empleado?.rut || 'Sin RUT',
-        instalacion: c.empleado?.instalacion?.nombre || 'Sin instalación',
+        instalacion: c.instalacion?.nombre || 'Sin instalación',
         rol: c.cargo,
         tipoContrato: c.tipo,
         periodoInicio: c.fechaInicio,
@@ -46,5 +46,15 @@ export function useContratos() {
     }
   }, [fetchContratos])
 
-  return { contratos, loading, error, refetch: fetchContratos, deleteContrato }
+  const updateContrato = useCallback(async (id, data) => {
+    try {
+      await contratosService.update(id, data)
+      await fetchContratos()
+    } catch (err) {
+      setError(err?.response?.data?.message ?? 'Error al actualizar el contrato')
+      throw err
+    }
+  }, [fetchContratos])
+
+  return { contratos, loading, error, refetch: fetchContratos, deleteContrato, updateContrato }
 }

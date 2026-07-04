@@ -9,15 +9,14 @@ export async function getMetricasDashboard() {
 
     const personalActivo = await AppDataSource.getRepository("Contrato")
         .createQueryBuilder("contrato")
-        .where("UPPER(contrato.estado) = :estado", { estado: "ACTIVO" })
+        .where("UPPER(contrato.estado) IN (:...estados)", { estados: ["ACTIVO", "POR VENCER"] })
         .getCount();
 
     const resultado = await AppDataSource.getRepository("Contrato")
         .createQueryBuilder("contrato")
-        .innerJoin("contrato.empleado", "empleado")
-        .innerJoin("empleado.instalacion", "instalacion")
+        .innerJoin("contrato.instalacion", "instalacion")
         .select("COUNT(DISTINCT instalacion.id_instalacion)", "count")
-        .where("UPPER(contrato.estado) = :estado", { estado: "ACTIVO" })
+        .where("UPPER(contrato.estado) IN (:...estados)", { estados: ["ACTIVO", "POR VENCER"] })
         .getRawOne();
     
     const instalacionesEnCurso = parseInt(resultado?.count || 0, 10);
@@ -36,18 +35,17 @@ export async function getMetricasDashboard() {
 }
 
 export async function getHistorialReciente() {
-    // Obtenemos los últimos contratos creados como historial
-    const contratos = await AppDataSource.getRepository("Contrato")
+    // Obtenemos los últimos 5 registros de actividad
+    const actividades = await AppDataSource.getRepository("Actividad")
         .find({
-            relations: ["empleado", "empleado.usuario", "empleado.instalacion"],
-            order: { fechaInicio: "DESC" },
+            order: { createdAt: "DESC" },
             take: 5
         });
 
-    return contratos.map(c => ({
-        tipo: "Contrato creado",
-        descripcion: `${c.empleado?.usuario?.nombre} ${c.empleado?.usuario?.apellido} asignado a ${c.empleado?.instalacion?.nombre || 'Sin instalación'}`,
-        fecha: c.fechaInicio
+    return actividades.map(a => ({
+        tipo: a.tipo,
+        descripcion: a.descripcion,
+        fecha: a.createdAt
     }));
 }
 

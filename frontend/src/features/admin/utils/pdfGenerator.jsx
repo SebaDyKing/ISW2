@@ -12,22 +12,26 @@ const styles = StyleSheet.create({
 export const ContractDocument = ({ formData, employeeData, facilityData }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
   const tipoTexto = formData.tipo.replace('_', ' ');
-  
-  const fechaFinTexto = formData.tipo === 'plazo_fijo' 
-    ? `hasta el ${formData.fechaFin}` 
+
+  const fechaFinTexto = (formData.tipo === 'plazo_fijo' || formData.tipo === 'Plazo Fijo')
+    ? `hasta el ${formData.fechaFin}`
     : `de carácter indefinido`;
 
   // Asegurar que employeeData y facilityData existan por precaución
   const emp = employeeData || {};
-  const fac = facilityData || {};
+  const fac = facilityData || emp.instalacion || {};
+
+  const instalacionText = fac.nombre
+    ? `la instalación denominada ${fac.nombre}`
+    : `las instalaciones designadas por la empresa`;
 
   return (
     <Document>
       <Page size="LETTER" style={styles.page}>
         <Text style={styles.title}>CONTRATO DE TRABAJO</Text>
-        
+
         <Text style={styles.paragraph}>
-          En Santiago, a {currentDate}, entre la empresa MiEmpresa SpA, RUT 76.000.000-K, representada legalmente por don/doña Pedro Jefe, RUT 12.345.678-9, ambos domiciliados para estos efectos en Av. Apoquindo 456, en adelante "el Empleador", y don/doña {emp.nombre} {emp.apellido}, de nacionalidad chilena, estado civil soltero, nacido/a el 01/01/1990, RUT {emp.idEmpleado || '11.111.111-1'}, domiciliado en Santiago, en adelante "el Trabajador", se ha convenido el siguiente contrato de trabajo:
+          En Concepción, a {currentDate}, entre la empresa CleanPro SpA, RUT 76.000.000-K, representada legalmente por don/doña Heriberto Mora Vargas , RUT 12.345.678-9, ambos domiciliados para estos efectos en Collao 1202, en adelante "el Empleador", y don/doña {emp.nombre} {emp.apellido}, de nacionalidad {formData.nacionalidad}, estado civil {formData.estadoCivil}, nacido/a el {formData.fechaNacimiento}, RUT {emp.rut || emp.idEmpleado}, domiciliado en {formData.domicilio}, en adelante "el Trabajador", se ha convenido el siguiente contrato de trabajo:
         </Text>
 
         <Text style={styles.paragraph}>
@@ -35,7 +39,7 @@ export const ContractDocument = ({ formData, employeeData, facilityData }) => {
         </Text>
 
         <Text style={styles.paragraph}>
-          SEGUNDO: Lugar de Prestación de Servicios. Los servicios se prestarán única y exclusivamente en la instalación denominada {fac.nombre || `Instalación #${formData.idInstalacion}`}, propiedad del empleador o de sus clientes, sin perjuicio de la facultad del empleador de alterar dicho sitio por causas justificadas, según el artículo 12 del Código del Trabajo.
+          SEGUNDO: Lugar de Prestación de Servicios. Los servicios se prestarán única y exclusivamente en {instalacionText}, propiedad del empleador o de sus clientes, sin perjuicio de la facultad del empleador de alterar dicho sitio por causas justificadas, según el artículo 12 del Código del Trabajo.
         </Text>
 
         <Text style={styles.paragraph}>
@@ -73,13 +77,13 @@ export const ContractDocument = ({ formData, employeeData, facilityData }) => {
 
 export const generateContractPDF = async (formData, employeeData, facilityData) => {
   const doc = <ContractDocument formData={formData} employeeData={employeeData} facilityData={facilityData} />;
-  
+
   const asPdf = pdf([]);
   asPdf.updateContainer(doc);
-  
+
   const blob = await asPdf.toBlob();
   const url = URL.createObjectURL(blob);
-  
+
   const link = document.createElement('a');
   link.href = url;
   const rutOId = employeeData?.idEmpleado || 'Desconocido';
@@ -92,7 +96,7 @@ export const generateContractPDF = async (formData, employeeData, facilityData) 
 
 export const AnexoDocument = ({ contratoAnterior, contratoNuevo }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
-  
+
   // Extraemos las modificaciones comparando el anterior con el nuevo
   const modificaciones = [];
   if (contratoAnterior.cargo !== contratoNuevo.cargo) {
@@ -118,9 +122,9 @@ export const AnexoDocument = ({ contratoAnterior, contratoNuevo }) => {
     <Document>
       <Page size="LETTER" style={styles.page}>
         <Text style={styles.title}>ANEXO DE CONTRATO DE TRABAJO</Text>
-        
+
         <Text style={styles.paragraph}>
-          En Santiago, a {currentDate}, entre la empresa CleanPro SpA, y don/doña {nombreEmpleado}, RUT {rutEmpleado}, en adelante "el Trabajador", se ha convenido el siguiente anexo al contrato de trabajo vigente:
+          En Concepción, a {currentDate}, entre la empresa CleanPro SpA, y don/doña {nombreEmpleado}, RUT {rutEmpleado}, en adelante "el Trabajador", se ha convenido el siguiente anexo al contrato de trabajo vigente:
         </Text>
 
         <Text style={styles.paragraph}>
@@ -160,17 +164,154 @@ export const AnexoDocument = ({ contratoAnterior, contratoNuevo }) => {
 
 export const generateAnexoPDF = async (contratoAnterior, contratoNuevo) => {
   const doc = <AnexoDocument contratoAnterior={contratoAnterior} contratoNuevo={contratoNuevo} />;
-  
+
   const asPdf = pdf([]);
   asPdf.updateContainer(doc);
-  
+
   const blob = await asPdf.toBlob();
   const url = URL.createObjectURL(blob);
-  
+
   const link = document.createElement('a');
   link.href = url;
   const codigo = contratoAnterior.codigo || 'XXXX';
   link.download = `Anexo_${codigo}_${new Date().toISOString().split('T')[0]}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+export const AnexoIndefinidoDocument = ({ contrato, empresa, representante }) => {
+  const currentDate = new Date().toLocaleDateString('es-CL');
+  const nombreEmpleado = contrato.nombre || 'Trabajador';
+  const rutEmpleado = contrato.rut || 'RUT Desconocido';
+  const empresaNombre = empresa?.razonSocial || 'CleanPro SpA';
+  const fechaInicioStr = new Date(contrato.periodoInicio).toLocaleDateString('es-CL');
+
+  return (
+    <Document>
+      <Page size="LETTER" style={styles.page}>
+        <Text style={styles.title}>ANEXO DE CONTRATO DE TRABAJO</Text>
+        <Text style={{ ...styles.title, fontSize: 12, marginTop: -15 }}>PASO A CONTRATO INDEFINIDO</Text>
+
+        <Text style={styles.paragraph}>
+          En Concepción, a {currentDate}, entre la empresa {empresaNombre}, y don/doña {nombreEmpleado}, RUT {rutEmpleado}, en adelante "el Trabajador", se ha convenido el siguiente anexo al contrato de trabajo vigente:
+        </Text>
+
+        <Text style={styles.paragraph}>
+          PRIMERO: Antecedentes. Las partes dejaron constancia que con fecha {fechaInicioStr} celebraron un contrato de trabajo a plazo fijo, mediante el cual el Trabajador presta servicios como {contrato.rol}.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          SEGUNDO: Modificación de la Duración. Por mutuo acuerdo de las partes contratantes, o en cumplimiento de lo establecido en el Código del Trabajo respecto a las renovaciones de contratos a plazo fijo, se acuerda modificar la cláusula relativa a la duración del contrato de trabajo.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          TERCERO: Carácter Indefinido. A contar de esta fecha, el contrato de trabajo original pasa a tener el carácter de INDEFINIDO, rigiéndose en todo lo demás por las cláusulas originalmente pactadas y que no son materia de modificación en este documento.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
+        </Text>
+
+        <View style={styles.signatures}>
+          <View>
+            <View style={styles.signatureLine}>
+              <Text>EL EMPLEADOR</Text>
+            </View>
+          </View>
+          <View>
+            <View style={styles.signatureLine}>
+              <Text>EL TRABAJADOR</Text>
+            </View>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
+export const generateAnexoIndefinidoPDF = async (contrato, empresa, representante) => {
+  const doc = <AnexoIndefinidoDocument contrato={contrato} empresa={empresa} representante={representante} />;
+
+  const asPdf = pdf([]);
+  asPdf.updateContainer(doc);
+
+  const blob = await asPdf.toBlob();
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  const codigo = contrato.codigo || 'XXXX';
+  link.download = `Anexo_Indefinido_${codigo}_${new Date().toISOString().split('T')[0]}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+export const AnexoTrasladoDocument = ({ empleado, instalacionAnterior, instalacionNueva }) => {
+  const currentDate = new Date().toLocaleDateString('es-CL');
+  const nombreEmpleado = `${empleado.nombre} ${empleado.apellido}`;
+  const rutEmpleado = empleado.rut || 'RUT Desconocido';
+  const empresaNombre = 'CleanPro SpA'; // Asumimos CleanPro por ahora
+
+  return (
+    <Document>
+      <Page size="LETTER" style={styles.page}>
+        <Text style={styles.title}>ANEXO DE CONTRATO DE TRABAJO</Text>
+        <Text style={{ ...styles.title, fontSize: 12, marginTop: -15 }}>TRASLADO DE INSTALACIÓN</Text>
+
+        <Text style={styles.paragraph}>
+          En Concepción, a {currentDate}, entre la empresa {empresaNombre}, y don/doña {nombreEmpleado}, RUT {rutEmpleado}, en adelante "el Trabajador", se ha convenido el siguiente anexo al contrato de trabajo vigente:
+        </Text>
+
+        <Text style={styles.paragraph}>
+          PRIMERO: Modificación del Lugar de Trabajo. Por mutuo acuerdo de las partes contratantes, se acuerda modificar la cláusula relativa al lugar de prestación de los servicios del Trabajador.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          SEGUNDO: Nuevo Lugar de Trabajo. A contar de esta fecha, el Trabajador dejará de prestar servicios en la instalación denominada "{instalacionAnterior?.nombre || 'Instalación anterior'}" y pasará a desempeñar sus funciones única y exclusivamente en la instalación denominada "{instalacionNueva?.nombre || 'Instalación nueva'}", ubicada en {instalacionNueva?.direccion || '---'}.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          TERCERO: Vigencia y Condiciones. El presente anexo forma parte integrante del contrato de trabajo original, el cual se mantiene plenamente vigente en todas y cada una de sus partes que no hayan sido modificadas expresamente por el presente documento.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
+        </Text>
+
+        <View style={styles.signatures}>
+          <View>
+            <View style={styles.signatureLine}>
+              <Text>EL EMPLEADOR</Text>
+            </View>
+          </View>
+          <View>
+            <View style={styles.signatureLine}>
+              <Text>EL TRABAJADOR</Text>
+            </View>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
+export const generateAnexoTrasladoPDF = async (empleado, instalacionAnterior, instalacionNueva) => {
+  const doc = <AnexoTrasladoDocument empleado={empleado} instalacionAnterior={instalacionAnterior} instalacionNueva={instalacionNueva} />;
+
+  const asPdf = pdf([]);
+  asPdf.updateContainer(doc);
+
+  const blob = await asPdf.toBlob();
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  const rutClean = (empleado.rut || '').replace(/\./g, '').replace('-', '');
+  link.download = `Anexo_Traslado_${rutClean}_${new Date().toISOString().split('T')[0]}.pdf`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

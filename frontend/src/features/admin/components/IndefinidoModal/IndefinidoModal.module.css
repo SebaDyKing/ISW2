@@ -1,0 +1,53 @@
+@reference "../../../../index.css";
+
+.overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm;
+}
+.modal {
+  @apply bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden;
+}
+
+/* Header */
+.header {
+  @apply flex items-center justify-between px-6 py-5 border-b border-slate-100;
+}
+.headerLeft {
+  @apply flex items-center gap-3;
+}
+.headerIcon {
+  @apply w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center shrink-0;
+}
+.headerIconSvg {
+  @apply w-5 h-5 text-amber-500;
+}
+.headerTitle {
+  @apply text-base font-bold text-slate-800;
+}
+.headerSubtitle {
+  @apply text-xs text-slate-400 mt-0.5;
+}
+.closeBtn {
+  @apply p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors;
+}
+
+/* Body */
+.body {
+  @apply px-6 py-6 space-y-4;
+}
+
+/* Footer */
+.footer {
+  @apply flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50;
+}
+.btnCancel {
+  @apply px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300
+         rounded-xl hover:bg-slate-100 transition-colors;
+}
+.btnSubmit {
+  @apply flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white
+         bg-amber-500 rounded-xl hover:bg-amber-600 transition-colors shadow-sm
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.spinner {
+  @apply w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin;
+}

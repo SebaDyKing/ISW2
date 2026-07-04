@@ -11,11 +11,17 @@ const INITIAL_FORM = {
   jornadaHoras: '',
   fechaInicio: '',
   fechaFin: '',
+  nacionalidad: '',
+  estadoCivil: '',
+  fechaNacimiento: '',
+  domicilio: '',
+  idInstalacion: '',
 }
 
 export function useNuevoContratoModal({ onSuccess } = {}) {
   const [form, setForm] = useState(INITIAL_FORM)
   const [empleados, setEmpleados] = useState([])
+  const [instalaciones, setInstalaciones] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingOptions, setLoadingOptions] = useState(true)
   const [error, setError] = useState(null)
@@ -25,8 +31,12 @@ export function useNuevoContratoModal({ onSuccess } = {}) {
     const fetchOptions = async () => {
       try {
         setLoadingOptions(true)
-        const empRes = await getEmpleados()
+        const [empRes, instRes] = await Promise.all([
+          getEmpleados(),
+          getInstalaciones()
+        ])
         setEmpleados(empRes.data)
+        setInstalaciones(instRes.data)
       } catch {
         setError('Error al cargar opciones del formulario')
       } finally {
@@ -58,11 +68,17 @@ export function useNuevoContratoModal({ onSuccess } = {}) {
         jornadaHoras: parseInt(form.jornadaHoras, 10),
         idEmpleado: parseInt(form.idEmpleado, 10),
         fechaFin: form.fechaFin || null,               // opcional
+        nacionalidad: form.nacionalidad,
+        estadoCivil: form.estadoCivil,
+        fechaNacimiento: form.fechaNacimiento,
+        domicilio: form.domicilio,
+        idInstalacion: form.idInstalacion ? parseInt(form.idInstalacion, 10) : null,
       })
       const employeeData = empleados.find(e => String(e.idEmpleado) === String(form.idEmpleado))
+      const facilityData = instalaciones.find(i => String(i.idInstalacion) === String(form.idInstalacion))
       
       // Generar PDF (facilityData puede pasarse vacío ahora que no se asocia a instalación en contrato)
-      await generateContractPDF(form, employeeData, null)
+      await generateContractPDF(form, employeeData, facilityData)
 
       reset()
       onSuccess?.()
@@ -76,6 +92,7 @@ export function useNuevoContratoModal({ onSuccess } = {}) {
   return {
     form,
     empleados,
+    instalaciones,
     loading,
     loadingOptions,
     error,

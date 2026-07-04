@@ -1,6 +1,7 @@
 "use strict";
 import { AppDataSource } from "../config/configDb.js";
-import { crearAlerta } from "./crearAlerta.service.js";
+import { crearAlerta, resolverAlertasEmpleado } from "./crearAlerta.service.js";
+import { registrarActividad } from "./actividad.service.js";
 import { In } from "typeorm";
 
 const getRepo = () => AppDataSource.getRepository("Contrato");
@@ -10,14 +11,14 @@ const ESTADOS_VALIDOS = ["ACTIVO", "POR VENCER", "FINALIZADO"];
 
 export async function getAllContratos() {
     return await getRepo().find({
-        relations: ["empleado", "empleado.usuario", "empleado.instalacion"],
+        relations: ["empleado", "empleado.usuario", "empleado.instalacion", "instalacion"],
     });
 }
 
 export async function getContratoById(id) {
     const contrato = await getRepo().findOne({
         where: { idContrato: id },
-        relations: ["empleado", "empleado.instalacion"],
+        relations: ["empleado", "empleado.instalacion", "instalacion"],
     });
     if (!contrato) throw { status: 404, message: "Contrato no encontrado" };
     return contrato;
@@ -37,7 +38,9 @@ export async function getContratosByEmpleado(idEmpleado) {
 export async function createContrato(body) {
     const {
         idEmpleado, tipo, cargo,
-        sueldo, jornadaHoras, fechaInicio, fechaFin
+        sueldo, jornadaHoras, fechaInicio, fechaFin,
+        nacionalidad, estadoCivil, fechaNacimiento, domicilio,
+        idInstalacion
     } = body;
 
     // Validaciones de campos obligatorios
@@ -54,7 +57,10 @@ export async function createContrato(body) {
 
     // Verifica que existan las entidades relacionadas
     const empleado = await AppDataSource.getRepository("Empleado")
-        .findOne({ where: { idEmpleado } });
+        .findOne({ 
+            where: { idEmpleado },
+            relations: ["usuario"]
+        });
     if (!empleado) throw { status: 404, message: "Empleado no encontrado" };
 
     const existeContratoActivo = await AppDataSource.getRepository("Contrato")
@@ -105,9 +111,20 @@ export async function createContrato(body) {
             await crearAlerta(
                 idEmpleado,
                 "Alerta de Riesgo Legal (Plazo Fijo)",
-                `El empleado ${empleado.nombre} ${empleado.apellido} registrará su tercer contrato a Plazo Fijo de forma consecutiva.`,
+                `El empleado ${empleado.usuario?.nombre || 'Desconocido'} ${empleado.usuario?.apellido || ''} registrará su tercer contrato a Plazo Fijo de forma consecutiva.`,
                 "LIMITE_PLAZO_FIJO"
             );
+        }
+    }
+
+    let estadoInicial = "ACTIVO";
+    if (fechaFin) {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0); // Ignorar la hora para comparar solo días
+        // Ajustar la fecha fin para comparar correctamente (generalmente viene en YYYY-MM-DD)
+        const dFin = new Date(fechaFin + "T00:00:00"); 
+        if (dFin < hoy) {
+            estadoInicial = "FINALIZADO";
         }
     }
 
@@ -118,11 +135,43 @@ export async function createContrato(body) {
         jornadaHoras,
         fechaInicio,
         fechaFin,
-        estado: "ACTIVO",
+        estado: estadoInicial,
+        nacionalidad,
+        estadoCivil,
+        fechaNacimiento,
+        domicilio,
         empleado: { idEmpleado },
+        ...(idInstalacion && { instalacion: { idInstalacion } })
     });
 
-    return await getRepo().save(nuevo);
+    const contratoGuardado = await getRepo().save(nuevo);
+
+    // Registrar actividad
+    const nombreEmpleado = empleado?.usuario ? `${empleado.usuario.nombre} ${empleado.usuario.apellido}` : `ID ${idEmpleado}`;
+
+    // [NUEVO] Verificación instantánea de vencimiento para nuevos contratos
+    if (tipo === 'Plazo Fijo' && fechaFin && estadoInicial !== 'FINALIZADO') {
+        const diffTime = new Date(fechaFin) - new Date();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays <= 15) {
+            contratoGuardado.estado = 'POR VENCER';
+            await getRepo().save(contratoGuardado);
+            
+            const mensaje = `El contrato a plazo fijo de ${nombreEmpleado} finaliza el ${fechaFin} (en ${diffDays} días).`;
+            await crearAlerta(
+                idEmpleado,
+                "ALERTA VENCIMIENTO",
+                mensaje,
+                "POR_VENCER",
+                contratoGuardado.idContrato
+            );
+        }
+    }
+
+    await registrarActividad("Contrato creado", `Se creó un contrato a ${tipo} para ${nombreEmpleado}`);
+    
+    return contratoGuardado;
 }
 
 export async function updateContrato(id, body) {
@@ -131,6 +180,8 @@ export async function updateContrato(id, body) {
     const {
         idEmpleado, tipo, cargo,
         sueldo, jornadaHoras, fechaInicio, fechaFin, estado,
+        nacionalidad, estadoCivil, fechaNacimiento, domicilio,
+        idInstalacion
     } = body;
 
     // Validaciones solo si vienen los campos
@@ -141,7 +192,7 @@ export async function updateContrato(id, body) {
         throw { status: 400, message: `Estado inválido. Permitidos: ${ESTADOS_VALIDOS.join(", ")}` };
     }
     const inicio = fechaInicio || contrato.fechaInicio;
-    const fin = fechaFin || contrato.fechaFin;
+    const fin = fechaFin !== undefined ? fechaFin : contrato.fechaFin;
     if (fin && new Date(fin) <= new Date(inicio)) {
         throw { status: 400, message: "La fecha fin debe ser posterior a la de inicio" };
     }
@@ -160,10 +211,37 @@ export async function updateContrato(id, body) {
     if (sueldo) contrato.sueldo = sueldo;
     if (jornadaHoras) contrato.jornadaHoras = jornadaHoras;
     if (fechaInicio) contrato.fechaInicio = fechaInicio;
-    if (fechaFin) contrato.fechaFin = fechaFin;
+    if (fechaFin !== undefined) contrato.fechaFin = fechaFin;
     if (estado) contrato.estado = estado;
+    if (nacionalidad !== undefined) contrato.nacionalidad = nacionalidad;
+    if (estadoCivil !== undefined) contrato.estadoCivil = estadoCivil;
+    if (fechaNacimiento !== undefined) contrato.fechaNacimiento = fechaNacimiento;
+    if (domicilio !== undefined) contrato.domicilio = domicilio;
+    if (idInstalacion) {
+        const instalacion = await AppDataSource.getRepository("Instalacion").findOne({ where: { idInstalacion } });
+        if (instalacion) contrato.instalacion = instalacion;
+    }
 
-    return await getRepo().save(contrato);
+    const contratoGuardado = await getRepo().save(contrato);
+
+    // Si el contrato pasa a ser Indefinido, resolvemos las alertas de Plazo Fijo para este empleado
+    if (tipo === 'Indefinido' && contratoGuardado.empleado) {
+        await resolverAlertasEmpleado(contratoGuardado.empleado.idEmpleado, 'LIMITE_PLAZO_FIJO');
+        await resolverAlertasEmpleado(contratoGuardado.empleado.idEmpleado, 'POR_VENCER');
+    }
+
+    if (estado === 'FINALIZADO' && contratoGuardado.empleado) {
+        await resolverAlertasEmpleado(contratoGuardado.empleado.idEmpleado, 'POR_VENCER');
+    }
+
+    // Registrar actividad
+    const cod = `CT-${String(id).padStart(4, '0')}`;
+    let desc = `Se modificó el contrato ${cod}`;
+    if (tipo === 'Indefinido') desc = `Se ascendió a Indefinido el contrato ${cod}`;
+    if (estado === 'FINALIZADO') desc = `Se finiquitó el contrato ${cod}`;
+    await registrarActividad("Contrato modificado", desc);
+
+    return contratoGuardado;
 }
 
 export async function updateEstadoContrato(id, estado) {
@@ -175,10 +253,18 @@ export async function updateEstadoContrato(id, estado) {
     }
     const contrato = await getContratoById(id);
     contrato.estado = estado;
-    return await getRepo().save(contrato);
+    const guardado = await getRepo().save(contrato);
+    
+    const cod = `CT-${String(id).padStart(4, '0')}`;
+    await registrarActividad("Estado modificado", `El contrato ${cod} cambió a estado ${estado}`);
+    
+    return guardado;
 }
 
 export async function deleteContrato(id) {
     const contrato = await getContratoById(id);
     await getRepo().remove(contrato);
+    
+    const cod = `CT-${String(id).padStart(4, '0')}`;
+    await registrarActividad("Contrato eliminado", `Se eliminó el contrato ${cod}`);
 }

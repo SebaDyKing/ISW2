@@ -5,6 +5,8 @@ import ContratosTable from '../../components/ContratosTable/ContratosTable'
 import NuevoContratoModal from '../../components/NuevoContratoModal/NuevoContratoModal'
 import TrasladoModal from '../../components/TrasladoModal/TrasladoModal'
 import AnexoModal from '../../components/AnexoModal/AnexoModal'
+import FiniquitoModal from '../../components/FiniquitoModal/FiniquitoModal'
+import IndefinidoModal from '../../components/IndefinidoModal/IndefinidoModal'
 import styles from './ContratosPage.module.css'
 
 export default function ContratosPage() {
@@ -22,8 +24,19 @@ export default function ContratosPage() {
     setShowAnexoModal,
     selectedContratoForAnexo,
     setSelectedContratoForAnexo,
-    refetch,
-    handleDelete
+    showFiniquitoModal,
+    setShowFiniquitoModal,
+    selectedContratoForFiniquito,
+    setSelectedContratoForFiniquito,
+    isFiniquitando,
+    handleFiniquitar,
+    showIndefinidoModal,
+    setShowIndefinidoModal,
+    selectedContratoForIndefinido,
+    setSelectedContratoForIndefinido,
+    isAscendiendo,
+    handlePasoAIndefinido,
+    refetch
   } = useContratosPage()
 
   return (
@@ -60,10 +73,17 @@ export default function ContratosPage() {
           loading={loading}
           error={error}
           onSearch={setSearch}
-          onDelete={handleDelete}
           onAnexo={(contrato) => {
             setSelectedContratoForAnexo(contrato)
             setShowAnexoModal(true)
+          }}
+          onFiniquitar={(contrato) => {
+            setSelectedContratoForFiniquito(contrato)
+            setShowFiniquitoModal(true)
+          }}
+          onIndefinido={(contrato) => {
+            setSelectedContratoForIndefinido(contrato)
+            setShowIndefinidoModal(true)
           }}
         />
       </div>
@@ -90,6 +110,30 @@ export default function ContratosPage() {
             setSelectedContratoForAnexo(null)
           }}
           onSuccess={refetch}
+        />
+      )}
+
+      {showFiniquitoModal && selectedContratoForFiniquito && (
+        <FiniquitoModal
+          contrato={selectedContratoForFiniquito}
+          onClose={() => {
+            setShowFiniquitoModal(false)
+            setSelectedContratoForFiniquito(null)
+          }}
+          onConfirm={handleFiniquitar}
+          isSubmitting={isFiniquitando}
+        />
+      )}
+
+      {showIndefinidoModal && selectedContratoForIndefinido && (
+        <IndefinidoModal
+          contrato={selectedContratoForIndefinido}
+          onClose={() => {
+            setShowIndefinidoModal(false)
+            setSelectedContratoForIndefinido(null)
+          }}
+          onConfirm={handlePasoAIndefinido}
+          isSubmitting={isAscendiendo}
         />
       )}
     </div>

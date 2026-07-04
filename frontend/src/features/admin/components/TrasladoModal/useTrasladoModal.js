@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { trasladarEmpleado, getEmpleados, getInstalaciones } from '../../services/admin.service'
+import { generateAnexoTrasladoPDF } from '../../utils/pdfGenerator'
 
 const INITIAL_FORM = {
   idEmpleado: '',
@@ -49,6 +50,27 @@ export function useTrasladoModal({ onSuccess } = {}) {
       setLoading(true)
       setError(null)
       await trasladarEmpleado(form.idEmpleado, form.idInstalacion)
+
+      const empId = parseInt(form.idEmpleado, 10)
+      const instId = parseInt(form.idInstalacion, 10)
+      
+      const empleado = empleados.find(e => e.idEmpleado === empId) || {}
+      
+      // Obtener instalación anterior (la que tiene el empleado actualmente)
+      const instAnteriorId = empleado?.instalacion?.idInstalacion
+      const instalacionAnterior = instalaciones.find(i => i.idInstalacion === instAnteriorId) || null
+      
+      // Obtener nueva instalación
+      const instalacionNueva = instalaciones.find(i => i.idInstalacion === instId) || null
+      
+      // Asegurarnos de que tenemos los datos del usuario
+      const empleadoCompleto = {
+        ...empleado,
+        nombre: empleado.nombre || '',
+        apellido: empleado.apellido || ''
+      }
+
+      await generateAnexoTrasladoPDF(empleadoCompleto, instalacionAnterior, instalacionNueva)
 
       reset()
       onSuccess?.()
