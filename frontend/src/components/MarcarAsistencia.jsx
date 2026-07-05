@@ -228,20 +228,22 @@ export default function MarcarAsistencia({ idContratoProp }) {
     }
   };
 
-  // Convierte la fecha del registro a "Hoy", "Ayer" o el día de la semana
+  // Convierte "YYYY-MM-DD" a "Lunes 23 de noviembre 2026"
   const obtenerFechaTexto = (fechaStr) => {
     try {
       const regDate = new Date(fechaStr + "T00:00:00");
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      const diffTime = hoy - regDate;
-      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 0) return "Hoy";
-      if (diffDays === 1) return "Ayer";
-
       const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-      return diasSemana[regDate.getDay()];
+      const meses = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+      ];
+
+      const diaSemana = diasSemana[regDate.getDay()];
+      const diaMes = regDate.getDate();
+      const mes = meses[regDate.getMonth()];
+      const anio = regDate.getFullYear();
+
+      return `${diaSemana} ${diaMes} de ${mes} ${anio}`;
     } catch {
       return fechaStr;
     }
@@ -319,9 +321,9 @@ export default function MarcarAsistencia({ idContratoProp }) {
         ) : (
           <div className="w-full overflow-x-auto">
             {/* Tabla sin líneas */}
-            <div className="min-w-[500px]">
+            <div className="min-w-[650px]">
               {/* Encabezado */}
-              <div className="grid grid-cols-5 text-[10px] font-extrabold text-[#9096a8] uppercase pb-2 mb-2 text-center select-none border-b border-[#e6e9f2]/30">
+              <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] text-[10px] font-extrabold text-[#9096a8] uppercase pb-2 mb-2 text-center select-none border-b border-[#e6e9f2]/30">
                 <div className="text-left">Fecha</div>
                 <div>Inicio de Turno</div>
                 <div>Inicio de Colación</div>
@@ -334,7 +336,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
                 {historial.map((reg) => (
                   <div
                     key={reg.idAsistencia}
-                    className="grid grid-cols-5 text-[12.5px] text-[#4f566b] py-1 text-center font-medium items-center"
+                    className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] text-[12.5px] text-[#4f566b] py-1 text-center font-medium items-center"
                   >
                     <div className="font-bold text-slate-800 text-left">
                       {obtenerFechaTexto(reg.fecha)}
