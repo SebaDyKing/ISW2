@@ -99,8 +99,8 @@ function ModalDetalle({ cotizacion, onCerrar, onResolver, onReactivar, actualiza
           )}
 
           <Seccion titulo="Instalación">
-            <Fila label="Nombre"    valor={cotizacion.instalacion?.nombre    || "—"} />
-            <Fila label="Dirección" valor={cotizacion.instalacion?.direccion || "—"} />
+            <Fila label="Nombre"    valor={cotizacion.instalacion?.nombre    || "Sin asignar"} />
+            <Fila label="Dirección" valor={cotizacion.instalacion?.direccion || "Sin asignar"} />
           </Seccion>
 
           <Seccion titulo="Plan solicitado">
@@ -177,7 +177,7 @@ function ModalResolver({ cotizacion, onCerrar, onConfirmar, cargando }) {
         <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #e2e8f0" }}>
           <p style={{ fontSize: "15px", fontWeight: 600, color: "#0f172a", marginBottom: "2px" }}>Resolver solicitud</p>
           <p style={{ fontSize: "12px", color: "#94a3b8" }}>
-            {cotizacion.cliente?.nombreEmpresa} — {cotizacion.instalacion?.nombre}
+            {cotizacion.cliente?.nombreEmpresa} — {cotizacion.instalacion?.nombre || "Sin asignar"}
           </p>
         </div>
 
@@ -587,7 +587,7 @@ function CotizacionesTable() {
                       {c.cliente?.nombreEmpresa || "—"}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", color: "#475569" }}>
-                      {c.instalacion?.nombre || "—"}
+                      {c.instalacion?.nombre || "Sin asignar"}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", color: "#475569" }}>
                       {c.plan?.tipo || "—"}

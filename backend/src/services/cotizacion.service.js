@@ -21,20 +21,23 @@ export async function crearCotizacionService(datosCotizacion) {
   });
   if (!clienteActual) throw new Error("Perfil de cliente no encontrado para este usuario.");
 
-  const instalacionValida = await instalacionRepo.findOne({
-    where: { idInstalacion: id_instalacion, cliente: { idCliente: clienteActual.idCliente } },
-    relations: ["cliente"]
-  });
-  if (!instalacionValida) throw new Error("La instalación indicada no existe o no pertenece a tu cuenta.");
+  let instalacionValida = null;
+  if (id_instalacion) {
+    instalacionValida = await instalacionRepo.findOne({
+      where: { idInstalacion: id_instalacion, cliente: { idCliente: clienteActual.idCliente } },
+      relations: ["cliente"]
+    });
+    if (!instalacionValida) throw new Error("La instalación indicada no existe o no pertenece a tu cuenta.");
 
-  const cotizacionPendiente = await cotizacionRepo.findOne({
-    where: {
-      estado: "Pendiente",
-      cliente: { idCliente: clienteActual.idCliente },
-      instalacion: { idInstalacion: id_instalacion }
-    }
-  });
-  if (cotizacionPendiente) throw new Error("Esta instalación ya tiene una cotización pendiente. Espera a que sea respondida.");
+    const cotizacionPendiente = await cotizacionRepo.findOne({
+      where: {
+        estado: "Pendiente",
+        cliente: { idCliente: clienteActual.idCliente },
+        instalacion: { idInstalacion: id_instalacion }
+      }
+    });
+    if (cotizacionPendiente) throw new Error("Esta instalación ya tiene una cotización pendiente. Espera a que sea respondida.");
+  }
 
   // ── Calcular fecha límite ───────────────────────────────────────────────────
   const ahora = new Date();

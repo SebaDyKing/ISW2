@@ -136,7 +136,6 @@ function SolicitarCotizacion() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!planSeleccionado) { toast.error("Debes seleccionar un plan."); return; }
-    if (!idInstalacion)    { toast.error("Debes seleccionar una instalación."); return; }
     if (esPersonalizado && !comentarios.trim()) {
       toast.error("El plan personalizado requiere que describas tus necesidades en comentarios.");
       return;
@@ -157,7 +156,7 @@ function SolicitarCotizacion() {
     try {
       await solicitarCotizacionService({
         id_plan:         Number(planSeleccionado),
-        id_instalacion:  Number(idInstalacion),
+        id_instalacion:  (idInstalacion && idInstalacion !== "nueva") ? Number(idInstalacion) : null,
         comentarios:     comentarioFinal,
         medioContacto:   medioContacto   || null,
         horarioContacto: horarioContacto || null,
@@ -201,8 +200,20 @@ function SolicitarCotizacion() {
   const instalacionActual = instalaciones.find((i) => i.idInstalacion === Number(idInstalacion));
   const charsRestantes    = MAX_CHARS - comentarios.length;
   const contadorColor     = charsRestantes < 100 ? "#854F0B" : "#94a3b8";
-  const pasoActual        = !planSeleccionado ? 1 : !idInstalacion ? 2 : !comentarios ? 3 : 4;
-  const btnDeshabilitado  = enviando || instalaciones.length === 0 || (esPersonalizado && !comentarios.trim());
+  
+  const instalacionValida = instalaciones.length === 0 || idInstalacion !== "";
+  let pasoActual = 1;
+  if (planSeleccionado) {
+    pasoActual = 2;
+    if (instalacionValida) {
+      pasoActual = 3;
+      if (comentarios.trim().length > 0) {
+        pasoActual = 4;
+      }
+    }
+  }
+
+  const btnDeshabilitado  = enviando || !instalacionValida || (esPersonalizado && !comentarios.trim());
 
   return (
     <>
@@ -370,15 +381,35 @@ function SolicitarCotizacion() {
             <hr style={{ border: "none", borderTop: "1px solid #dde1e9", margin: "1.25rem 0" }} />
 
             {/* Instalación */}
-            <div style={{ marginBottom: "1rem" }}>
-              <label style={labelStyle}>Instalación</label>
+            <div style={{ marginBottom: "1.25rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "8px" }}>
+                <label style={{...labelStyle, marginBottom: 0}}>Instalación a cotizar</label>
+              </div>
+
               {instalaciones.length === 0 ? (
-                <p style={{ fontSize: "13px", color: "#ef4444" }}>
-                  No tienes instalaciones registradas. Contacta al administrador.
-                </p>
+                <div style={{
+                  display: "flex", gap: "12px", alignItems: "flex-start",
+                  background: "#f8fafc", border: "1px solid #e2e8f0",
+                  borderRadius: "8px", padding: "16px", marginBottom: "12px"
+                }}>
+                  <div style={{ color: "#64748b", marginTop: "2px" }}>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a", marginBottom: "4px" }}>
+                      Sin instalaciones registradas
+                    </p>
+                    <p style={{ fontSize: "13px", color: "#475569", lineHeight: "1.5" }}>
+                      Actualmente no posees recintos en tu cuenta. Puedes continuar y enviar esta solicitud de cotización definiendo los detalles de la nueva ubicación en los comentarios. Sin embargo, para agilizar futuras gestiones y obtener presupuestos más precisos, te recomendamos registrar tus instalaciones en la sección correspondiente de tu perfil.
+                    </p>
+                  </div>
+                </div>
               ) : (
                 <select value={idInstalacion} onChange={(e) => setIdInstalacion(e.target.value)} style={inputStyle}>
                   <option value="" disabled>Selecciona una instalación</option>
+                  <option value="nueva" style={{ fontWeight: 500 }}>Cotizar para una nueva ubicación / Sin asignar</option>
                   {instalaciones.map((inst) => (
                     <option key={inst.idInstalacion} value={inst.idInstalacion}>
                       {inst.nombre} — {inst.direccion}
@@ -531,7 +562,7 @@ function SolicitarCotizacion() {
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
                       <span style={{ color: "#64748b" }}>Instalación</span>
                       <span style={{ fontWeight: 500, color: "#0f172a" }}>
-                        {instalacionActual ? instalacionActual.nombre : "—"}
+                        {instalacionActual ? instalacionActual.nombre : "Sin asignar"}
                       </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
