@@ -315,7 +315,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
           onClick={handleEntrada}
           className="w-full border-none rounded-xl p-5 text-base font-bold text-white transition-all duration-150 active:scale-[0.98] cursor-pointer bg-[#166534] hover:brightness-[1.05] disabled:bg-[#e2e5ee] disabled:text-[#a7acbd] disabled:cursor-not-allowed disabled:transform-none disabled:filter-none mb-3.5 flex items-center justify-center gap-2"
         >
-          <span className="text-lg">▶</span> Iniciar Turno
+          Iniciar Turno
         </button>
 
         {/* Acciones de Colación (Iniciar / Terminar) */}
@@ -325,7 +325,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
             onClick={handleInicioColacion}
             className="border-none rounded-lg p-4 px-2 text-[13.5px] font-bold text-white transition-all duration-150 active:scale-[0.97] cursor-pointer bg-[#854d0e] hover:brightness-[1.05] disabled:bg-[#e2e5ee] disabled:text-[#a7acbd] disabled:cursor-not-allowed disabled:transform-none disabled:filter-none flex items-center justify-center gap-2"
           >
-            <span className="text-base">☕</span> Marcar Colación
+            Marcar Colación
           </button>
 
           <button
@@ -333,7 +333,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
             onClick={handleFinColacion}
             className="border-none rounded-lg p-4 px-2 text-[13.5px] font-bold text-white transition-all duration-150 active:scale-[0.97] cursor-pointer bg-[#1d4ed8] hover:brightness-[1.05] disabled:bg-[#e2e5ee] disabled:text-[#a7acbd] disabled:cursor-not-allowed disabled:transform-none disabled:filter-none flex items-center justify-center gap-2"
           >
-            <span className="text-base">✔</span> Finalizar Colación
+            Finalizar Colación
           </button>
         </div>
 
@@ -343,7 +343,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
           onClick={handleSalida}
           className="w-full border-none rounded-xl p-5 text-base font-bold text-white transition-all duration-150 active:scale-[0.98] cursor-pointer bg-[#ef4444] hover:brightness-[1.05] disabled:bg-[#e2e5ee] disabled:text-[#a7acbd] disabled:cursor-not-allowed disabled:transform-none disabled:filter-none flex items-center justify-center gap-2"
         >
-          <span className="text-lg">■</span> Finalizar Turno
+          Finalizar Turno
         </button>
       </div>
 
