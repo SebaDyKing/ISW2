@@ -1,18 +1,20 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import LoginForm    from "../features/auth/components/LoginForm";
+import LoginForm from "../features/auth/components/LoginForm";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import PrivateRoute from "./PrivateRoute";
-import AdminLayout       from "../features/admin/components/AdminLayout";
-import UsuariosTable     from "../features/admin/components/UsuariosTable";
+import AdminLayout from "../features/admin/components/AdminLayout";
+import UsuariosTable from "../features/admin/components/UsuariosTable";
 import CotizacionesTable from "../features/admin/components/CotizacionesTable";
 import LicenciasMedicasView from "../features/admin/components/LicenciasMedicasView";
-import HojaVidaView         from "../features/admin/components/HojaVidaView";
-import EmpleadoLayout  from "../features/empleado/components/EmpleadoLayout";
+import HojaVidaView from "../features/admin/components/HojaVidaView";
+import EmpleadoLayout from "../features/empleado/components/EmpleadoLayout";
 import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
 import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
-import LandingPage         from "../features/cliente/components/LandingPage";
+import LandingPage from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
 import EmpleadoPortal from "../components/EmpleadoPortal";
+import MarcarAsistencia from "../components/MarcarAsistencia";
+import { Toaster } from "react-hot-toast";
 
 function PanelClienteProximamente() {
   const navigate = useNavigate();
@@ -48,8 +50,8 @@ function AppRouter() {
       <Toaster position="top-right" />
       <Routes>
         {/* Pública */}
-        <Route path="/"         element={<LandingPage />} />
-        <Route path="/login"    element={<LoginForm />} />
+        <Route path="/" element={<MarcarAsistencia />} />
+        <Route path="/login" element={<LoginForm />} />
         <Route path="/registro" element={<RegisterForm />} />
 
         {/* Admin */}
@@ -62,10 +64,10 @@ function AppRouter() {
           }
         >
           <Route index element={<Navigate to="usuarios" replace />} />
-          <Route path="usuarios"     element={<UsuariosTable />} />
+          <Route path="usuarios" element={<UsuariosTable />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
-          <Route path="licencias"    element={<LicenciasMedicasView />} />
-          <Route path="hojas-vida"   element={<HojaVidaView />} />
+          <Route path="licencias" element={<LicenciasMedicasView />} />
+          <Route path="hojas-vida" element={<HojaVidaView />} />
         </Route>
 
         {/* Cliente */}
