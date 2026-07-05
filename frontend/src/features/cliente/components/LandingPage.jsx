@@ -3,15 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { obtenerPlanesService } from "../services/cliente.service";
 
 const PLAN_STYLES = {
-  1: { tag: "Básico",   bg: "#f1efff", color: "#534AB7", border: "#534AB7" },
+  1: { tag: "Básico", bg: "#f1efff", color: "#534AB7", border: "#534AB7" },
   2: { tag: "Estándar", bg: "#e1f5ee", color: "#0F6E56", border: "#0F6E56" },
-  3: { tag: "Premium",  bg: "#faeeda", color: "#854F0B", border: "#854F0B" },
+  3: { tag: "Premium", bg: "#faeeda", color: "#854F0B", border: "#854F0B" },
 };
 
 function LandingPage() {
-  const [planes, setPlanes]     = useState([]);
+  const [planes, setPlanes] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [error, setError]       = useState(null);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
@@ -38,7 +38,7 @@ function LandingPage() {
   };
 
   if (cargando) return <p style={{ padding: "2rem", fontSize: "14px", color: "#64748b" }}>Cargando planes...</p>;
-  if (error)    return <p style={{ padding: "2rem", fontSize: "14px", color: "#ef4444" }}>{error}</p>;
+  if (error) return <p style={{ padding: "2rem", fontSize: "14px", color: "#ef4444" }}>{error}</p>;
 
   return (
     <div style={{ maxWidth: "860px", margin: "0 auto", padding: "3rem 2rem" }}>

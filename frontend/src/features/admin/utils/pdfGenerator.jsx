@@ -317,3 +317,84 @@ export const generateAnexoTrasladoPDF = async (empleado, instalacionAnterior, in
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
+
+export const AnexoMultiInstalacionDocument = ({ contrato, payload, instalacionNueva }) => {
+  const currentDate = new Date().toLocaleDateString('es-CL');
+  const nombreEmpleado = contrato.nombre || 'Trabajador';
+  const rutEmpleado = contrato.rut || 'RUT Desconocido';
+  const empresaNombre = 'CleanPro SpA'; 
+  const instalacionOriginal = contrato.instalacion || 'Instalación principal';
+
+  const pagoAdicionalFormat = payload.pagoAdicional 
+    ? `$${Number(payload.pagoAdicional).toLocaleString('es-CL')}` 
+    : '$0';
+
+  return (
+    <Document>
+      <Page size="LETTER" style={styles.page}>
+        <Text style={styles.title}>ANEXO DE CONTRATO DE TRABAJO</Text>
+        <Text style={{ ...styles.title, fontSize: 12, marginTop: -15 }}>ASIGNACIÓN A MÚLTIPLES INSTALACIONES</Text>
+
+        <Text style={styles.paragraph}>
+          En Concepción, a {currentDate}, entre la empresa {empresaNombre}, y don/doña {nombreEmpleado}, RUT {rutEmpleado}, en adelante "el Trabajador", se ha convenido el siguiente anexo al contrato de trabajo vigente:
+        </Text>
+
+        <Text style={styles.paragraph}>
+          PRIMERO: Modificación de la Prestación de Servicios. Por mutuo acuerdo, se acuerda modificar la cláusula relativa al lugar de prestación de los servicios para permitir la distribución de la jornada laboral en múltiples instalaciones de la empresa.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          SEGUNDO: Distribución de Horarios. A partir de esta fecha, el trabajador prestará servicios adicionales en la instalación denominada "{instalacionNueva.nombre}", ubicada en {instalacionNueva.direccion || '---'}.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          TERCERO: Jornada y Remuneración Adicional. Para cumplir con las funciones en la nueva instalación, se acuerda una asignación de {payload.horasSemanales} horas semanales. En compensación por esta asignación, se establece un Pago adicional de {pagoAdicionalFormat} por la nueva instalación.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          CUARTO: Límite Legal. La suma de las horas trabajadas en {instalacionOriginal} y en {instalacionNueva.nombre} no podrá exceder en ningún caso el límite máximo de la jornada ordinaria de trabajo establecido por la ley vigente.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          QUINTO: En todo lo no modificado expresamente por el presente anexo, el contrato original mantiene su plena vigencia y vigor legal entre las partes.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
+        </Text>
+
+        <View style={styles.signatures}>
+          <View>
+            <View style={styles.signatureLine}>
+              <Text>EL EMPLEADOR</Text>
+            </View>
+          </View>
+          <View>
+            <View style={styles.signatureLine}>
+              <Text>EL TRABAJADOR</Text>
+            </View>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
+export const generateAnexoMultiInstalacionPDF = async (contrato, payload, instalacionNueva) => {
+  const doc = <AnexoMultiInstalacionDocument contrato={contrato} payload={payload} instalacionNueva={instalacionNueva} />;
+
+  const asPdf = pdf([]);
+  asPdf.updateContainer(doc);
+
+  const blob = await asPdf.toBlob();
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  const rutClean = (contrato.rut || '').replace(/\./g, '').replace('-', '');
+  link.download = `Anexo_MultiInstalacion_${rutClean}_${new Date().toISOString().split('T')[0]}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};

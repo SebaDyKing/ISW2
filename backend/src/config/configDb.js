@@ -10,6 +10,7 @@ import { ClientePlan } from '../models/ClientePlan.js';
 import { Instalacion } from '../models/Instalacion.js';
 import { SupervisorInstalacion } from '../models/SupervisorInstalacion.js';
 import { Contrato } from '../models/Contrato.js';
+import { ContratoInstalacion } from '../models/ContratoInstalacion.js';
 import { Asistencia } from '../models/Asistencia.js';
 import { LicenciaMedica } from '../models/LicenciaMedica.js';
 import { HojaVida } from '../models/HojaVida.js';
@@ -35,7 +36,7 @@ export const AppDataSource = new DataSource({
   entities: [
     Usuario, Empleado, Administrador, Supervisor,
     Cliente, Plan, ClientePlan, Instalacion,
-    SupervisorInstalacion, Contrato, Asistencia,
+    SupervisorInstalacion, Contrato, ContratoInstalacion, Asistencia,
     LicenciaMedica, HojaVida, ReporteCliente,
     SolicitudCotizacion, Alertas, Actividad
   ],

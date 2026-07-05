@@ -5,15 +5,15 @@ import toast from "react-hot-toast";
 const ESTADOS = ["Pendiente", "Aprobada", "Rechazada"];
 
 const BADGE = {
-  pendiente:  { bg: "#fef9c3", color: "#854d0e" },
-  aprobada:   { bg: "#dcfce7", color: "#166534" },
-  rechazada:  { bg: "#fee2e2", color: "#991b1b" },
+  pendiente: { bg: "#fef9c3", color: "#854d0e" },
+  aprobada: { bg: "#dcfce7", color: "#166534" },
+  rechazada: { bg: "#fee2e2", color: "#991b1b" },
 };
 
 function CotizacionesTable() {
   const [cotizaciones, setCotizaciones] = useState([]);
-  const [cargando, setCargando]         = useState(true);
-  
+  const [cargando, setCargando] = useState(true);
+
   // Nuevo estado para saber qué fila específica se está actualizando
   const [actualizandoId, setActualizandoId] = useState(null);
 
@@ -39,7 +39,7 @@ function CotizacionesTable() {
     setCotizaciones(prev =>
       prev.map(c => c.idSolicitud === id ? { ...c, estado: nuevoEstado } : c)
     );
-    
+
     // Bloqueamos el selector de esta fila mientras trabaja el backend
     setActualizandoId(id);
 
@@ -90,8 +90,8 @@ function CotizacionesTable() {
               return (
                 <tr
                   key={c.idSolicitud}
-                  style={{ 
-                    borderTop: "1px solid #e2e8f0", 
+                  style={{
+                    borderTop: "1px solid #e2e8f0",
                     background: i % 2 === 0 ? "#fff" : "#f8fafc",
                     opacity: estaCargando ? 0.6 : 1, // Damos un ligero efecto de transparencia si está cargando
                     transition: "opacity 0.2s"
@@ -99,7 +99,7 @@ function CotizacionesTable() {
                 >
                   <td style={{ padding: "0.75rem 1rem", color: "#94a3b8" }}>#{c.idSolicitud}</td>
                   <td style={{ padding: "0.75rem 1rem", color: "#0f172a" }}>{c.cliente?.nombreEmpresa || "—"}</td>
-                  
+
                   <td style={{ padding: "0.75rem 1rem", color: "#475569" }}>
                     {c.plan?.tipo || "Sin Plan"}
                   </td>
@@ -111,7 +111,7 @@ function CotizacionesTable() {
                       fontSize: "0.75rem",
                       fontWeight: 600,
                       background: BADGE[estadoNormalizado]?.bg ?? "#f1f5f9",
-                      color:      BADGE[estadoNormalizado]?.color ?? "#475569",
+                      color: BADGE[estadoNormalizado]?.color ?? "#475569",
                     }}>
                       {c.estado}
                     </span>

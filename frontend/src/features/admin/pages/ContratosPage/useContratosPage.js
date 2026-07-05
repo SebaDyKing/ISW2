@@ -13,6 +13,9 @@ export function useContratosPage() {
   const [showAnexoModal, setShowAnexoModal] = useState(false)
   const [selectedContratoForAnexo, setSelectedContratoForAnexo] = useState(null)
   
+  const [showAnexoInstalacionModal, setShowAnexoInstalacionModal] = useState(false)
+  const [selectedContratoForAnexoInstalacion, setSelectedContratoForAnexoInstalacion] = useState(null)
+  
   const [showFiniquitoModal, setShowFiniquitoModal] = useState(false)
   const [selectedContratoForFiniquito, setSelectedContratoForFiniquito] = useState(null)
   const [isFiniquitando, setIsFiniquitando] = useState(false)
@@ -90,6 +93,10 @@ export function useContratosPage() {
     setShowAnexoModal,
     selectedContratoForAnexo,
     setSelectedContratoForAnexo,
+    showAnexoInstalacionModal,
+    setShowAnexoInstalacionModal,
+    selectedContratoForAnexoInstalacion,
+    setSelectedContratoForAnexoInstalacion,
     showFiniquitoModal,
     setShowFiniquitoModal,
     selectedContratoForFiniquito,

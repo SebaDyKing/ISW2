@@ -7,6 +7,7 @@ import {
     updateContrato,
     updateEstadoContrato,
     deleteContrato,
+    agregarInstalacionContrato
 } from "../services/contrato.service.js";
 import {
     handleSuccess,
@@ -97,6 +98,26 @@ export const remove = async (req, res) => {
             handleErrorClient(res, 404, error.message);
         } else {
             handleErrorServer(res, 500, "Error al eliminar contrato", error.message);
+        }
+    }
+};
+
+export const agregarInstalacion = async (req, res) => {
+    try {
+        const { idContrato } = req.params;
+        const { idInstalacion, horasSemanales, pagoAdicional } = req.body;
+
+        if (!idInstalacion || !horasSemanales) {
+            return handleErrorClient(res, 400, "Instalacion y horas semanales son requeridos");
+        }
+
+        const data = await agregarInstalacionContrato(Number(idContrato), Number(idInstalacion), Number(horasSemanales), Number(pagoAdicional) || 0);
+        handleSuccess(res, 201, "Instalación agregada exitosamente al contrato", data);
+    } catch (error) {
+        if (error.status === 400 || error.status === 404) {
+            handleErrorClient(res, error.status, error.message);
+        } else {
+            handleErrorServer(res, 500, "Error al agregar instalación", error.message);
         }
     }
 };

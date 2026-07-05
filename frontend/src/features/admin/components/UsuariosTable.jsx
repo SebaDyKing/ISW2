@@ -12,9 +12,9 @@ const ROLES = ["cliente", "empleado", "supervisor", "administrador"];
 
 const BADGE_ROL = {
   administrador: { bg: "#dbeafe", color: "#1d4ed8" },
-  supervisor:    { bg: "#ede9fe", color: "#6d28d9" },
-  empleado:      { bg: "#dcfce7", color: "#166534" },
-  cliente:       { bg: "#f1f5f9", color: "#475569" },
+  supervisor: { bg: "#ede9fe", color: "#6d28d9" },
+  empleado: { bg: "#dcfce7", color: "#166534" },
+  cliente: { bg: "#f1f5f9", color: "#475569" },
 };
 
 const FORM_VACIO = { nombre: "", apellido: "", rut: "", correo: "", password: "", rol: "cliente" };
@@ -136,14 +136,14 @@ function CampoSelect({ label, value, onChange, error }) {
 }
 
 function UsuariosTable() {
-  const [usuarios,    setUsuarios]    = useState([]);
-  const [cargando,    setCargando]    = useState(true);
-  const [busqueda,    setBusqueda]    = useState("");
-  const [modalCrear,  setModalCrear]  = useState(false);
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [busqueda, setBusqueda] = useState("");
+  const [modalCrear, setModalCrear] = useState(false);
   const [modalEditar, setModalEditar] = useState(null);
-  const [form,        setForm]        = useState(FORM_VACIO);
-  const [errores,     setErrores]     = useState({});
-  const [guardando,   setGuardando]   = useState(false);
+  const [form, setForm] = useState(FORM_VACIO);
+  const [errores, setErrores] = useState({});
+  const [guardando, setGuardando] = useState(false);
 
   async function cargar() {
     try {
@@ -161,9 +161,9 @@ function UsuariosTable() {
   const usuariosFiltrados = usuarios.filter(u => {
     const q = busqueda.toLowerCase();
     return (
-      u.nombre?.toLowerCase().includes(q)   ||
+      u.nombre?.toLowerCase().includes(q) ||
       u.apellido?.toLowerCase().includes(q) ||
-      u.correo?.toLowerCase().includes(q)   ||
+      u.correo?.toLowerCase().includes(q) ||
       u.rut?.toLowerCase().includes(q)
     );
   });
@@ -293,7 +293,7 @@ function UsuariosTable() {
                     padding: "0.2rem 0.6rem", borderRadius: "999px",
                     fontSize: "0.75rem", fontWeight: 600,
                     background: BADGE_ROL[u.rol]?.bg ?? "#f1f5f9",
-                    color:      BADGE_ROL[u.rol]?.color ?? "#475569",
+                    color: BADGE_ROL[u.rol]?.color ?? "#475569",
                   }}>
                     {u.rol ?? "—"}
                   </span>
@@ -334,10 +334,10 @@ function UsuariosTable() {
 
       {modalCrear && (
         <Modal titulo="Nuevo usuario" onClose={() => setModalCrear(false)}>
-          <Campo label="Nombre"     value={form.nombre}   onChange={f("nombre")}   placeholder="Juan"                maxLength={50} error={errores.nombre} />
-          <Campo label="Apellido"   value={form.apellido} onChange={f("apellido")} placeholder="Pérez"               maxLength={50} error={errores.apellido} />
-          <Campo label="RUT"        value={form.rut}      onChange={f("rut")}      placeholder="12345678-9"          maxLength={10} error={errores.rut} />
-          <Campo label="Correo"     value={form.correo}   onChange={f("correo")}   placeholder="juan@ejemplo.cl"     maxLength={100} type="email"    error={errores.correo} />
+          <Campo label="Nombre" value={form.nombre} onChange={f("nombre")} placeholder="Juan" maxLength={50} error={errores.nombre} />
+          <Campo label="Apellido" value={form.apellido} onChange={f("apellido")} placeholder="Pérez" maxLength={50} error={errores.apellido} />
+          <Campo label="RUT" value={form.rut} onChange={f("rut")} placeholder="12345678-9" maxLength={10} error={errores.rut} />
+          <Campo label="Correo" value={form.correo} onChange={f("correo")} placeholder="juan@ejemplo.cl" maxLength={100} type="email" error={errores.correo} />
           <Campo label="Contraseña" value={form.password} onChange={f("password")} placeholder="Mínimo 6 caracteres" maxLength={64} type="password" error={errores.password} />
           <CampoSelect label="Rol" value={form.rol} onChange={f("rol")} error={errores.rol} />
           <button
@@ -357,10 +357,10 @@ function UsuariosTable() {
 
       {modalEditar && (
         <Modal titulo="Editar usuario" onClose={() => setModalEditar(null)}>
-          <Campo label="Nombre"     value={form.nombre}   onChange={f("nombre")}   placeholder="Juan"                    maxLength={50} error={errores.nombre} />
-          <Campo label="Apellido"   value={form.apellido} onChange={f("apellido")} placeholder="Pérez"                   maxLength={50} error={errores.apellido} />
-          <Campo label="RUT"        value={form.rut}      onChange={f("rut")}      placeholder="12345678-9"              maxLength={10} error={errores.rut} />
-          <Campo label="Correo"     value={form.correo}   onChange={f("correo")}   placeholder="juan@ejemplo.cl"         maxLength={100} type="email"    error={errores.correo} />
+          <Campo label="Nombre" value={form.nombre} onChange={f("nombre")} placeholder="Juan" maxLength={50} error={errores.nombre} />
+          <Campo label="Apellido" value={form.apellido} onChange={f("apellido")} placeholder="Pérez" maxLength={50} error={errores.apellido} />
+          <Campo label="RUT" value={form.rut} onChange={f("rut")} placeholder="12345678-9" maxLength={10} error={errores.rut} />
+          <Campo label="Correo" value={form.correo} onChange={f("correo")} placeholder="juan@ejemplo.cl" maxLength={100} type="email" error={errores.correo} />
           <Campo label="Nueva contraseña (opcional)" value={form.password} onChange={f("password")} placeholder="Dejar vacío para no cambiar" maxLength={64} type="password" error={errores.password} />
           <CampoSelect label="Rol" value={form.rol} onChange={f("rol")} error={errores.rol} />
           <button

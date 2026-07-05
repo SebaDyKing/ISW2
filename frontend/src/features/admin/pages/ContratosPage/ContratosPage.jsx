@@ -5,6 +5,7 @@ import ContratosTable from '../../components/ContratosTable/ContratosTable'
 import NuevoContratoModal from '../../components/NuevoContratoModal/NuevoContratoModal'
 import TrasladoModal from '../../components/TrasladoModal/TrasladoModal'
 import AnexoModal from '../../components/AnexoModal/AnexoModal'
+import AnexoInstalacionModal from '../../components/AnexoInstalacionModal/AnexoInstalacionModal'
 import FiniquitoModal from '../../components/FiniquitoModal/FiniquitoModal'
 import IndefinidoModal from '../../components/IndefinidoModal/IndefinidoModal'
 import styles from './ContratosPage.module.css'
@@ -24,6 +25,10 @@ export default function ContratosPage() {
     setShowAnexoModal,
     selectedContratoForAnexo,
     setSelectedContratoForAnexo,
+    showAnexoInstalacionModal,
+    setShowAnexoInstalacionModal,
+    selectedContratoForAnexoInstalacion,
+    setSelectedContratoForAnexoInstalacion,
     showFiniquitoModal,
     setShowFiniquitoModal,
     selectedContratoForFiniquito,
@@ -77,6 +82,10 @@ export default function ContratosPage() {
             setSelectedContratoForAnexo(contrato)
             setShowAnexoModal(true)
           }}
+          onAnexoInstalacion={(contrato) => {
+            setSelectedContratoForAnexoInstalacion(contrato)
+            setShowAnexoInstalacionModal(true)
+          }}
           onFiniquitar={(contrato) => {
             setSelectedContratoForFiniquito(contrato)
             setShowFiniquitoModal(true)
@@ -108,6 +117,17 @@ export default function ContratosPage() {
           onClose={() => {
             setShowAnexoModal(false)
             setSelectedContratoForAnexo(null)
+          }}
+          onSuccess={refetch}
+        />
+      )}
+
+      {showAnexoInstalacionModal && selectedContratoForAnexoInstalacion && (
+        <AnexoInstalacionModal
+          contrato={selectedContratoForAnexoInstalacion}
+          onClose={() => {
+            setShowAnexoInstalacionModal(false)
+            setSelectedContratoForAnexoInstalacion(null)
           }}
           onSuccess={refetch}
         />

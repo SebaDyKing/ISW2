@@ -16,7 +16,9 @@ export function useContratos() {
         codigo: `CT-${String(c.idContrato).padStart(4, '0')}`,
         nombre: c.empleado?.usuario ? `${c.empleado.usuario.nombre} ${c.empleado.usuario.apellido}` : 'Sin empleado',
         rut: c.empleado?.rut || 'Sin RUT',
-        instalacion: c.instalacion?.nombre || 'Sin instalación',
+        instalacion: c.contratoInstalaciones?.length > 1 
+          ? 'Múltiples instalaciones' 
+          : c.contratoInstalaciones?.[0]?.instalacion?.nombre || 'Sin instalación',
         rol: c.cargo,
         tipoContrato: c.tipo,
         periodoInicio: c.fechaInicio,

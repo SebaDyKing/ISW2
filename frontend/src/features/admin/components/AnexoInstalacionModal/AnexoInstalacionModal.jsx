@@ -1,22 +1,22 @@
-import { useAnexoModal } from './useAnexoModal'
-import { TIPOS_CONTRATO, LEY_LABORAL_CHILE } from '../../constants/contratos.constants'
-import styles from './AnexoModal.module.css'
+import React from 'react'
+import { useAnexoInstalacionModal } from './useAnexoInstalacionModal'
+import { LEY_LABORAL_CHILE } from '../../constants/contratos.constants'
+import styles from '../AnexoModal/AnexoModal.module.css'
 
-export default function AnexoModal({ contrato, onClose, onSuccess }) {
+export default function AnexoInstalacionModal({ contrato, onClose, onSuccess }) {
   const {
     form,
     loading,
     error,
+    instalaciones,
     handleChange,
     submit,
-  } = useAnexoModal(contrato, {
+  } = useAnexoInstalacionModal(contrato, {
     onSuccess: () => {
       onSuccess?.()
       onClose()
     },
   })
-
-  const isPlazoFijo = form.tipo === 'Plazo Fijo'
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) onClose()
@@ -32,12 +32,12 @@ export default function AnexoModal({ contrato, onClose, onSuccess }) {
             <div className={styles.headerIcon}>
               <svg className={styles.headerIconSvg} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
             <div>
-              <p className={styles.headerTitle}>Anexo de Contrato</p>
-              <p className={styles.headerSubtitle}>Modifica las condiciones actuales para generar un anexo</p>
+              <p className={styles.headerTitle}>Anexo de Nueva Instalación</p>
+              <p className={styles.headerSubtitle}>Asigna al empleado a una instalación adicional</p>
             </div>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>
@@ -50,85 +50,63 @@ export default function AnexoModal({ contrato, onClose, onSuccess }) {
         {/* Form */}
         <form onSubmit={submit}>
           <div className={styles.body}>
-
-            {/* Condiciones Laborales */}
-            <p className={styles.sectionLabel}>Condiciones Laborales</p>
+            <p className={styles.sectionLabel}>Detalles de la Asignación</p>
 
             <div className={styles.row}>
               <div className={styles.fieldFull}>
                 <label className={styles.label}>
-                  Cargo <span className={styles.required}>*</span>
+                  Nueva Instalación <span className={styles.required}>*</span>
                 </label>
-                <input
-                  type="text"
-                  name="cargo"
-                  value={form.cargo}
+                <select
+                  name="idInstalacion"
+                  value={form.idInstalacion}
                   onChange={handleChange}
-                  placeholder="Ej: Supervisor de Aseo"
                   required
-                  maxLength={100}
-                  className={styles.input}
-                />
+                  className={styles.select}
+                >
+                  <option value="">Seleccionar Instalación...</option>
+                  {instalaciones.map((inst) => (
+                    <option key={inst.idInstalacion} value={inst.idInstalacion}>
+                      {inst.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
             <div className={styles.row}>
               <div className={styles.field}>
                 <label className={styles.label}>
-                  Sueldo (CLP) <span className={styles.required}>*</span>
+                  Horas Semanales <span className={styles.required}>*</span>
                 </label>
                 <input
                   type="number"
-                  name="sueldo"
-                  value={form.sueldo}
+                  name="horasSemanales"
+                  value={form.horasSemanales}
                   onChange={handleChange}
-                  placeholder={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP.toString()}
-                  required
-                  min={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP}
-                  step="1"
-                  className={styles.input}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Jornada (horas) <span className={styles.required}>*</span>
-                </label>
-                <input
-                  type="number"
-                  name="jornadaHoras"
-                  value={form.jornadaHoras}
-                  onChange={handleChange}
-                  placeholder={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL.toString()}
+                  placeholder="Ej: 20"
                   required
                   min={1}
                   max={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL}
                   className={styles.input}
                 />
               </div>
-            </div>
 
-            <div className={styles.divider} />
-
-            {/* Duración */}
-            <p className={styles.sectionLabel}>Duración del Contrato</p>
-
-            <div className={styles.row}>
-              {isPlazoFijo && (
-                <div className={styles.fieldFull}>
+              <div className={styles.field}>
                 <label className={styles.label}>
-                  Fecha Fin {isPlazoFijo && <span className={styles.required}>*</span>}
+                  Pago Adicional ($)
                 </label>
                 <input
-                  type="date"
-                  name="fechaFin"
-                  value={form.fechaFin}
+                  type="number"
+                  name="pagoAdicional"
+                  value={form.pagoAdicional}
                   onChange={handleChange}
-                  required={isPlazoFijo}
+                  placeholder="0"
+                  min={0}
+                  step="1"
                   className={styles.input}
                 />
-                </div>
-              )}
+              </div>
             </div>
 
             {/* Error */}

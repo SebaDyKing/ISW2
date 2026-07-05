@@ -11,14 +11,14 @@ const ESTADOS_VALIDOS = ["ACTIVO", "POR VENCER", "FINALIZADO"];
 
 export async function getAllContratos() {
     return await getRepo().find({
-        relations: ["empleado", "empleado.usuario", "empleado.instalacion", "instalacion"],
+        relations: ["empleado", "empleado.usuario", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
     });
 }
 
 export async function getContratoById(id) {
     const contrato = await getRepo().findOne({
         where: { idContrato: id },
-        relations: ["empleado", "empleado.instalacion", "instalacion"],
+        relations: ["empleado", "empleado.usuario", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
     });
     if (!contrato) throw { status: 404, message: "Contrato no encontrado" };
     return contrato;
@@ -31,7 +31,7 @@ export async function getContratosByEmpleado(idEmpleado) {
 
     return await getRepo().find({
         where: { empleado: { idEmpleado } },
-        relations: ["empleado", "empleado.instalacion"],
+        relations: ["empleado", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
     });
 }
 
@@ -140,11 +140,22 @@ export async function createContrato(body) {
         estadoCivil,
         fechaNacimiento,
         domicilio,
-        empleado: { idEmpleado },
-        ...(idInstalacion && { instalacion: { idInstalacion } })
+        empleado: { idEmpleado }
     });
 
     const contratoGuardado = await getRepo().save(nuevo);
+
+    // Guardar la instalacion inicial si se provee
+    if (idInstalacion) {
+        const ciRepo = AppDataSource.getRepository("ContratoInstalacion");
+        const ci = ciRepo.create({
+            contrato: { idContrato: contratoGuardado.idContrato },
+            instalacion: { idInstalacion: idInstalacion },
+            horasSemanales: jornadaHoras,
+            pagoAdicional: 0
+        });
+        await ciRepo.save(ci);
+    }
 
     // Registrar actividad
     const nombreEmpleado = empleado?.usuario ? `${empleado.usuario.nombre} ${empleado.usuario.apellido}` : `ID ${idEmpleado}`;
@@ -218,8 +229,9 @@ export async function updateContrato(id, body) {
     if (fechaNacimiento !== undefined) contrato.fechaNacimiento = fechaNacimiento;
     if (domicilio !== undefined) contrato.domicilio = domicilio;
     if (idInstalacion) {
-        const instalacion = await AppDataSource.getRepository("Instalacion").findOne({ where: { idInstalacion } });
-        if (instalacion) contrato.instalacion = instalacion;
+        // En update básico, si mandan idInstalacion se asume que se quiere cambiar la instalación principal
+        // Por simplicidad, esto podría eliminarse y forzar el uso de agregarInstalacionContrato
+        // No actualizaremos instalaciones desde acá para evitar conflictos con los anexos
     }
 
     const contratoGuardado = await getRepo().save(contrato);
@@ -268,3 +280,40 @@ export async function deleteContrato(id) {
     const cod = `CT-${String(id).padStart(4, '0')}`;
     await registrarActividad("Contrato eliminado", `Se eliminó el contrato ${cod}`);
 }
+
+export async function agregarInstalacionContrato(idContrato, idInstalacion, horasSemanales, pagoAdicional) {
+    const contrato = await getContratoById(idContrato);
+    
+    // Obtener las instalaciones actuales para sumar las horas
+    const ciRepo = AppDataSource.getRepository("ContratoInstalacion");
+    const asignacionesActuales = await ciRepo.find({ where: { contrato: { idContrato } } });
+    
+    let horasTotalesActuales = 0;
+    for (const asig of asignacionesActuales) {
+        if (asig.instalacion.idInstalacion === idInstalacion) {
+            throw { status: 400, message: "El empleado ya está asignado a esta instalación en este contrato" };
+        }
+        horasTotalesActuales += Number(asig.horasSemanales);
+    }
+    
+    const maxHorasLegales = 42; // LEY_LABORAL_CHILE
+    if ((horasTotalesActuales + Number(horasSemanales)) > maxHorasLegales) {
+        throw { status: 400, message: `No se puede exceder el límite legal de ${maxHorasLegales} horas. Total proyectado: ${horasTotalesActuales + Number(horasSemanales)} horas.` };
+    }
+    
+    const nuevaAsignacion = ciRepo.create({
+        contrato: { idContrato },
+        instalacion: { idInstalacion },
+        horasSemanales: Number(horasSemanales),
+        pagoAdicional: Number(pagoAdicional)
+    });
+    
+    await ciRepo.save(nuevaAsignacion);
+    
+    // Registrar actividad
+    const nombreEmpleado = contrato.empleado?.usuario ? `${contrato.empleado.usuario.nombre} ${contrato.empleado.usuario.apellido}` : `ID ${contrato.empleado.idEmpleado}`;
+    await registrarActividad("Anexo generado", `Se asignó a ${nombreEmpleado} a una nueva instalación con ${horasSemanales}h adicionales.`);
+    
+    return await getContratoById(idContrato);
+}
+
