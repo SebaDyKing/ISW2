@@ -17,6 +17,7 @@ import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizac
 import MarcarAsistencia from "../components/MarcarAsistencia";
 import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
 import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
+import InstalacionesView from "../features/admin/components/InstalacionesView";
 import api from "../config/axios";
 
 function PanelClienteProximamente() {
@@ -63,13 +64,14 @@ function AppRouter() {
         <Route path="/login" element={<LoginForm />} />
         <Route path="/registro" element={<RegisterForm />} />
 
-        {/* Admin */}
+        {/* Panel de Administrador */}
         <Route path="/admin" element={<PrivateRoute allowedRoles={["administrador"]}><AdminLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios" element={<UsuariosTable />} />
           <Route path="contratos" element={<ContratosPage />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
+          <Route path="instalaciones" element={<InstalacionesView />} />
           <Route path="licencias" element={<LicenciasMedicasView />} />
           <Route path="hojas-vida" element={<HojaVidaView />} />
         </Route>

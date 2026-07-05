@@ -56,6 +56,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
   const [errorText, setErrorText] = useState("");
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [userIp, setUserIp] = useState("Cargando IP...");
+  const [instalacionAsignada, setInstalacionAsignada] = useState(null);
 
   // Reloj en tiempo real
   useEffect(() => {
@@ -69,6 +70,25 @@ export default function MarcarAsistencia({ idContratoProp }) {
     setErrorText("");
     setLoadingHistory(true);
     try {
+      // Cargar asignación de instalación para el contrato del empleado
+      try {
+        const storedUser = localStorage.getItem("usuario");
+        if (storedUser) {
+          const userObj = JSON.parse(storedUser);
+          if (userObj.rol === "empleado" || userObj.rol === "administrador") {
+            const resAsig = await api.get("/contratos/mis-asignaciones");
+            if (resAsig && resAsig.status === "Success" && resAsig.data) {
+              const activeContract = resAsig.data.find(c => c.idContrato === idContrato) || resAsig.data[0];
+              if (activeContract && activeContract.instalacion) {
+                setInstalacionAsignada(activeContract.instalacion);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("No se pudo obtener la instalación asignada:", err);
+      }
+
       // Obtener todos los registros de asistencia
       const res = await api.get("/asistencias");
       if (res && res.status === "Success") {
@@ -183,22 +203,26 @@ export default function MarcarAsistencia({ idContratoProp }) {
         });
     };
 
-    // Solicitar coordenadas
+    // Solicitar coordenadas de forma obligatoria
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           enviarPeticion(position.coords.latitude, position.coords.longitude);
         },
-        () => {
-          console.warn("Geolocalización rechazada, usando coordenadas de respaldo.");
-          // Coordenadas fallback (Edificio Central)
-          enviarPeticion(-36.827, -73.0498);
+        (error) => {
+          console.warn("Geolocalización rechazada o con error:", error);
+          setErrorText("Para registrar tu asistencia debes permitir el acceso a tu ubicación en los permisos de tu navegador.");
+          setLoading(false);
         },
-        { timeout: 5000 }
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000 
+        }
       );
     } else {
-      console.warn("Geolocalización no soportada, usando coordenadas de respaldo.");
-      enviarPeticion(-36.827, -73.0498);
+      console.warn("Geolocalización no soportada en este navegador.");
+      setErrorText("Tu navegador no soporta la geolocalización, lo cual es obligatorio para marcar asistencia.");
+      setLoading(false);
     }
   };
 
@@ -259,9 +283,14 @@ export default function MarcarAsistencia({ idContratoProp }) {
         <p className="text-[44px] font-extrabold text-[#4f46e5] m-0 tracking-tight leading-none">
           {formatHoraEspanol(currentTime)}
         </p>
-        <p className="text-[#8a90a2] text-sm mt-1.5 mb-[34px] font-medium">
+        <p className="text-[#8a90a2] text-sm mt-1.5 mb-[15px] font-medium">
           {formatFechaEspanol(currentTime)}
         </p>
+        {instalacionAsignada && (
+          <div className="mb-[34px] inline-block bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl text-slate-600 text-xs font-semibold">
+            📍 Lugar de trabajo asignado: <strong className="text-indigo-600">{instalacionAsignada.nombre}</strong> ({instalacionAsignada.direccion})
+          </div>
+        )}
       </div>
 
       {/* Acciones Card */}

@@ -1,6 +1,6 @@
 "use strict";
 import { usuarioBodyValidation, usuarioUpdateValidation } from "../validations/usuario.validation.js";
-import { crearUsuarioService, obtenerUsuariosService, obtenerUsuarioPorIdService, actualizarUsuarioService, eliminarUsuarioService, obtenerEmpleadosService } from "../services/usuario.service.js";
+import { crearUsuarioService, obtenerUsuariosService, obtenerUsuarioPorIdService, actualizarUsuarioService, eliminarUsuarioService, obtenerEmpleadosService, obtenerClientesService } from "../services/usuario.service.js";
 
 export const crearUsuario = async (req, res) => {
   try {
@@ -110,5 +110,17 @@ export const eliminarUsuario = async (req, res) => {
       return res.status(404).json({ message: error.message });
     }
     res.status(500).json({ message: "Error interno al eliminar el usuario." });
+  }
+};
+
+export const obtenerClientes = async (req, res) => {
+  try {
+    const clientes = await obtenerClientesService();
+    res.status(200).json({
+      message: "Lista de clientes recuperada con éxito",
+      data: clientes
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error interno al recuperar los clientes" });
   }
 };
