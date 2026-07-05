@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react"
 import * as licenciaService from "../services/licenciaMedica.service"
 
-// El token JWT guarda { idUsuario, rol, correo }.
 function getIdUsuario() {
   try {
-    const token = localStorage.getItem("token")
-    if (!token) return null
-    return JSON.parse(atob(token.split(".")[1])).idUsuario
+    const usuario = localStorage.getItem("usuario")
+    if (!usuario) return null
+    return JSON.parse(usuario).idUsuario ?? null
   } catch {
     return null
   }
@@ -39,7 +38,6 @@ export function useMisLicencias() {
     fetchMisLicencias()
   }, [])
 
-  // El backend deriva el empleado del token, no hace falta mandarlo.
   const subir = async (datos) => {
     await licenciaService.crear(datos)
     await fetchMisLicencias()

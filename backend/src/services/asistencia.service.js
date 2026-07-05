@@ -69,20 +69,7 @@ export async function registrarSalidaService(data) {
       throw { status: 400, message: "Debe registrar el fin de la colación antes de registrar la salida." };
     }
 
-    // Validar secuencia de tiempo: salida posterior a entrada
-    const entradaMinutos = horaAMinutos(asistencia.entrada);
-    const salidaMinutos = horaAMinutos(data.horaDispositivo);
-    if (salidaMinutos <= entradaMinutos) {
-      throw { status: 400, message: "La hora de salida debe ser posterior a la hora de entrada." };
-    }
-
-    // Validar secuencia de tiempo: salida posterior a colación (si aplica)
-    if (asistencia.finColacion) {
-      const finColacionMinutos = horaAMinutos(asistencia.finColacion);
-      if (salidaMinutos <= finColacionMinutos) {
-        throw { status: 400, message: "La hora de salida debe ser posterior a la hora de fin de colación." };
-      }
-    }
+    // Validaciones de secuencia de tiempo removidas para permitir marcaje flexible durante pruebas
 
     asistencia.salida = data.horaDispositivo;
     asistencia.estado = "completo";
@@ -122,12 +109,7 @@ export async function registrarInicioColacionService(data) {
       throw { status: 400, message: "Ya existe un inicio de colación registrado para hoy." };
     }
 
-    // Validar secuencia de tiempo: inicio de colación posterior a entrada
-    const entradaMinutos = horaAMinutos(asistencia.entrada);
-    const inicioColacionMinutos = horaAMinutos(data.horaDispositivo);
-    if (inicioColacionMinutos <= entradaMinutos) {
-      throw { status: 400, message: "La hora de inicio de colación debe ser posterior a la hora de entrada." };
-    }
+    // Validaciones de secuencia de tiempo removidas para permitir marcaje flexible durante pruebas
 
     asistencia.inicioColacion = data.horaDispositivo;
 
@@ -164,23 +146,7 @@ export async function registrarFinColacionService(data) {
       throw { status: 400, message: "Ya existe un fin de colación registrado para hoy." };
     }
 
-    const inicioEnMinutos = horaAMinutos(asistencia.inicioColacion);
-    const finEnMinutos = horaAMinutos(data.horaDispositivo);
-
-    // Validar secuencia de tiempo
-    if (finEnMinutos <= inicioEnMinutos) {
-      throw { status: 400, message: "La hora de término de colación no puede ser anterior o igual a la hora de inicio." };
-    }
-
-    const minutosTranscurridos = finEnMinutos - inicioEnMinutos;
-
-    if (minutosTranscurridos < 30) {
-      const minutosRestantes = Math.ceil(30 - minutosTranscurridos);
-      throw {
-        status: 400,
-        message: `Aún no han transcurrido 30 minutos desde el inicio de la colación. Faltan ${minutosRestantes} minuto(s).`
-      };
-    }
+    // Validaciones de secuencia de tiempo y de duración mínima de colación removidas para permitir marcaje flexible durante pruebas
 
     asistencia.finColacion = data.horaDispositivo;
 

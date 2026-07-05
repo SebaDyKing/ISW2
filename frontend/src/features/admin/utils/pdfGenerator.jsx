@@ -12,9 +12,9 @@ const styles = StyleSheet.create({
 export const ContractDocument = ({ formData, employeeData, facilityData }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
   const tipoTexto = formData.tipo.replace('_', ' ');
-
-  const fechaFinTexto = (formData.tipo === 'plazo_fijo' || formData.tipo === 'Plazo Fijo')
-    ? `hasta el ${formData.fechaFin}`
+  
+  const fechaFinTexto = formData.tipo === 'Plazo Fijo' 
+    ? `hasta el ${formData.fechaFin}` 
     : `de carácter indefinido`;
 
   // Asegurar que employeeData y facilityData existan por precaución

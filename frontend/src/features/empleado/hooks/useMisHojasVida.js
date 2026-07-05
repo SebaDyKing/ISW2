@@ -3,9 +3,9 @@ import * as hojaService from "../services/hojaVida.service"
 
 function getIdUsuario() {
   try {
-    const token = localStorage.getItem("token")
-    if (!token) return null
-    return JSON.parse(atob(token.split(".")[1])).idUsuario
+    const usuario = localStorage.getItem("usuario")
+    if (!usuario) return null
+    return JSON.parse(usuario).idUsuario ?? null
   } catch {
     return null
   }

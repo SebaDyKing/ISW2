@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import api from "../../../config/axios";
 
 function IconLogo() {
   return (
@@ -62,8 +63,17 @@ function IconAsistencia() {
   );
 }
 
+function IconAsignacion() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
 const NAV = [
   { to: "/empleado/asistencia", label: "Marcar Asistencia", icon: IconAsistencia },
+  { to: "/empleado/asignaciones", label: "Mis Asignaciones", icon: IconAsignacion },
   { to: "/empleado/licencias", label: "Mis Licencias", icon: IconLicencia },
   { to: "/empleado/hoja-vida", label: "Mi Hoja de Vida", icon: IconHojaVida },
 ];
@@ -78,10 +88,14 @@ function EmpleadoLayout() {
     if (userGuardado) setUsuario(JSON.parse(userGuardado));
   }, []);
 
-  function cerrarSesion() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
-    navigate("/login");
+  async function cerrarSesion() {
+    try {
+      await api.post("/auth/logout");
+    } catch (_) {}
+    finally {
+      localStorage.removeItem("usuario");
+      navigate("/login");
+    }
   }
 
   const inicial = (usuario.nombreMostrar || "E").charAt(0).toUpperCase();

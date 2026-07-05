@@ -12,5 +12,5 @@ export async function solicitarCotizacionService(datos) {
 
 export async function obtenerMisInstalacionesService() {
   const res = await api.get(`/instalaciones/mis-instalaciones`);
-  return res;
+  return res.data;
 }

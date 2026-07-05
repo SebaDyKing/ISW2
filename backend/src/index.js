@@ -3,14 +3,16 @@ import "dotenv/config";
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { connectDB } from "./config/configDb.js";
 import { HOST, PORT } from "./config/configEnv.js";
 import { routerApi } from "./routes/index.routes.js";
 import { seedDatabase } from "./config/seed.js";
 import authRouter from "./routes/auth.routes.js";
-import { initCronJobs } from "./jobs/vencimientoContratos.job.js";
+import { iniciarJobVencimiento } from "./jobs/vencimientoJob.js";
 
 const app = express();
+
 const allowedOrigins = [
   "http://localhost:5173",
   "http://146.83.198.35:1318",
@@ -22,6 +24,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use(cookieParser());
 app.use(morgan("dev"));
 app.use("/api/auth", authRouter);
 
@@ -33,8 +36,7 @@ connectDB()
   .then(async () => {
     await seedDatabase();
     routerApi(app);
-    initCronJobs();
-
+    iniciarJobVencimiento(); 
     app.listen(PORT, () => {
       console.log(`Servidor iniciado en ${HOST}:${PORT}`);
     });

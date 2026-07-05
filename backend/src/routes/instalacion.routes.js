@@ -5,6 +5,12 @@ import { obtenerMisInstalaciones, obtenerInstalaciones } from "../controllers/in
 
 const router = Router();
 
+router.get("/",
+  authMiddleware,
+  autorizeEntities("administrador", "supervisor"),
+  obtenerInstalaciones
+);
+
 router.get("/mis-instalaciones",
   authMiddleware,
   autorizeEntities("cliente"),

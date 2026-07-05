@@ -2,7 +2,9 @@
 import { AppDataSource } from "../config/configDb.js";
 import { Usuario } from "../models/Usuario.js";
 import { Empleado } from "../models/Empleado.js";
-import { registrarActividad } from "./actividad.service.js";
+import { Cliente } from "../models/Cliente.js";
+import { Supervisor } from "../models/Supervisor.js";
+import { Administrador } from "../models/Administrador.js";
 import bcrypt from "bcrypt";
 
 export async function crearUsuarioService(datosUsuario) {
@@ -30,15 +32,22 @@ export async function crearUsuarioService(datosUsuario) {
 
     const usuarioGuardado = await usuarioRepository.save(nuevoUsuario);
 
-    // Si el rol es empleado, creamos también su registro en la tabla Empleado
     if (rol === "empleado") {
-      const empleadoRepository = AppDataSource.getRepository(Empleado);
-      const nuevoEmpleado = empleadoRepository.create({
-        rut: rut,
-        fechaNacimiento: "1990-01-01", // Fecha por defecto ya que el form no la pide aún
-        usuario: { idUsuario: usuarioGuardado.idUsuario }
-      });
-      await empleadoRepository.save(nuevoEmpleado);
+      const empleadoRepo = AppDataSource.getRepository(Empleado);
+      await empleadoRepo.save(empleadoRepo.create({ usuario: usuarioGuardado, rut }));
+    } else if (rol === "supervisor") {
+      const supervisorRepo = AppDataSource.getRepository(Supervisor);
+      await supervisorRepo.save(supervisorRepo.create({ usuario: usuarioGuardado, rut }));
+    } else if (rol === "administrador") {
+      const adminRepo = AppDataSource.getRepository(Administrador);
+      await adminRepo.save(adminRepo.create({ usuario: usuarioGuardado }));
+    } else if (rol === "cliente") {
+      const clienteRepo = AppDataSource.getRepository(Cliente);
+      await clienteRepo.save(clienteRepo.create({ 
+        usuario: usuarioGuardado, 
+        nombreEmpresa: nombre, 
+        telefono: "Sin asignar" 
+      }));
     }
 
     // 5. Por seguridad, no se devuelve el passwordHash al frontend
@@ -121,13 +130,9 @@ export async function actualizarUsuarioService(id, datosActualizar) {
 
     if (!usuario) throw new Error("Usuario no encontrado");
 
-    // Si intenta actualizar el RUT
-    if (datosActualizar.rut) {
-      const rutOcupado = await usuarioRepository.findOne({ where: { rut: datosActualizar.rut } });
-      if (rutOcupado && rutOcupado.idUsuario !== idNumerico) {
-        throw new Error("El RUT ya está en uso por otra cuenta.");
-      }
-    }
+    // Por seguridad, aseguramos que el rut y el rol no puedan ser modificados
+    delete datosActualizar.rut;
+    delete datosActualizar.rol;
 
     // Si intenta actualizar el correo
     if (datosActualizar.correo) {

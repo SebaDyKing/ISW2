@@ -16,6 +16,6 @@ export async function obtenerInstalaciones(req, res) {
     const instalaciones = await obtenerInstalacionesService();
     res.status(200).json({ data: instalaciones });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: "Error interno al recuperar las instalaciones" });
   }
 }

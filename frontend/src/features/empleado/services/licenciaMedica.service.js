@@ -2,13 +2,7 @@ import api from "../../../config/axios"
 
 const API_ORIGIN = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
 
-function authHeader() {
-  const token = localStorage.getItem("token")
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 export const getAll = () => api.get("/licencias-medicas")
-
 
 export const crear = (datos) => {
   const fd = new FormData()
@@ -16,8 +10,9 @@ export const crear = (datos) => {
   fd.append("fechaInicio", datos.fechaInicio)
   fd.append("fechaFin", datos.fechaFin)
   fd.append("diagnostico", datos.diagnostico)
+  // withCredentials ya va en la instancia — solo necesitamos multipart
   return api.post("/licencias-medicas", fd, {
-    headers: { "Content-Type": "multipart/form-data", ...authHeader() },
+    headers: { "Content-Type": "multipart/form-data" },
   })
 }
 

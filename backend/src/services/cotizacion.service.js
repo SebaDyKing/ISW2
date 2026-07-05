@@ -3,71 +3,80 @@ import { AppDataSource } from "../config/configDb.js";
 import { SolicitudCotizacion } from "../models/SolicitudCotizacion.js";
 import { Cliente } from "../models/Cliente.js";
 import { Instalacion } from "../models/Instalacion.js";
-import { enviarCorreoSolicitudRecibida, enviarCorreoEstadoCotizacion } from "../utils/email.js";
+import { enviarCorreoSolicitudRecibida, enviarCorreoEstadoCotizacion, enviarCorreoReactivacion } from "../utils/email.js";
+import { agregarHorasHabiles } from "../utils/businessHours.js"; // ← nuevo
+
+const HORAS_HABILES_LIMITE = 24; // configurable 
 
 export async function crearCotizacionService(datosCotizacion) {
-  const { id_usuario, comentarios, id_plan, id_instalacion } = datosCotizacion;
+  const { id_usuario, comentarios, id_plan, id_instalacion, medioContacto, horarioContacto } = datosCotizacion;
 
-  const clienteRepo = AppDataSource.getRepository(Cliente);
-  const cotizacionRepo = AppDataSource.getRepository(SolicitudCotizacion);
+  const clienteRepo     = AppDataSource.getRepository(Cliente);
+  const cotizacionRepo  = AppDataSource.getRepository(SolicitudCotizacion);
   const instalacionRepo = AppDataSource.getRepository(Instalacion);
 
   const clienteActual = await clienteRepo.findOne({
     where: { usuario: { idUsuario: id_usuario } },
     relations: ["usuario"]
   });
+  if (!clienteActual) throw new Error("Perfil de cliente no encontrado para este usuario.");
 
-  if (!clienteActual) {
-    throw new Error("Perfil de cliente no encontrado para este usuario.");
+  let instalacionValida = null;
+  if (id_instalacion) {
+    instalacionValida = await instalacionRepo.findOne({
+      where: { idInstalacion: id_instalacion, cliente: { idCliente: clienteActual.idCliente } },
+      relations: ["cliente"]
+    });
+    if (!instalacionValida) throw new Error("La instalación indicada no existe o no pertenece a tu cuenta.");
+
+    const cotizacionPendiente = await cotizacionRepo.findOne({
+      where: {
+        estado: "Pendiente",
+        cliente: { idCliente: clienteActual.idCliente },
+        instalacion: { idInstalacion: id_instalacion }
+      }
+    });
+    if (cotizacionPendiente) throw new Error("Esta instalación ya tiene una cotización pendiente. Espera a que sea respondida.");
   }
 
-  const instalacionValida = await instalacionRepo.findOne({
-    where: {
-      idInstalacion: id_instalacion,
-      cliente: { idCliente: clienteActual.idCliente }
-    },
-    relations: ["cliente"]
-  });
-
-  if (!instalacionValida) {
-    throw new Error("La instalación indicada no existe o no pertenece a tu cuenta.");
-  }
-
-  const cotizacionPendiente = await cotizacionRepo.findOne({
-    where: {
-      estado: "Pendiente",
-      cliente: { idCliente: clienteActual.idCliente },
-      instalacion: { idInstalacion: id_instalacion }
-    }
-  });
-
-  if (cotizacionPendiente) {
-    throw new Error("Esta instalación ya tiene una cotización pendiente. Espera a que sea respondida.");
-  }
+  // ── Calcular fecha límite ───────────────────────────────────────────────────
+  const ahora = new Date();
+  const fechaLimite = agregarHorasHabiles(ahora, HORAS_HABILES_LIMITE);
+  // ───────────────────────────────────────────────────────────────────────────
 
   const nuevaSolicitud = cotizacionRepo.create({
-    comentarios: comentarios || null,
-    estado: "Pendiente",
-    cliente: clienteActual,
+    comentarios:        comentarios     || null,
+    medioContacto:      medioContacto   || null,
+    horarioContacto:    horarioContacto || null,
+    estado:             "Pendiente",
+    fechaLimite,                          
+    horasHabilesLimite: HORAS_HABILES_LIMITE, 
+    cliente:     clienteActual,
     instalacion: instalacionValida,
-    plan: { idPlan: id_plan }
+    plan:        { idPlan: id_plan }
   });
 
   const solicitudGuardada = await cotizacionRepo.save(nuevaSolicitud);
 
-  // Envío en segundo plano — no bloquea la respuesta
-  enviarCorreoSolicitudRecibida(clienteActual.usuario.correo, clienteActual.nombreEmpresa)
-    .catch((err) => console.error("Error enviando correo de solicitud:", err));
+  // Pasar fechaLimite al correo
+  enviarCorreoSolicitudRecibida(
+    clienteActual.usuario.correo,
+    clienteActual.nombreEmpresa,
+    fechaLimite,              
+    HORAS_HABILES_LIMITE      
+  ).catch((err) => console.error("Error enviando correo de solicitud:", err));
 
   delete solicitudGuardada.cliente.usuario.passwordHash;
   return solicitudGuardada;
 }
 
+// obtenerCotizacionesService — ordenar por fechaLimite ascendente
+// para que el admin vea primero las más urgentes
 export async function obtenerCotizacionesService() {
   try {
     const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
     return await repositorio.find({
-      order: { fechaCreacion: "DESC" },
+      order: { fechaLimite: "ASC" }, 
       relations: ["cliente", "plan", "instalacion"]
     });
   } catch (error) {
@@ -92,18 +101,16 @@ export async function obtenerMisCotizacionesService(id_usuario) {
   }
 }
 
-export async function actualizarEstadoService(idSolicitud, nuevoEstado) {
+export async function actualizarEstadoService(idSolicitud, nuevoEstado, motivo) {
   const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
 
   const cotizacion = await repositorio.findOne({
     where: { idSolicitud: parseInt(idSolicitud) }
   });
-
-  if (!cotizacion) {
-    throw new Error("Cotización no encontrada.");
-  }
+  if (!cotizacion) throw new Error("Cotización no encontrada.");
 
   cotizacion.estado = nuevoEstado;
+  cotizacion.motivo = motivo || null;
   const cotizacionActualizada = await repositorio.save(cotizacion);
 
   const cotizacionConCliente = await repositorio.findOne({
@@ -111,12 +118,42 @@ export async function actualizarEstadoService(idSolicitud, nuevoEstado) {
     relations: ["cliente", "cliente.usuario"]
   });
 
-  // Envío en segundo plano — no bloquea la respuesta
   enviarCorreoEstadoCotizacion(
     cotizacionConCliente.cliente.usuario.correo,
     cotizacionConCliente.cliente.nombreEmpresa,
-    nuevoEstado
+    nuevoEstado,
+    motivo,
+    cotizacionConCliente.medioContacto,
+    cotizacionConCliente.horarioContacto,
   ).catch((err) => console.error("Error enviando correo de estado:", err));
 
   return cotizacionActualizada;
+}
+
+export async function reactivarCotizacionService(idSolicitud) {
+  const repositorio = AppDataSource.getRepository(SolicitudCotizacion);
+
+  const cotizacion = await repositorio.findOne({
+    where: { idSolicitud: parseInt(idSolicitud) },
+    relations: ["cliente", "cliente.usuario"]
+  });
+  if (!cotizacion) throw new Error("Cotización no encontrada.");
+  if (cotizacion.estado !== "Vencida") throw new Error("Solo se pueden reactivar cotizaciones vencidas.");
+
+  // Nuevo plazo: 24 horas hábiles desde AHORA
+  const ahora = new Date();
+  const nuevaFechaLimite = agregarHorasHabiles(ahora, HORAS_HABILES_LIMITE);
+
+  cotizacion.estado = "Pendiente";
+  cotizacion.fechaLimite = nuevaFechaLimite;
+  
+  const cotizacionReactivada = await repositorio.save(cotizacion);
+
+  enviarCorreoReactivacion(
+    cotizacion.cliente.usuario.correo,
+    cotizacion.cliente.nombreEmpresa,
+    nuevaFechaLimite
+  ).catch((err) => console.error("Error enviando correo de reactivación:", err));
+
+  return cotizacionReactivada;
 }
