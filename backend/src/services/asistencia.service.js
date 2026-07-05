@@ -10,6 +10,7 @@ function horaAMinutos(horaStr) {
 
 export async function registrarEntradaService(data) {
   try {
+    await validarDistanciaInstalacion(data.idContrato, data.latitud, data.longitud);
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
     const hoy = data.fechaDispositivo;
@@ -44,6 +45,7 @@ export async function registrarEntradaService(data) {
 
 export async function registrarSalidaService(data) {
   try {
+    await validarDistanciaInstalacion(data.idContrato, data.latitud, data.longitud);
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
     const hoy = data.fechaDispositivo;
@@ -85,6 +87,7 @@ export async function registrarSalidaService(data) {
 
 export async function registrarInicioColacionService(data) {
   try {
+    await validarDistanciaInstalacion(data.idContrato, data.latitud, data.longitud);
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
     const hoy = data.fechaDispositivo;
@@ -122,6 +125,7 @@ export async function registrarInicioColacionService(data) {
 
 export async function registrarFinColacionService(data) {
   try {
+    await validarDistanciaInstalacion(data.idContrato, data.latitud, data.longitud);
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
     const hoy = data.fechaDispositivo;
@@ -195,5 +199,60 @@ export async function eliminarAsistenciasService() {
     return { message: "Todos los registros de asistencia eliminados" };
   } catch (error) {
     throw new Error(`Error al eliminar asistencias: ${error.message}`);
+  }
+}
+
+// Helper para calcular distancia entre dos coordenadas en metros usando Haversine
+function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // Radio de la Tierra en metros
+  const phi1 = (lat1 * Math.PI) / 180;
+  const phi2 = (lat2 * Math.PI) / 180;
+  const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+  const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+    Math.cos(phi1) * Math.cos(phi2) *
+    Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // Distancia en metros
+}
+
+// Verifica si el marcaje está dentro del rango de 150m de la instalación asignada
+async function validarDistanciaInstalacion(idContrato, latDispositivo, lonDispositivo) {
+  if (latDispositivo === undefined || lonDispositivo === undefined || latDispositivo === null || lonDispositivo === null) {
+    throw { status: 400, message: "La geolocalización es obligatoria para registrar la asistencia." };
+  }
+
+  const contratoRepo = AppDataSource.getRepository("Contrato");
+  const contrato = await contratoRepo.findOne({
+    where: { idContrato },
+    relations: ["instalacion"]
+  });
+
+  if (!contrato) {
+    throw { status: 404, message: "Contrato no encontrado." };
+  }
+
+  if (!contrato.instalacion) {
+    throw { status: 400, message: "El contrato del empleado no tiene una instalación asignada." };
+  }
+
+  const instLat = Number(contrato.instalacion.latitud);
+  const instLon = Number(contrato.instalacion.longitud);
+
+  const distancia = calcularDistanciaHaversine(
+    Number(latDispositivo),
+    Number(lonDispositivo),
+    instLat,
+    instLon
+  );
+
+  if (distancia > 150) {
+    throw {
+      status: 400,
+      message: `Marcaje fuera de rango. Estás a ${Math.round(distancia)} metros del lugar de trabajo asignado, el rango máximo permitido es 150 metros.`
+    };
   }
 }

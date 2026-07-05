@@ -127,6 +127,43 @@ export async function createContrato(body) {
                 "LIMITE_PLAZO_FIJO"
             );
         }
+
+        // [NUEVA REGLA] Regla de los 15 meses: Si ha trabajado 12 meses (365 días) en un periodo de 15 meses.
+        const fechaInicioVentana = new Date(fechaInicio);
+        fechaInicioVentana.setMonth(fechaInicioVentana.getMonth() - 15);
+
+        const contratosTodos = await AppDataSource.getRepository("Contrato").find({
+            where: {
+                empleado: { idEmpleado },
+                tipo: "Plazo Fijo",
+            }
+        });
+
+        let diasTrabajados = 0;
+        for (const c of contratosTodos) {
+            if (!c.fechaFin) continue; // solo contamos periodos cerrados para esta regla
+            const dInicio = new Date(c.fechaInicio) < fechaInicioVentana ? fechaInicioVentana : new Date(c.fechaInicio);
+            const dFin = new Date(c.fechaFin);
+            
+            if (dFin > dInicio) {
+                diasTrabajados += Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24));
+            }
+        }
+
+        // Sumamos los días del nuevo contrato que se está creando
+        if (fechaFin) {
+            const diasNuevo = Math.ceil((new Date(fechaFin) - new Date(fechaInicio)) / (1000 * 60 * 60 * 24));
+            diasTrabajados += diasNuevo;
+        }
+
+        if (diasTrabajados >= 365) {
+             await crearAlerta(
+                idEmpleado,
+                "Alerta Regla 15 Meses (Plazo Fijo)",
+                `El empleado ${empleado.usuario?.nombre || 'Desconocido'} superará los 12 meses de servicio discontinuo en un periodo de 15 meses con este contrato, debiendo pasar a Indefinido.`,
+                "LIMITE_PLAZO_FIJO"
+            );
+        }
     }
 
     let estadoInicial = "ACTIVO";
@@ -298,7 +335,10 @@ export async function agregarInstalacionContrato(idContrato, idInstalacion, hora
     
     // Obtener las instalaciones actuales para sumar las horas
     const ciRepo = AppDataSource.getRepository("ContratoInstalacion");
-    const asignacionesActuales = await ciRepo.find({ where: { contrato: { idContrato } } });
+    const asignacionesActuales = await ciRepo.find({ 
+        where: { contrato: { idContrato } },
+        relations: ["instalacion"]
+    });
     
     let horasTotalesActuales = 0;
     for (const asig of asignacionesActuales) {

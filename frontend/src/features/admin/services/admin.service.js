@@ -45,6 +45,26 @@ export async function getInstalaciones() {
   return res;
 }
 
+export async function crearInstalacionService(datos) {
+  const res = await api.post('/instalaciones', datos);
+  return res;
+}
+
+export async function actualizarInstalacionService(id, datos) {
+  const res = await api.put(`/instalaciones/${id}`, datos);
+  return res;
+}
+
+export async function eliminarInstalacionService(id) {
+  const res = await api.delete(`/instalaciones/${id}`);
+  return res;
+}
+
+export async function obtenerClientesService() {
+  const res = await api.get('/usuarios/clientes');
+  return res;
+}
+
 export async function getDashboard() {
   const res = await api.get(`/dashboard?t=${new Date().getTime()}`);
   return res;

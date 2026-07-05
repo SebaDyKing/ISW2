@@ -111,6 +111,9 @@ export const AnexoDocument = ({ contratoAnterior, contratoNuevo }) => {
   if (contratoAnterior.tipo !== contratoNuevo.tipo) {
     modificaciones.push(`El tipo de contrato pasa a ser: ${contratoNuevo.tipo.replace('_', ' ')}.`);
   }
+  if (contratoNuevo.fechaInicio && contratoAnterior.fechaInicio !== contratoNuevo.fechaInicio) {
+    modificaciones.push(`La fecha de inicio de estas nuevas condiciones se establece a contar del: ${contratoNuevo.fechaInicio}.`);
+  }
   if (contratoNuevo.tipo === 'Plazo Fijo' && contratoAnterior.fechaFin !== contratoNuevo.fechaFin) {
     modificaciones.push(`La fecha de término del contrato se establece para el: ${contratoNuevo.fechaFin}.`);
   }

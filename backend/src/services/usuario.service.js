@@ -234,14 +234,31 @@ export async function trasladarEmpleadoService(idEmpleado, idInstalacion) {
       ? (await AppDataSource.getRepository("Instalacion").findOne({ where: { idInstalacion: parseInt(idInstalacion, 10) } }))?.nombre 
       : "Sin instalación";
 
-    await registrarActividad(
-      "Traslado", 
-      `Se trasladó a ${empleado.usuario?.nombre} ${empleado.usuario?.apellido} a ${instalacionNuevaNombre}`
-    );
-
     return empleado;
   } catch (error) {
     console.error("Error en trasladarEmpleadoService:", error);
     throw error;
+  }
+}
+
+export async function obtenerClientesService() {
+  try {
+    const clienteRepo = AppDataSource.getRepository(Cliente);
+    const clientesRaw = await clienteRepo.find({
+      relations: ["usuario"]
+    });
+    
+    return clientesRaw.map(c => ({
+      idCliente: c.idCliente,
+      nombreEmpresa: c.nombreEmpresa,
+      telefono: c.telefono,
+      nombre: c.usuario?.nombre,
+      apellido: c.usuario?.apellido,
+      correo: c.usuario?.correo,
+      idUsuario: c.usuario?.idUsuario,
+    }));
+  } catch (error) {
+    console.error("Error en obtenerClientesService:", error);
+    throw new Error("Error al obtener la lista de clientes");
   }
 }

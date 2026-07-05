@@ -1,14 +1,18 @@
 import { useAnexoModal } from './useAnexoModal'
-import { TIPOS_CONTRATO, LEY_LABORAL_CHILE } from '../../constants/contratos.constants'
+import { LEY_LABORAL_CHILE } from '../../constants/contratos.constants'
 import styles from './AnexoModal.module.css'
 
 export default function AnexoModal({ contrato, onClose, onSuccess }) {
   const {
+    tipoAnexo,
+    setTipoAnexo,
     form,
     loading,
     error,
     handleChange,
     submit,
+    instalaciones,
+    loadingInstalaciones
   } = useAnexoModal(contrato, {
     onSuccess: () => {
       onSuccess?.()
@@ -16,7 +20,7 @@ export default function AnexoModal({ contrato, onClose, onSuccess }) {
     },
   })
 
-  const isPlazoFijo = form.tipo === 'Plazo Fijo'
+  const isPlazoFijo = contrato.tipoContrato === 'Plazo Fijo'
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) onClose()
@@ -37,7 +41,7 @@ export default function AnexoModal({ contrato, onClose, onSuccess }) {
             </div>
             <div>
               <p className={styles.headerTitle}>Anexo de Contrato</p>
-              <p className={styles.headerSubtitle}>Modifica las condiciones actuales para generar un anexo</p>
+              <p className={styles.headerSubtitle}>Modifica las condiciones o agrega una instalación</p>
             </div>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>
@@ -51,85 +55,160 @@ export default function AnexoModal({ contrato, onClose, onSuccess }) {
         <form onSubmit={submit}>
           <div className={styles.body}>
 
-            {/* Condiciones Laborales */}
-            <p className={styles.sectionLabel}>Condiciones Laborales</p>
-
+            {/* Selector de tipo de anexo */}
             <div className={styles.row}>
               <div className={styles.fieldFull}>
-                <label className={styles.label}>
-                  Cargo <span className={styles.required}>*</span>
-                </label>
-                <input
-                  type="text"
-                  name="cargo"
-                  value={form.cargo}
-                  onChange={handleChange}
-                  placeholder="Ej: Supervisor de Aseo"
-                  required
-                  maxLength={100}
+                <label className={styles.label}>¿Qué tipo de anexo desea generar?</label>
+                <select 
                   className={styles.input}
-                />
-              </div>
-            </div>
-
-            <div className={styles.row}>
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Sueldo (CLP) <span className={styles.required}>*</span>
-                </label>
-                <input
-                  type="number"
-                  name="sueldo"
-                  value={form.sueldo}
-                  onChange={handleChange}
-                  placeholder={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP.toString()}
-                  required
-                  min={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP}
-                  step="1"
-                  className={styles.input}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Jornada (horas) <span className={styles.required}>*</span>
-                </label>
-                <input
-                  type="number"
-                  name="jornadaHoras"
-                  value={form.jornadaHoras}
-                  onChange={handleChange}
-                  placeholder={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL.toString()}
-                  required
-                  min={1}
-                  max={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL}
-                  className={styles.input}
-                />
+                  value={tipoAnexo}
+                  onChange={(e) => setTipoAnexo(e.target.value)}
+                >
+                  <option value="condiciones">Modificar Condiciones Laborales</option>
+                  <option value="instalacion">Asignar Nueva Instalación</option>
+                </select>
               </div>
             </div>
 
             <div className={styles.divider} />
 
-            {/* Duración */}
-            <p className={styles.sectionLabel}>Duración del Contrato</p>
-
-            <div className={styles.row}>
-              {isPlazoFijo && (
-                <div className={styles.fieldFull}>
-                <label className={styles.label}>
-                  Fecha Fin {isPlazoFijo && <span className={styles.required}>*</span>}
-                </label>
-                <input
-                  type="date"
-                  name="fechaFin"
-                  value={form.fechaFin}
-                  onChange={handleChange}
-                  required={isPlazoFijo}
-                  className={styles.input}
-                />
+            {tipoAnexo === 'condiciones' ? (
+              <>
+                <p className={styles.sectionLabel}>Condiciones Laborales</p>
+                <div className={styles.row}>
+                  <div className={styles.fieldFull}>
+                    <label className={styles.label}>
+                      Cargo <span className={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="cargo"
+                      value={form.cargo}
+                      onChange={handleChange}
+                      placeholder="Ej: Supervisor de Aseo"
+                      required
+                      maxLength={100}
+                      className={styles.input}
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
+
+                <div className={styles.row}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>
+                      Sueldo (CLP) <span className={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="sueldo"
+                      value={form.sueldo}
+                      onChange={handleChange}
+                      placeholder={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP.toString()}
+                      required
+                      min={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP}
+                      step="1"
+                      className={styles.input}
+                    />
+                  </div>
+
+                  <div className={styles.field}>
+                    <label className={styles.label}>
+                      Jornada (horas) <span className={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="jornadaHoras"
+                      value={form.jornadaHoras}
+                      onChange={handleChange}
+                      placeholder={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL.toString()}
+                      required
+                      min={1}
+                      max={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL}
+                      className={styles.input}
+                    />
+                  </div>
+                </div>
+
+                {isPlazoFijo && (
+                  <>
+                    <div className={styles.row}>
+                      <div className={styles.fieldFull}>
+                        <label className={styles.label}>
+                          Fecha Fin <span className={styles.required}>*</span>
+                        </label>
+                        <input
+                          type="date"
+                          name="fechaFin"
+                          value={form.fechaFin}
+                          onChange={handleChange}
+                          required={isPlazoFijo}
+                          className={styles.input}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <p className={styles.sectionLabel}>Nueva Asignación</p>
+                <div className={styles.row}>
+                  <div className={styles.fieldFull}>
+                    <label className={styles.label}>
+                      Instalación <span className={styles.required}>*</span>
+                    </label>
+                    <select
+                      name="idInstalacion"
+                      value={form.idInstalacion}
+                      onChange={handleChange}
+                      required
+                      className={styles.input}
+                      disabled={loadingInstalaciones}
+                    >
+                      <option value="">
+                        {loadingInstalaciones ? 'Cargando instalaciones...' : 'Seleccione una instalación'}
+                      </option>
+                      {instalaciones.map(inst => (
+                        <option key={inst.idInstalacion} value={inst.idInstalacion}>
+                          {inst.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className={styles.row}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>
+                      Horas Adicionales <span className={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="horasAdicionales"
+                      value={form.horasAdicionales}
+                      onChange={handleChange}
+                      placeholder="Ej: 10"
+                      required
+                      min={1}
+                      className={styles.input}
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>
+                      Pago Adic. (Opcional)
+                    </label>
+                    <input
+                      type="number"
+                      name="pagoAdicional"
+                      value={form.pagoAdicional}
+                      onChange={handleChange}
+                      placeholder="Ej: 50000"
+                      min={0}
+                      className={styles.input}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Error */}
             {error && (

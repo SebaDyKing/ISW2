@@ -1,7 +1,13 @@
 "use strict";
 import { Router } from "express";
 import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
-import { obtenerMisInstalaciones, obtenerInstalaciones } from "../controllers/instalacion.controller.js";
+import { 
+  obtenerMisInstalaciones, 
+  obtenerInstalaciones,
+  crearInstalacion,
+  actualizarInstalacion,
+  eliminarInstalacion 
+} from "../controllers/instalacion.controller.js";
 
 const router = Router();
 
@@ -17,10 +23,22 @@ router.get("/mis-instalaciones",
   obtenerMisInstalaciones
 );
 
-router.get("/",
+router.post("/",
   authMiddleware,
-  autorizeEntities("administrador", "supervisor"),
-  obtenerInstalaciones
+  autorizeEntities("administrador"),
+  crearInstalacion
+);
+
+router.put("/:id",
+  authMiddleware,
+  autorizeEntities("administrador"),
+  actualizarInstalacion
+);
+
+router.delete("/:id",
+  authMiddleware,
+  autorizeEntities("administrador"),
+  eliminarInstalacion
 );
 
 export default router;

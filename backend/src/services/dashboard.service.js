@@ -14,7 +14,8 @@ export async function getMetricasDashboard() {
 
     const resultado = await AppDataSource.getRepository("Contrato")
         .createQueryBuilder("contrato")
-        .innerJoin("contrato.instalacion", "instalacion")
+        .innerJoin("contrato.contratoInstalaciones", "ci")
+        .innerJoin("ci.instalacion", "instalacion")
         .select("COUNT(DISTINCT instalacion.id_instalacion)", "count")
         .where("UPPER(contrato.estado) IN (:...estados)", { estados: ["ACTIVO", "POR VENCER"] })
         .getRawOne();

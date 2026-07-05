@@ -56,6 +56,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
   const [errorText, setErrorText] = useState("");
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [userIp, setUserIp] = useState("Cargando IP...");
+  const [instalacionAsignada, setInstalacionAsignada] = useState(null);
 
   // Reloj en tiempo real
   useEffect(() => {
@@ -69,6 +70,25 @@ export default function MarcarAsistencia({ idContratoProp }) {
     setErrorText("");
     setLoadingHistory(true);
     try {
+      // Cargar asignación de instalación para el contrato del empleado
+      try {
+        const storedUser = localStorage.getItem("usuario");
+        if (storedUser) {
+          const userObj = JSON.parse(storedUser);
+          if (userObj.rol === "empleado" || userObj.rol === "administrador") {
+            const resAsig = await api.get("/contratos/mis-asignaciones");
+            if (resAsig && resAsig.status === "Success" && resAsig.data) {
+              const activeContract = resAsig.data.find(c => c.idContrato === idContrato) || resAsig.data[0];
+              if (activeContract && activeContract.instalacion) {
+                setInstalacionAsignada(activeContract.instalacion);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("No se pudo obtener la instalación asignada:", err);
+      }
+
       // Obtener todos los registros de asistencia
       const res = await api.get("/asistencias");
       if (res && res.status === "Success") {
@@ -183,22 +203,26 @@ export default function MarcarAsistencia({ idContratoProp }) {
         });
     };
 
-    // Solicitar coordenadas
+    // Solicitar coordenadas de forma obligatoria
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           enviarPeticion(position.coords.latitude, position.coords.longitude);
         },
-        () => {
-          console.warn("Geolocalización rechazada, usando coordenadas de respaldo.");
-          // Coordenadas fallback (Edificio Central)
-          enviarPeticion(-36.827, -73.0498);
+        (error) => {
+          console.warn("Geolocalización rechazada o con error:", error);
+          setErrorText("Para registrar tu asistencia debes permitir el acceso a tu ubicación en los permisos de tu navegador.");
+          setLoading(false);
         },
-        { timeout: 5000 }
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000 
+        }
       );
     } else {
-      console.warn("Geolocalización no soportada, usando coordenadas de respaldo.");
-      enviarPeticion(-36.827, -73.0498);
+      console.warn("Geolocalización no soportada en este navegador.");
+      setErrorText("Tu navegador no soporta la geolocalización, lo cual es obligatorio para marcar asistencia.");
+      setLoading(false);
     }
   };
 
@@ -228,68 +252,25 @@ export default function MarcarAsistencia({ idContratoProp }) {
     }
   };
 
-  // Convertir registros diarios a lista de eventos individuales
-  const obtenerEventosDeHistorial = (records) => {
-    const eventos = [];
-    const recordsOrdenados = [...records].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  // Convierte "YYYY-MM-DD" a "Lunes 23 de noviembre 2026"
+  const obtenerFechaTexto = (fechaStr) => {
+    try {
+      const regDate = new Date(fechaStr + "T00:00:00");
+      const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+      const meses = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+      ];
 
-    recordsOrdenados.forEach((reg) => {
-      // Para mostrar en español la fecha del evento
-      let fechaTexto = reg.fecha;
-      try {
-        const regDate = new Date(reg.fecha + "T00:00:00");
-        const diffTime = new Date().setHours(0,0,0,0) - regDate.getTime();
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays === 0) {
-          fechaTexto = "Hoy";
-        } else if (diffDays === 1) {
-          fechaTexto = "Ayer";
-        } else {
-          const diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-          fechaTexto = diasSemana[regDate.getDay()];
-        }
-      } catch {
-        // Fallback
-      }
+      const diaSemana = diasSemana[regDate.getDay()];
+      const diaMes = regDate.getDate();
+      const mes = meses[regDate.getMonth()];
+      const anio = regDate.getFullYear();
 
-      const diaEventos = [];
-      if (reg.salida) {
-        diaEventos.push({
-          id: `${reg.idAsistencia}-salida`,
-          label: "Fin de turno",
-          hora: formatHoraHistorial(reg.salida),
-          fechaTexto
-        });
-      }
-      if (reg.finColacion) {
-        diaEventos.push({
-          id: `${reg.idAsistencia}-fincolacion`,
-          label: "Término de colación",
-          hora: formatHoraHistorial(reg.finColacion),
-          fechaTexto
-        });
-      }
-      if (reg.inicioColacion) {
-        diaEventos.push({
-          id: `${reg.idAsistencia}-iniciocolacion`,
-          label: "Inicio de colación",
-          hora: formatHoraHistorial(reg.inicioColacion),
-          fechaTexto
-        });
-      }
-      if (reg.entrada) {
-        diaEventos.push({
-          id: `${reg.idAsistencia}-entrada`,
-          label: "Inicio de turno",
-          hora: formatHoraHistorial(reg.entrada),
-          fechaTexto
-        });
-      }
-
-      eventos.push(...diaEventos);
-    });
-
-    return eventos;
+      return `${diaSemana} ${diaMes} de ${mes} ${anio}`;
+    } catch {
+      return fechaStr;
+    }
   };
 
   return (
@@ -302,9 +283,14 @@ export default function MarcarAsistencia({ idContratoProp }) {
         <p className="text-[44px] font-extrabold text-[#4f46e5] m-0 tracking-tight leading-none">
           {formatHoraEspanol(currentTime)}
         </p>
-        <p className="text-[#8a90a2] text-sm mt-1.5 mb-[34px] font-medium">
+        <p className="text-[#8a90a2] text-sm mt-1.5 mb-[15px] font-medium">
           {formatFechaEspanol(currentTime)}
         </p>
+        {instalacionAsignada && (
+          <div className="mb-[34px] inline-block bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl text-slate-600 text-xs font-semibold">
+            📍 Lugar de trabajo asignado: <strong className="text-indigo-600">{instalacionAsignada.nombre}</strong> ({instalacionAsignada.direccion})
+          </div>
+        )}
       </div>
 
       {/* Acciones Card */}
@@ -315,7 +301,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
           onClick={handleEntrada}
           className="w-full border-none rounded-xl p-5 text-base font-bold text-white transition-all duration-150 active:scale-[0.98] cursor-pointer bg-[#166534] hover:brightness-[1.05] disabled:bg-[#e2e5ee] disabled:text-[#a7acbd] disabled:cursor-not-allowed disabled:transform-none disabled:filter-none mb-3.5 flex items-center justify-center gap-2"
         >
-          <span className="text-lg">▶</span> Iniciar Turno
+          Iniciar Turno
         </button>
 
         {/* Acciones de Colación (Iniciar / Terminar) */}
@@ -325,7 +311,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
             onClick={handleInicioColacion}
             className="border-none rounded-lg p-4 px-2 text-[13.5px] font-bold text-white transition-all duration-150 active:scale-[0.97] cursor-pointer bg-[#854d0e] hover:brightness-[1.05] disabled:bg-[#e2e5ee] disabled:text-[#a7acbd] disabled:cursor-not-allowed disabled:transform-none disabled:filter-none flex items-center justify-center gap-2"
           >
-            <span className="text-base">☕</span> Marcar Colación
+            Marcar Colación
           </button>
 
           <button
@@ -333,7 +319,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
             onClick={handleFinColacion}
             className="border-none rounded-lg p-4 px-2 text-[13.5px] font-bold text-white transition-all duration-150 active:scale-[0.97] cursor-pointer bg-[#1d4ed8] hover:brightness-[1.05] disabled:bg-[#e2e5ee] disabled:text-[#a7acbd] disabled:cursor-not-allowed disabled:transform-none disabled:filter-none flex items-center justify-center gap-2"
           >
-            <span className="text-base">✔</span> Finalizar Colación
+            Finalizar Colación
           </button>
         </div>
 
@@ -343,13 +329,13 @@ export default function MarcarAsistencia({ idContratoProp }) {
           onClick={handleSalida}
           className="w-full border-none rounded-xl p-5 text-base font-bold text-white transition-all duration-150 active:scale-[0.98] cursor-pointer bg-[#ef4444] hover:brightness-[1.05] disabled:bg-[#e2e5ee] disabled:text-[#a7acbd] disabled:cursor-not-allowed disabled:transform-none disabled:filter-none flex items-center justify-center gap-2"
         >
-          <span className="text-lg">■</span> Finalizar Turno
+          Finalizar Turno
         </button>
       </div>
 
       {/* Historial Card */}
       <div className="bg-white border border-[#e6e9f2] rounded-2xl p-6 w-full max-w-[576px] shadow-[0_1px_2px_rgba(20,20,43,0.03)]">
-        <div className="text-[11px] tracking-[0.6px] text-[#9096a8] font-bold mb-3.5">
+        <div className="text-[11px] tracking-[0.6px] text-[#9096a8] font-bold mb-4">
           HISTORIAL RECIENTE
         </div>
 
@@ -362,15 +348,36 @@ export default function MarcarAsistencia({ idContratoProp }) {
             No hay marcajes registrados.
           </div>
         ) : (
-          <div className="divide-y divide-[#e6e9f2]">
-            {obtenerEventosDeHistorial(historial).map((evt) => (
-              <div key={evt.id} className="flex justify-between py-3 text-[13px] border-b border-[#e6e9f2] last:border-b-0">
-                <span className="font-semibold text-slate-700">
-                  {evt.label}
-                </span>
-                <span className="text-[#8a90a2] font-semibold">{evt.hora}</span>
+          <div className="w-full overflow-x-auto">
+            {/* Tabla sin líneas */}
+            <div className="min-w-[650px]">
+              {/* Encabezado */}
+              <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] text-[10px] font-extrabold text-[#9096a8] uppercase pb-2 mb-2 text-center select-none border-b border-[#e6e9f2]/30">
+                <div className="text-left">Fecha</div>
+                <div>Inicio de Turno</div>
+                <div>Inicio de Colación</div>
+                <div>Término de Colación</div>
+                <div>Fin de Turno</div>
               </div>
-            ))}
+
+              {/* Datos */}
+              <div className="space-y-3.5">
+                {historial.map((reg) => (
+                  <div
+                    key={reg.idAsistencia}
+                    className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] text-[12.5px] text-[#4f566b] py-1 text-center font-medium items-center"
+                  >
+                    <div className="font-bold text-slate-800 text-left">
+                      {obtenerFechaTexto(reg.fecha)}
+                    </div>
+                    <div className="text-[#1e293b]">{formatHoraHistorial(reg.entrada) || "--"}</div>
+                    <div className="text-[#1e293b]">{formatHoraHistorial(reg.inicioColacion) || "--"}</div>
+                    <div className="text-[#1e293b]">{formatHoraHistorial(reg.finColacion) || "--"}</div>
+                    <div className="text-[#1e293b]">{formatHoraHistorial(reg.salida) || "--"}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>

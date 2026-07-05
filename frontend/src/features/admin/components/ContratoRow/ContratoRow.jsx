@@ -30,7 +30,7 @@ function IconPersona() {
   )
 }
 
-export default function ContratoRow({ contrato, onAnexo, onAnexoInstalacion, onFiniquitar, onIndefinido }) {
+export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefinido }) {
   const { esTraslado, iniciales, avatarColor } = useContratoRow(contrato)
 
   return (
@@ -72,24 +72,17 @@ export default function ContratoRow({ contrato, onAnexo, onAnexoInstalacion, onF
       </td>
       <td className={styles.cell}>
         <div className="flex items-center gap-1">
-          <button 
-            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
-            onClick={() => onAnexo(contrato)}
-            title="Generar Anexo"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
-          <button 
-            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
-            onClick={() => onAnexoInstalacion(contrato)}
-            title="Agregar Instalación Adicional"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </button>
+          {contrato.estado !== 'FINALIZADO' && (
+            <button 
+              className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
+              onClick={() => onAnexo(contrato)}
+              title="Generar Anexo"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+          )}
           {contrato.estado === 'ACTIVO' && contrato.tipoContrato === 'Plazo Fijo' && (
             <button 
               className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
