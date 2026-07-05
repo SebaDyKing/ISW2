@@ -228,68 +228,23 @@ export default function MarcarAsistencia({ idContratoProp }) {
     }
   };
 
-  // Convertir registros diarios a lista de eventos individuales
-  const obtenerEventosDeHistorial = (records) => {
-    const eventos = [];
-    const recordsOrdenados = [...records].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  // Convierte la fecha del registro a "Hoy", "Ayer" o el día de la semana
+  const obtenerFechaTexto = (fechaStr) => {
+    try {
+      const regDate = new Date(fechaStr + "T00:00:00");
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const diffTime = hoy - regDate;
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-    recordsOrdenados.forEach((reg) => {
-      // Para mostrar en español la fecha del evento
-      let fechaTexto = reg.fecha;
-      try {
-        const regDate = new Date(reg.fecha + "T00:00:00");
-        const diffTime = new Date().setHours(0,0,0,0) - regDate.getTime();
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays === 0) {
-          fechaTexto = "Hoy";
-        } else if (diffDays === 1) {
-          fechaTexto = "Ayer";
-        } else {
-          const diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-          fechaTexto = diasSemana[regDate.getDay()];
-        }
-      } catch {
-        // Fallback
-      }
+      if (diffDays === 0) return "Hoy";
+      if (diffDays === 1) return "Ayer";
 
-      const diaEventos = [];
-      if (reg.salida) {
-        diaEventos.push({
-          id: `${reg.idAsistencia}-salida`,
-          label: "Fin de turno",
-          hora: formatHoraHistorial(reg.salida),
-          fechaTexto
-        });
-      }
-      if (reg.finColacion) {
-        diaEventos.push({
-          id: `${reg.idAsistencia}-fincolacion`,
-          label: "Término de colación",
-          hora: formatHoraHistorial(reg.finColacion),
-          fechaTexto
-        });
-      }
-      if (reg.inicioColacion) {
-        diaEventos.push({
-          id: `${reg.idAsistencia}-iniciocolacion`,
-          label: "Inicio de colación",
-          hora: formatHoraHistorial(reg.inicioColacion),
-          fechaTexto
-        });
-      }
-      if (reg.entrada) {
-        diaEventos.push({
-          id: `${reg.idAsistencia}-entrada`,
-          label: "Inicio de turno",
-          hora: formatHoraHistorial(reg.entrada),
-          fechaTexto
-        });
-      }
-
-      eventos.push(...diaEventos);
-    });
-
-    return eventos;
+      const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+      return diasSemana[regDate.getDay()];
+    } catch {
+      return fechaStr;
+    }
   };
 
   return (
@@ -349,7 +304,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
 
       {/* Historial Card */}
       <div className="bg-white border border-[#e6e9f2] rounded-2xl p-6 w-full max-w-[576px] shadow-[0_1px_2px_rgba(20,20,43,0.03)]">
-        <div className="text-[11px] tracking-[0.6px] text-[#9096a8] font-bold mb-3.5">
+        <div className="text-[11px] tracking-[0.6px] text-[#9096a8] font-bold mb-4">
           HISTORIAL RECIENTE
         </div>
 
@@ -362,15 +317,36 @@ export default function MarcarAsistencia({ idContratoProp }) {
             No hay marcajes registrados.
           </div>
         ) : (
-          <div className="divide-y divide-[#e6e9f2]">
-            {obtenerEventosDeHistorial(historial).map((evt) => (
-              <div key={evt.id} className="flex justify-between py-3 text-[13px] border-b border-[#e6e9f2] last:border-b-0">
-                <span className="font-semibold text-slate-700">
-                  {evt.label}
-                </span>
-                <span className="text-[#8a90a2] font-semibold">{evt.hora}</span>
+          <div className="w-full overflow-x-auto">
+            {/* Tabla sin líneas */}
+            <div className="min-w-[500px]">
+              {/* Encabezado */}
+              <div className="grid grid-cols-5 text-[10px] font-extrabold text-[#9096a8] uppercase pb-2 mb-2 text-center select-none border-b border-[#e6e9f2]/30">
+                <div className="text-left">Fecha</div>
+                <div>Inicio de Turno</div>
+                <div>Inicio de Colación</div>
+                <div>Término de Colación</div>
+                <div>Fin de Turno</div>
               </div>
-            ))}
+
+              {/* Datos */}
+              <div className="space-y-3.5">
+                {historial.map((reg) => (
+                  <div
+                    key={reg.idAsistencia}
+                    className="grid grid-cols-5 text-[12.5px] text-[#4f566b] py-1 text-center font-medium items-center"
+                  >
+                    <div className="font-bold text-slate-800 text-left">
+                      {obtenerFechaTexto(reg.fecha)}
+                    </div>
+                    <div className="text-[#1e293b]">{formatHoraHistorial(reg.entrada) || "--"}</div>
+                    <div className="text-[#1e293b]">{formatHoraHistorial(reg.inicioColacion) || "--"}</div>
+                    <div className="text-[#1e293b]">{formatHoraHistorial(reg.finColacion) || "--"}</div>
+                    <div className="text-[#1e293b]">{formatHoraHistorial(reg.salida) || "--"}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
