@@ -10,8 +10,13 @@ export async function getMetricasDashboard() {
     const personalActivo = await AppDataSource.getRepository("Contrato")
         .count({ where: { estado: "ACTIVO" } });
 
-    const instalacionesEnCurso = await AppDataSource.getRepository("Instalacion")
-        .count({ where: { estado: "EN_CURSO" } });
+    const resultado = await AppDataSource.getRepository("Contrato")
+        .createQueryBuilder("contrato")
+        .select("COUNT(DISTINCT contrato.id_instalacion)", "count")
+        .where("UPPER(contrato.estado) = :estado", { estado: "ACTIVO" })
+        .getRawOne();
+    
+    const instalacionesEnCurso = parseInt(resultado.count, 10) || 0;
 
     const totalEmpleados = await AppDataSource.getRepository("Empleado").count();
     const porcentajeAsistencia = totalEmpleados > 0 ? Math.round((asistenciaHoy / totalEmpleados) * 100) : 0;

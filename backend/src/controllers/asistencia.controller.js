@@ -7,7 +7,7 @@ import {
   getAsistenciasService,
   getAsistenciaByIdService,
   eliminarAsistenciasService,
-} from "../services/asistencia.services.js";
+} from "../services/asistencia.service.js";
 import { validateAsistenciaBody } from "../validations/asistencia.validations.js";
 import {
   handleSuccess,

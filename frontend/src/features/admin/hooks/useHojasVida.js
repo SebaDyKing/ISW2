@@ -18,7 +18,6 @@ export function useHojasVida() {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     fetchHojas()
   }, [])

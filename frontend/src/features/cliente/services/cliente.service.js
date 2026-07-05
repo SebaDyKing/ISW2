@@ -1,29 +1,16 @@
-import axios from "axios";
+import api from "../../../config/axios";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-
-function getAuthHeader() {
-  const token = localStorage.getItem("token");
-  return { Authorization: `Bearer ${token}` };
-}
-
-//Planes
 export async function obtenerPlanesService() {
-  const res = await axios.get(`${API}/planes`);
+  const res = await api.get(`/planes`);
   return res.data;
 }
 
-//Cotizaciones
 export async function solicitarCotizacionService(datos) {
-  const res = await axios.post(`${API}/cotizaciones/solicitar`, datos, {
-    headers: getAuthHeader(),
-  });
-  return res.data;
+  const res = await api.post(`/cotizaciones/solicitar`, datos);
+  return res;
 }
 
 export async function obtenerMisInstalacionesService() {
-  const res = await axios.get(`${API}/instalaciones/mis-instalaciones`, {
-    headers: getAuthHeader(),
-  });
+  const res = await api.get(`/instalaciones/mis-instalaciones`);
   return res.data;
 }

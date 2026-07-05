@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import LoginForm from "../features/auth/components/LoginForm";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import PrivateRoute from "./PrivateRoute";
@@ -10,18 +11,26 @@ import HojaVidaView from "../features/admin/components/HojaVidaView";
 import EmpleadoLayout from "../features/empleado/components/EmpleadoLayout";
 import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
 import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
+import MisAsignacionesView from "../features/empleado/components/MisAsignacionesView";
 import LandingPage from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
-import EmpleadoPortal from "../components/EmpleadoPortal";
 import MarcarAsistencia from "../components/MarcarAsistencia";
-import { Toaster } from "react-hot-toast";
+import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
+import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
+import api from "../config/axios";
 
 function PanelClienteProximamente() {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (_) {
+      // si falla igual limpiamos el lado cliente
+    } finally {
+      localStorage.removeItem("usuario");
+      navigate("/");
+    }
   };
 
   return (
@@ -55,50 +64,29 @@ function AppRouter() {
         <Route path="/registro" element={<RegisterForm />} />
 
         {/* Admin */}
-        <Route
-          path="/admin"
-          element={
-            <PrivateRoute allowedRoles={["administrador"]}>
-              <AdminLayout />
-            </PrivateRoute>
-          }
-        >
+        <Route path="/admin" element={<PrivateRoute allowedRoles={["administrador"]}><AdminLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios" element={<UsuariosTable />} />
+          <Route path="contratos" element={<ContratosPage />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
           <Route path="licencias" element={<LicenciasMedicasView />} />
           <Route path="hojas-vida" element={<HojaVidaView />} />
         </Route>
 
-        {/* Cliente */}
-        <Route
-          path="/cliente/cotizar"
-          element={
-            <PrivateRoute allowedRoles={["cliente"]}>
-              <SolicitarCotizacion />
-            </PrivateRoute>
-          }
-        />
+        <Route path="/cliente/cotizar" element={<PrivateRoute allowedRoles={["cliente"]}><SolicitarCotizacion /></PrivateRoute>} />
 
-        <Route
-          path="/empleado"
-          element={
-            <PrivateRoute allowedRoles={["empleado"]}>
-              <EmpleadoPortal />
-            </PrivateRoute>
-          }
-        />
+        <Route path="/empleado" element={<PrivateRoute allowedRoles={["empleado"]}><EmpleadoLayout /></PrivateRoute>}>
+          <Route index             element={<Navigate to="asistencia" replace />} />
+          <Route path="asistencia" element={<MarcarAsistencia />} />
+          <Route path="asignaciones" element={<MisAsignacionesView />} />
+          <Route path="licencias"  element={<MisLicenciasView />} />
+          <Route path="hoja-vida"  element={<MisHojasVidaView />} />
+        </Route>
+
         <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
-        <Route
-          path="/cliente"
-          element={
-            <PrivateRoute allowedRoles={["cliente"]}>
-              <PanelClienteProximamente />
-            </PrivateRoute>
-          }
-        />
-
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/cliente" element={<PrivateRoute allowedRoles={["cliente"]}><Navigate to="/cliente/cotizar" replace /></PrivateRoute>} />
+        <Route path="*"           element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

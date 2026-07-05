@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import { useMisHojasVida } from "../hooks/useMisHojasVida"
-import HojaVidaCard from "../../admin/components/HojaVidaCard"
-import HojaVidaSummary from "../../admin/components/HojaVidaSummary"
+import HojaVidaCard from "../../../components/shared/HojaVidaCard"
+import HojaVidaSummary from "../../../components/shared/HojaVidaSummary"
 
 export default function MisHojasVidaView() {
   const { hojas, loading, error } = useMisHojasVida()

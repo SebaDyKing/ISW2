@@ -1,9 +1,4 @@
-import axios from 'axios'
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL, // cambiar por URL de tu API en un archivo .env
-  withCredentials: true,
-})
+import api from '../../../config/axios';
 
 export const contratosService = {
   getAll: (params) => api.get('/contratos', { params }),

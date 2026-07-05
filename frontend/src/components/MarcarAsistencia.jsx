@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import api from "../services/api";
+import React, { useState, useEffect } from "react";
+import api from "../config/axios";
 
 // Helper para convertir formato HH:mm:ss o HH:mm a minutos
 function horaAMinutos(horaStr) {
@@ -71,8 +71,8 @@ export default function MarcarAsistencia({ idContratoProp }) {
     try {
       // Obtener todos los registros de asistencia
       const res = await api.get("/asistencias");
-      if (res.data && res.data.status === "Success") {
-        const registros = res.data.data;
+      if (res && res.status === "Success") {
+        const registros = res.data;
 
         // Filtrar por contrato actual
         const registrosEmpleado = registros.filter(
@@ -151,8 +151,8 @@ export default function MarcarAsistencia({ idContratoProp }) {
       api
         .post(endpoint, payload)
         .then((res) => {
-          if (res.data && res.data.status === "Success") {
-            const registroMarcado = res.data.data;
+          if (res && res.status === "Success") {
+            const registroMarcado = res.data;
             if (registroMarcado) {
               const cache = localStorage.getItem(`historial_${idContrato}`);
               let registrosEmpleado = cache ? JSON.parse(cache) : [];

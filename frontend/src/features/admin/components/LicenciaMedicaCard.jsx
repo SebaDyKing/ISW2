@@ -1,5 +1,5 @@
-import { formatFecha } from "../utils/fecha"
-import { getEstado } from "../utils/estadoLicencia"
+import { formatFecha } from "../../../utils/fecha"
+import { getEstado } from "../../../utils/estadoLicencia"
 
 function getInitials(nombre = "", apellido = "") {
   return `${nombre[0] ?? ""}${apellido[0] ?? ""}`.toUpperCase() || "LM"

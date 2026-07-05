@@ -1,5 +1,5 @@
-import { formatFecha } from "../../admin/utils/fecha"
-import { getEstado } from "../../admin/utils/estadoLicencia"
+import { formatFecha } from "../../../utils/fecha"
+import { getEstado } from "../../../utils/estadoLicencia"
 
 function IconEye() {
   return (

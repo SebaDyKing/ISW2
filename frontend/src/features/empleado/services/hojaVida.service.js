@@ -1,3 +1,3 @@
-import api from "../../../config/api"
+import api from "../../../config/axios"
 
 export const getAll = () => api.get("/hojas-vida")

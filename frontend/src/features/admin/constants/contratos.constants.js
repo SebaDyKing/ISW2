@@ -1,8 +1,8 @@
 export const TIPOS_CONTRATO = [
-  { value: 'plazo_fijo',  label: 'Plazo Fijo' },
-  { value: 'indefinido',  label: 'Indefinido' },
-  { value: 'traslado',    label: 'Traslado' },
-  { value: 'reemplazo',   label: 'Reemplazo' },
+  { value: 'Plazo Fijo',  label: 'Plazo Fijo' },
+  { value: 'Indefinido',  label: 'Indefinido' },
+  { value: 'Traslado',    label: 'Traslado' },
+  { value: 'Reemplazo',   label: 'Reemplazo' },
 ];
 
 export const LEY_LABORAL_CHILE = {

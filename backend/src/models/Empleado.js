@@ -20,6 +20,7 @@ export const Empleado = new EntitySchema({
     fechaNacimiento: {
       name: "fecha_nacimiento",
       type: "date",
+      nullable: true,
     },
     createdAt: {
       name: "created_at",

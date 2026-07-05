@@ -5,7 +5,7 @@ import {
   createHojaVidaServices,
   updateHojaVidaServices,
   deleteHojaVidaServices,
-} from "../services/hojavida.services.js";
+} from "../services/hojavida.service.js";
 import {
   handleSuccess,
   handleErrorClient,

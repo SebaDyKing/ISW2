@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MarcarAsistencia from "./MarcarAsistencia";
+import api from "../config/axios";
 
 export default function EmpleadoPortal() {
   const navigate = useNavigate();
@@ -8,19 +9,17 @@ export default function EmpleadoPortal() {
   const [initials, setInitials] = useState("JP");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    const storedUser = localStorage.getItem("usuario");
+    if (!storedUser) {
       navigate("/login");
       return;
     }
 
     try {
-      const storedUser = JSON.parse(localStorage.getItem("usuario") || "{}");
-      if (storedUser.nombreCompleto) {
-        setUser(storedUser);
-        
-        // Calcular iniciales a partir del nombre completo
-        const parts = storedUser.nombreCompleto.split(" ");
+      const parsed = JSON.parse(storedUser);
+      if (parsed.nombreCompleto) {
+        setUser(parsed);
+        const parts = parsed.nombreCompleto.split(" ");
         const init = parts.map(p => p[0]).join("").slice(0, 2).toUpperCase();
         setInitials(init || "EM");
       }
@@ -29,11 +28,15 @@ export default function EmpleadoPortal() {
     }
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
-    localStorage.removeItem("idContrato");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (_) {}
+    finally {
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("idContrato");
+      navigate("/login");
+    }
   };
 
   const avatarChar = user.nombreCompleto ? user.nombreCompleto[0].toUpperCase() : "E";
@@ -51,7 +54,6 @@ export default function EmpleadoPortal() {
       {/* SIDEBAR FIJO A LA IZQUIERDA */}
       <aside className="w-64 bg-[#1e293b] text-white flex flex-col justify-between p-6 shrink-0 border-r border-[#94a3b8]/30">
         <div className="space-y-8">
-          {/* LOGO */}
           <div className="flex items-center space-x-3">
             <div className="w-9 h-9 rounded-lg bg-[#0f172a] flex items-center justify-center font-bold text-base shadow-md shadow-black/20">
               ⬜
@@ -64,7 +66,6 @@ export default function EmpleadoPortal() {
             </div>
           </div>
 
-          {/* MENÚ DE NAVEGACIÓN */}
           <nav className="space-y-1">
             <button className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#dcfce7] text-[#166534] border border-[#166534]/30 shadow-sm transition-all">
               <span>🕐 Marcar Asistencia</span>
@@ -80,7 +81,6 @@ export default function EmpleadoPortal() {
           </nav>
         </div>
 
-        {/* PERFIL Y CERRAR SESION */}
         <div className="space-y-4">
           <button
             onClick={handleLogout}
@@ -107,7 +107,6 @@ export default function EmpleadoPortal() {
         </div>
       </aside>
 
-      {/* ÁREA DE CONTENIDO PRINCIPAL */}
       <main className="flex-1 flex flex-col">
         <MarcarAsistencia idContratoProp={1} />
       </main>

@@ -7,7 +7,7 @@ import {
   createLicenciaMedicaServices,
   updateEstadoLicenciaMedicaServices,
   deleteLicenciaMedicaServices,
-} from "../services/licenciamedica.services.js";
+} from "../services/licenciamedica.service.js";
 import {
   handleSuccess,
   handleErrorClient,

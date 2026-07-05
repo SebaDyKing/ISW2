@@ -1,6 +1,10 @@
 "use strict";
 import { AppDataSource } from "../config/configDb.js";
 import { Usuario } from "../models/Usuario.js";
+import { Empleado } from "../models/Empleado.js";
+import { Cliente } from "../models/Cliente.js";
+import { Supervisor } from "../models/Supervisor.js";
+import { Administrador } from "../models/Administrador.js";
 import bcrypt from "bcrypt";
 
 export async function crearUsuarioService(datosUsuario) {
@@ -28,6 +32,24 @@ export async function crearUsuarioService(datosUsuario) {
 
     const usuarioGuardado = await usuarioRepository.save(nuevoUsuario);
 
+    if (rol === "empleado") {
+      const empleadoRepo = AppDataSource.getRepository(Empleado);
+      await empleadoRepo.save(empleadoRepo.create({ usuario: usuarioGuardado, rut }));
+    } else if (rol === "supervisor") {
+      const supervisorRepo = AppDataSource.getRepository(Supervisor);
+      await supervisorRepo.save(supervisorRepo.create({ usuario: usuarioGuardado, rut }));
+    } else if (rol === "administrador") {
+      const adminRepo = AppDataSource.getRepository(Administrador);
+      await adminRepo.save(adminRepo.create({ usuario: usuarioGuardado }));
+    } else if (rol === "cliente") {
+      const clienteRepo = AppDataSource.getRepository(Cliente);
+      await clienteRepo.save(clienteRepo.create({ 
+        usuario: usuarioGuardado, 
+        nombreEmpresa: nombre, 
+        telefono: "Sin asignar" 
+      }));
+    }
+
     // 5. Por seguridad, no se devuelve el passwordHash al frontend
     const { passwordHash: _, ...usuarioSinPassword } = usuarioGuardado;
     
@@ -51,6 +73,31 @@ export async function obtenerUsuariosService() {
   } catch (error) {
     console.error("Error en obtenerUsuariosService:", error);
     throw new Error("Error al obtener la lista de usuarios");
+  }
+}
+
+export async function obtenerEmpleadosService() {
+  try {
+    const empleadoRepo = AppDataSource.getRepository(Empleado);
+    const empleadosRaw = await empleadoRepo.find({
+      relations: ["usuario"]
+    });
+    
+    // Mapear para que el frontend reciba nombre, apellido y correo directamente en el objeto
+    const empleadosMapeados = empleadosRaw.map(emp => ({
+      idEmpleado: emp.idEmpleado,
+      rut: emp.rut,
+      fechaNacimiento: emp.fechaNacimiento,
+      nombre: emp.usuario?.nombre,
+      apellido: emp.usuario?.apellido,
+      correo: emp.usuario?.correo,
+      idUsuario: emp.usuario?.idUsuario,
+    }));
+
+    return empleadosMapeados;
+  } catch (error) {
+    console.error("Error en obtenerEmpleadosService:", error);
+    throw new Error("Error al obtener la lista de empleados");
   }
 }
 
@@ -82,13 +129,9 @@ try {
 
     if (!usuario) throw new Error("Usuario no encontrado");
 
-    // Si intenta actualizar el RUT
-    if (datosActualizar.rut) {
-      const rutOcupado = await usuarioRepository.findOne({ where: { rut: datosActualizar.rut } });
-      if (rutOcupado && rutOcupado.idUsuario !== idNumerico) {
-        throw new Error("El RUT ya está en uso por otra cuenta.");
-      }
-    }
+    // Por seguridad, aseguramos que el rut y el rol no puedan ser modificados
+    delete datosActualizar.rut;
+    delete datosActualizar.rol;
 
     // Si intenta actualizar el correo
     if (datosActualizar.correo) {

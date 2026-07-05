@@ -1,4 +1,4 @@
-import api from "../../../config/api"
+import api from "../../../config/axios"
 
 const API_ORIGIN = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
 
