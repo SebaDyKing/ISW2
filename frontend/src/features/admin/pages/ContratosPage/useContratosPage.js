@@ -21,6 +21,12 @@ export function useContratosPage() {
   const [selectedContratoForIndefinido, setSelectedContratoForIndefinido] = useState(null)
   const [isAscendiendo, setIsAscendiendo] = useState(false)
 
+  const [showAdministrarInstalacionesModal, setShowAdministrarInstalacionesModal] = useState(false)
+  const [selectedContratoForInstalaciones, setSelectedContratoForInstalaciones] = useState(null)
+
+  const [showDocumentosModal, setShowDocumentosModal] = useState(false)
+  const [selectedContratoForDocumentos, setSelectedContratoForDocumentos] = useState(null)
+
   const contratosFiltrados = useMemo(() => {
     if (!search) return contratos
     const term = search.toLowerCase()
@@ -75,9 +81,13 @@ export function useContratosPage() {
     }
   }, [updateContrato])
 
+  const handleOpenDocumentos = useCallback((contrato) => {
+    setSelectedContratoForDocumentos(contrato)
+    setShowDocumentosModal(true)
+  }, [])
+
   return {
-    contratosFiltrados,
-    alertaTrabajador,
+    contratos: contratosFiltrados,
     loading,
     error,
     search,
@@ -102,6 +112,15 @@ export function useContratosPage() {
     setSelectedContratoForIndefinido,
     isAscendiendo,
     handlePasoAIndefinido,
-    refetch
+    showAdministrarInstalacionesModal,
+    setShowAdministrarInstalacionesModal,
+    selectedContratoForInstalaciones,
+    setSelectedContratoForInstalaciones,
+    alertaTrabajador,
+    refetch,
+    showDocumentosModal,
+    setShowDocumentosModal,
+    selectedContratoForDocumentos,
+    handleOpenDocumentos,
   }
 }

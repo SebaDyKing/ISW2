@@ -7,14 +7,17 @@ import TrasladoModal from '../../components/TrasladoModal/TrasladoModal'
 import AnexoModal from '../../components/AnexoModal/AnexoModal'
 import FiniquitoModal from '../../components/FiniquitoModal/FiniquitoModal'
 import IndefinidoModal from '../../components/IndefinidoModal/IndefinidoModal'
+import AdministrarInstalacionesModal from '../../components/AdministrarInstalacionesModal/AdministrarInstalacionesModal'
+import DocumentosModal from '../../components/DocumentosModal/DocumentosModal'
 import styles from './ContratosPage.module.css'
 
 export default function ContratosPage() {
+  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const {
-    contratosFiltrados,
-    alertaTrabajador,
+    contratos,
     loading,
     error,
+    search,
     setSearch,
     showModal,
     setShowModal,
@@ -36,7 +39,16 @@ export default function ContratosPage() {
     setSelectedContratoForIndefinido,
     isAscendiendo,
     handlePasoAIndefinido,
-    refetch
+    showAdministrarInstalacionesModal,
+    setShowAdministrarInstalacionesModal,
+    selectedContratoForInstalaciones,
+    setSelectedContratoForInstalaciones,
+    alertaTrabajador,
+    refetch,
+    showDocumentosModal,
+    setShowDocumentosModal,
+    selectedContratoForDocumentos,
+    handleOpenDocumentos,
   } = useContratosPage()
 
   return (
@@ -47,21 +59,23 @@ export default function ContratosPage() {
             <h1 className={styles.title}>Gestión de Contratos</h1>
             <p className={styles.subtitle}>Asignación y traslado de personal por proyecto</p>
           </div>
-          <div className={styles.actions}>
-            <button className={styles.btnSecondary} onClick={() => setShowTrasladoModal(true)}>
-              <svg className={styles.btnIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-              Traslado
-            </button>
-            <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>
-              <svg className={styles.btnIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Nuevo Contrato
-            </button>
-          </div>
+          {usuario.rol === 'administrador' && (
+            <div className={styles.actions}>
+              <button className={styles.btnSecondary} onClick={() => setShowTrasladoModal(true)}>
+                <svg className={styles.btnIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                Traslado
+              </button>
+              <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>
+                <svg className={styles.btnIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Nuevo Contrato
+              </button>
+            </div>
+          )}
         </div>
 
         {alertaTrabajador && (
@@ -69,7 +83,7 @@ export default function ContratosPage() {
         )}
 
         <ContratosTable
-          contratos={contratosFiltrados}
+          contratos={contratos}
           loading={loading}
           error={error}
           onSearch={setSearch}
@@ -85,6 +99,11 @@ export default function ContratosPage() {
             setSelectedContratoForIndefinido(contrato)
             setShowIndefinidoModal(true)
           }}
+          onAdministrarInstalaciones={(contrato) => {
+            setSelectedContratoForInstalaciones(contrato)
+            setShowAdministrarInstalacionesModal(true)
+          }}
+          onVerDocumentos={handleOpenDocumentos}
         />
       </div>
 
@@ -133,6 +152,25 @@ export default function ContratosPage() {
           }}
           onConfirm={handlePasoAIndefinido}
           isSubmitting={isAscendiendo}
+        />
+      )}
+
+      {showAdministrarInstalacionesModal && selectedContratoForInstalaciones && (
+        <AdministrarInstalacionesModal
+          contrato={selectedContratoForInstalaciones}
+          onClose={() => {
+            setShowAdministrarInstalacionesModal(false)
+            setSelectedContratoForInstalaciones(null)
+          }}
+          onRefresh={refetch}
+        />
+      )}
+
+      {showDocumentosModal && (
+        <DocumentosModal
+          isOpen={showDocumentosModal}
+          onClose={() => setShowDocumentosModal(false)}
+          contrato={selectedContratoForDocumentos}
         />
       )}
     </div>

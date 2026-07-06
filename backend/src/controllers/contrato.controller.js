@@ -8,7 +8,8 @@ import {
     updateEstadoContrato,
     deleteContrato,
     getMisAsignacionesService,
-    agregarInstalacionContrato
+    agregarInstalacionContrato,
+    removerInstalacionService
 } from "../services/contrato.service.js";
 import {
     handleSuccess,
@@ -18,7 +19,7 @@ import {
 
 export const getAll = async (req, res) => {
     try {
-        const data = await getAllContratos();
+        const data = await getAllContratos(req.user);
         handleSuccess(res, 200, "Contratos obtenidos exitosamente", data);
     } catch (error) {
         handleErrorServer(res, 500, "Error al obtener contratos", error.message);
@@ -63,6 +64,7 @@ export const getMisAsignaciones = async (req, res) => {
         }
     }
 };
+
 
 export const create = async (req, res) => {
     try {
@@ -132,6 +134,20 @@ export const agregarInstalacion = async (req, res) => {
             handleErrorClient(res, error.status, error.message);
         } else {
             handleErrorServer(res, 500, "Error al agregar instalación", error.message);
+        }
+    }
+};
+
+export const removerInstalacion = async (req, res) => {
+    try {
+        const { idContrato, idInstalacion } = req.params;
+        const data = await removerInstalacionService(Number(idContrato), Number(idInstalacion));
+        handleSuccess(res, 200, "Instalación removida del contrato", data);
+    } catch (error) {
+        if (error.status === 400 || error.status === 404) {
+            handleErrorClient(res, error.status, error.message);
+        } else {
+            handleErrorServer(res, 500, error.message);
         }
     }
 };

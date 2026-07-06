@@ -2,7 +2,7 @@
 import { Router } from "express";
 import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
 import { getAll, getById, getByEmpleado, create,
-        update, updateEstado, remove, getMisAsignaciones, agregarInstalacion
+        update, updateEstado, remove, getMisAsignaciones, agregarInstalacion, removerInstalacion
 } from "../controllers/contrato.controller.js";
 
 const router = Router();
@@ -18,6 +18,7 @@ router.post("/", authMiddleware, autorizeEntities("administrador"), create);
 router.put("/:id", authMiddleware, autorizeEntities("administrador"), update);
 router.patch("/:id/estado", authMiddleware, autorizeEntities("administrador"), updateEstado);
 router.post("/:idContrato/instalacion", authMiddleware, autorizeEntities("administrador"), agregarInstalacion);
+router.delete("/:idContrato/instalacion/:idInstalacion", authMiddleware, autorizeEntities("administrador"), removerInstalacion);
 router.delete("/:id", authMiddleware, autorizeEntities("administrador"), remove);
 
 export default router;

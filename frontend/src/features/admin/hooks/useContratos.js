@@ -13,6 +13,7 @@ export function useContratos() {
       
       const contratosMapeados = response.data.map(c => ({
         id: c.idContrato,
+        idEmpleado: c.empleado?.idEmpleado,
         codigo: `CT-${String(c.idContrato).padStart(4, '0')}`,
         nombre: c.empleado?.usuario ? `${c.empleado.usuario.nombre} ${c.empleado.usuario.apellido}` : 'Sin empleado',
         rut: c.empleado?.rut || 'Sin RUT',
@@ -24,7 +25,8 @@ export function useContratos() {
         periodoInicio: c.fechaInicio,
         periodoFin: c.fechaFin,
         estado: c.estado,
-        tieneAlerta: false
+        tieneAlerta: false,
+        contratoInstalacionesData: c.contratoInstalaciones || []
       }))
 
       setContratos(contratosMapeados)

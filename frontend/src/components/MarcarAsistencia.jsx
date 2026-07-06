@@ -44,7 +44,7 @@ function formatHoraEspanol(date) {
 }
 
 export default function MarcarAsistencia({ idContratoProp }) {
-  const idContrato = idContratoProp || Number(localStorage.getItem("idContrato")) || 1;
+  const [idContrato, setIdContrato] = useState(idContratoProp || Number(localStorage.getItem("idContrato")) || null);
 
   // Estados del reloj
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -56,7 +56,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
   const [errorText, setErrorText] = useState("");
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [userIp, setUserIp] = useState("Cargando IP...");
-  const [instalacionAsignada, setInstalacionAsignada] = useState(null);
+  const [instalacionesAsignadas, setInstalacionesAsignadas] = useState([]);
 
   // Reloj en tiempo real
   useEffect(() => {
@@ -78,9 +78,15 @@ export default function MarcarAsistencia({ idContratoProp }) {
           if (userObj.rol === "empleado" || userObj.rol === "administrador") {
             const resAsig = await api.get("/contratos/mis-asignaciones");
             if (resAsig && resAsig.status === "Success" && resAsig.data) {
-              const activeContract = resAsig.data.find(c => c.idContrato === idContrato) || resAsig.data[0];
-              if (activeContract && activeContract.instalacion) {
-                setInstalacionAsignada(activeContract.instalacion);
+              const activeContract = (idContrato ? resAsig.data.find(c => c.idContrato === idContrato) : null) || resAsig.data[0];
+              if (activeContract) {
+                setIdContrato(activeContract.idContrato);
+                localStorage.setItem("idContrato", activeContract.idContrato);
+                if (activeContract.contratoInstalaciones && activeContract.contratoInstalaciones.length > 0) {
+                  setInstalacionesAsignadas(activeContract.contratoInstalaciones.map(ci => ci.instalacion));
+                } else if (activeContract.instalacion) {
+                  setInstalacionesAsignadas([activeContract.instalacion]);
+                }
               }
             }
           }
@@ -160,6 +166,12 @@ export default function MarcarAsistencia({ idContratoProp }) {
     const horaDispositivo = ahora.toTimeString().split(" ")[0];
 
     const enviarPeticion = (lat, lon) => {
+      if (!idContrato) {
+        setErrorText("No se pudo identificar tu contrato activo.");
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         idContrato,
         latitud: lat,
@@ -286,9 +298,14 @@ export default function MarcarAsistencia({ idContratoProp }) {
         <p className="text-[#8a90a2] text-sm mt-1.5 mb-[15px] font-medium">
           {formatFechaEspanol(currentTime)}
         </p>
-        {instalacionAsignada && (
-          <div className="mb-[34px] inline-block bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl text-slate-600 text-xs font-semibold">
-            📍 Lugar de trabajo asignado: <strong className="text-indigo-600">{instalacionAsignada.nombre}</strong> ({instalacionAsignada.direccion})
+        {instalacionesAsignadas.length > 0 && (
+          <div className="mb-[34px] inline-block bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl text-slate-600 text-xs font-semibold text-left">
+            📍 Lugares de trabajo asignados:<br/>
+            {instalacionesAsignadas.map((inst, i) => (
+              <span key={i} className="block mt-1 ml-4">
+                - <strong className="text-indigo-600">{inst.nombre}</strong> ({inst.direccion})
+              </span>
+            ))}
           </div>
         )}
       </div>

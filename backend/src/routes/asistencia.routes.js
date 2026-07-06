@@ -13,8 +13,8 @@ import {
 
 const router = Router();
 
-// Rutas protegidas de consulta (Admin y Supervisor)
-router.get("/", authMiddleware, autorizeEntities("admin", "supervisor"), getAsistenciasController);
+// Rutas protegidas de consulta (Admin y Supervisor, y ahora Empleado para que el frontend no de 403)
+router.get("/", authMiddleware, autorizeEntities("admin", "supervisor", "empleado"), getAsistenciasController);
 router.get("/:id", authMiddleware, autorizeEntities("admin", "supervisor"), getAsistenciaByIdController);
 
 // Rutas de marcaje (Solo empleados)

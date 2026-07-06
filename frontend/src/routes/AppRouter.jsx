@@ -12,6 +12,7 @@ import EmpleadoLayout from "../features/empleado/components/EmpleadoLayout";
 import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
 import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
 import MisAsignacionesView from "../features/empleado/components/MisAsignacionesView";
+import MisDocumentosView from "../features/empleado/components/MisDocumentosView";
 import LandingPage from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
 import MarcarAsistencia from "../components/MarcarAsistencia";
@@ -60,13 +61,19 @@ function AppRouter() {
       <Toaster position="top-right" />
       <Routes>
         {/* Pública */}
-        <Route path="/" element={<MarcarAsistencia />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/asistencia" element={<MarcarAsistencia />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/registro" element={<RegisterForm />} />
 
-        {/* Panel de Administrador */}
-        <Route path="/admin" element={<PrivateRoute allowedRoles={["administrador"]}><AdminLayout /></PrivateRoute>}>
-          <Route index element={<Navigate to="usuarios" replace />} />
+        {/* Panel de Administrador y Supervisor */}
+        <Route path="/admin" element={<PrivateRoute allowedRoles={["administrador", "supervisor"]}><AdminLayout /></PrivateRoute>}>
+          <Route index element={
+            (() => {
+              const u = JSON.parse(localStorage.getItem("usuario") || "{}");
+              return u.rol === "supervisor" ? <Navigate to="contratos" replace /> : <Navigate to="usuarios" replace />;
+            })()
+          } />
           <Route path="usuarios" element={<UsuariosTable />} />
           <Route path="contratos" element={<ContratosPage />} />
           <Route path="dashboard" element={<AdminDashboard />} />
@@ -82,11 +89,11 @@ function AppRouter() {
           <Route index element={<Navigate to="asistencia" replace />} />
           <Route path="asistencia" element={<MarcarAsistencia />} />
           <Route path="asignaciones" element={<MisAsignacionesView />} />
+          <Route path="documentos" element={<MisDocumentosView />} />
           <Route path="licencias" element={<MisLicenciasView />} />
           <Route path="hoja-vida" element={<MisHojasVidaView />} />
         </Route>
 
-        <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
         <Route path="/cliente" element={<PrivateRoute allowedRoles={["cliente"]}><Navigate to="/cliente/cotizar" replace /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

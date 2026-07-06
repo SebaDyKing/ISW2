@@ -109,13 +109,13 @@ function IconInstalacion() {
 }
 
 const NAV = [
-  { to: "/admin/dashboard",    label: "Dashboard",         icon: IconDashboard },
-  { to: "/admin/usuarios",     label: "Usuarios",          icon: IconUsuarios },
-  { to: "/admin/contratos",    label: "Contratos",         icon: IconContratos },
-  { to: "/admin/instalaciones", label: "Instalaciones",     icon: IconInstalacion },
-  { to: "/admin/cotizaciones", label: "Cotizaciones",      icon: IconCotizaciones },
-  { to: "/admin/licencias",    label: "Licencias Médicas", icon: IconLicencia },
-  { to: "/admin/hojas-vida",   label: "Hojas de Vida",     icon: IconHojaVida },
+  { to: "/admin/dashboard",    label: "Dashboard",         icon: IconDashboard, roles: ["administrador"] },
+  { to: "/admin/usuarios",     label: "Usuarios",          icon: IconUsuarios, roles: ["administrador"] },
+  { to: "/admin/contratos",    label: "Contratos",         icon: IconContratos, roles: ["administrador", "supervisor"] },
+  { to: "/admin/instalaciones", label: "Instalaciones",     icon: IconInstalacion, roles: ["administrador", "supervisor"] },
+  { to: "/admin/cotizaciones", label: "Cotizaciones",      icon: IconCotizaciones, roles: ["administrador"] },
+  { to: "/admin/licencias",    label: "Licencias Médicas", icon: IconLicencia, roles: ["administrador", "supervisor"] },
+  { to: "/admin/hojas-vida",   label: "Hojas de Vida",     icon: IconHojaVida, roles: ["administrador", "supervisor"] },
 ];
 
 function AdminLayout() {
@@ -178,7 +178,7 @@ function AdminLayout() {
 
         {/* Navegación */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-          {NAV.map(({ to, label, icon: Icon }) => (
+          {NAV.filter(item => !item.roles || item.roles.includes(usuario.rol)).map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}

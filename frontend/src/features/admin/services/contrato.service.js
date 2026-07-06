@@ -7,4 +7,5 @@ export const contratosService = {
   update: (id, data) => api.put(`/contratos/${id}`, data),
   delete: (id) => api.delete(`/contratos/${id}`),
   agregarInstalacion: (idContrato, data) => api.post(`/contratos/${idContrato}/instalacion`, data),
+  removerInstalacion: (idContrato, idInstalacion) => api.delete(`/contratos/${idContrato}/instalacion/${idInstalacion}`),
 }

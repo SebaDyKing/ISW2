@@ -30,8 +30,15 @@ function IconPersona() {
   )
 }
 
-export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefinido }) {
+export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefinido, onAdministrarInstalaciones, onVerDocumentos }) {
+  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
   const { esTraslado, iniciales, avatarColor } = useContratoRow(contrato)
+  
+  // Normalizar el estado para las comprobaciones de los botones
+  // Si no está definido o es distinto a FINALIZADO, lo consideramos activo,
+  // siguiendo la misma lógica del fallback del Badge.
+  const estadoSeguro = contrato.estado?.toUpperCase()?.trim();
+  const isActive = estadoSeguro !== 'FINALIZADO';
 
   return (
     <tr className={`${styles.row} group`}>
@@ -58,23 +65,48 @@ export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefin
       </td>
       <td className={styles.cell}>
         <div className={styles.typeWrapper}>
-          {esTraslado ? <IconTraslado /> : <IconDocumento />}
-          <span>{esTraslado ? 'Traslado' : (contrato.tipoContrato || 'Plazo Fijo')}</span>
+          <p className={styles.typeText}>
+            {esTraslado && <IconTraslado />}
+            {contrato.tipoContrato}
+          </p>
+          <ContratoEstadoBadge estado={contrato.estado} />
         </div>
       </td>
       <td className={styles.cell}>
-        <span className={styles.periodBadge}>
-          {contrato.periodoInicio} — {contrato.periodoFin}
-        </span>
-      </td>
-      <td className={styles.cell}>
-        <ContratoEstadoBadge estado={contrato.estado} />
+        <p className={styles.dateText}>{new Date(contrato.periodoInicio).toLocaleDateString('es-CL')}</p>
+        <p className={styles.dateSub}>
+          {contrato.periodoFin 
+            ? `Hasta ${new Date(contrato.periodoFin).toLocaleDateString('es-CL')}`
+            : 'Indefinido'}
+        </p>
       </td>
       <td className={styles.cell}>
         <div className="flex items-center gap-1">
-          {contrato.estado !== 'FINALIZADO' && (
+          
+          <button 
+            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
+            onClick={() => onVerDocumentos(contrato)}
+            title="Ver Carpeta Digital"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+          </button>
+
+          {usuario.rol === 'administrador' && isActive && (
             <button 
-              className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
+              className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
+              onClick={() => onAdministrarInstalaciones(contrato)}
+              title="Administrar Instalaciones"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </button>
+          )}
+          {usuario.rol === 'administrador' && isActive && (
+            <button 
+              className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
               onClick={() => onAnexo(contrato)}
               title="Generar Anexo"
             >
@@ -83,7 +115,7 @@ export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefin
               </svg>
             </button>
           )}
-          {contrato.estado === 'ACTIVO' && contrato.tipoContrato === 'Plazo Fijo' && (
+          {usuario.rol === 'administrador' && isActive && contrato.tipoContrato?.toLowerCase()?.trim() === 'plazo fijo' && (
             <button 
               className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
               onClick={() => onIndefinido(contrato)}
@@ -94,7 +126,7 @@ export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefin
               </svg>
             </button>
           )}
-          {contrato.estado === 'ACTIVO' && (
+          {usuario.rol === 'administrador' && isActive && (
             <button 
               className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
               onClick={() => onFiniquitar(contrato)}

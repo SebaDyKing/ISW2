@@ -1,6 +1,7 @@
 "use strict";
 import "dotenv/config";
 import express from "express";
+import path from "path";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -27,6 +28,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
 app.use("/api/auth", authRouter);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/", (req, res) => {
   res.send("¡Bienvenido a mi API REST con TypeORM!");

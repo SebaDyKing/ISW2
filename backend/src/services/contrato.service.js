@@ -9,8 +9,31 @@ const getRepo = () => AppDataSource.getRepository("Contrato");
 const TIPOS_VALIDOS = ["Plazo Fijo", "Indefinido"];
 const ESTADOS_VALIDOS = ["ACTIVO", "POR VENCER", "FINALIZADO"];
 
-export async function getAllContratos() {
+export async function getAllContratos(user = null) {
+    let whereClause = {};
+    
+    if (user && user.rol === "supervisor") {
+        const supervisor = await AppDataSource.getRepository("Supervisor").findOne({
+            where: { usuario: { idUsuario: user.idUsuario } },
+            relations: ["instalaciones", "instalaciones.instalacion"]
+        });
+        
+        if (supervisor && supervisor.instalaciones && supervisor.instalaciones.length > 0) {
+            const instalacionIds = supervisor.instalaciones.map(si => si.instalacion.idInstalacion);
+            whereClause = {
+                contratoInstalaciones: {
+                    instalacion: {
+                        idInstalacion: In(instalacionIds)
+                    }
+                }
+            };
+        } else {
+            return []; // Supervisor sin instalaciones
+        }
+    }
+
     return await getRepo().find({
+        where: whereClause,
         relations: ["empleado", "empleado.usuario", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
     });
 }
@@ -42,7 +65,7 @@ export async function getMisAsignacionesService(idUsuario) {
 
     return await getRepo().find({
         where: { empleado: { idEmpleado: empleado.idEmpleado } },
-        relations: ["instalacion", "instalacion.cliente"],
+        relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion", "contratoInstalaciones.instalacion.cliente"],
         order: { fechaInicio: "DESC" }
     });
 }
@@ -369,3 +392,37 @@ export async function agregarInstalacionContrato(idContrato, idInstalacion, hora
     return await getContratoById(idContrato);
 }
 
+export async function removerInstalacionService(idContrato, idInstalacion) {
+  try {
+    const contratoRepo = AppDataSource.getRepository("Contrato");
+    const contratoInstalacionRepo = AppDataSource.getRepository("ContratoInstalacion");
+
+    const contrato = await contratoRepo.findOne({
+      where: { idContrato },
+      relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion"]
+    });
+
+    if (!contrato) {
+      throw { status: 404, message: "Contrato no encontrado." };
+    }
+
+    if (contrato.contratoInstalaciones.length <= 1) {
+      throw { status: 400, message: "No se puede dejar un contrato sin ninguna instalación." };
+    }
+
+    const asignacion = contrato.contratoInstalaciones.find(ci => ci.instalacion.idInstalacion === idInstalacion);
+    if (!asignacion) {
+      throw { status: 404, message: "La instalación indicada no está asignada a este contrato." };
+    }
+
+    await contratoInstalacionRepo.delete({ 
+      contrato: { idContrato: idContrato }, 
+      instalacion: { idInstalacion: idInstalacion } 
+    });
+
+    return true;
+  } catch (error) {
+    if (error.status) throw error;
+    throw new Error(`Error al remover instalación: ${error.message}`);
+  }
+}

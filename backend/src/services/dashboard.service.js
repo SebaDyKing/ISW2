@@ -5,7 +5,7 @@ export async function getMetricasDashboard() {
     const hoy = new Date().toISOString().split("T")[0];
 
     const asistenciaHoy = await AppDataSource.getRepository("Asistencia")
-        .count({ where: { fecha: hoy, estado: "PRESENTE" } });
+        .count({ where: { fecha: hoy } });
 
     const personalActivo = await AppDataSource.getRepository("Contrato")
         .createQueryBuilder("contrato")
@@ -24,8 +24,7 @@ export async function getMetricasDashboard() {
 
     const totalInstalaciones = await AppDataSource.getRepository("Instalacion").count();
 
-    const totalEmpleados = await AppDataSource.getRepository("Empleado").count();
-    const porcentajeAsistencia = totalEmpleados > 0 ? Math.round((asistenciaHoy / totalEmpleados) * 100) : 0;
+    const porcentajeAsistencia = personalActivo > 0 ? Math.round((asistenciaHoy / personalActivo) * 100) : 0;
 
     return { 
         asistenciaHoy: porcentajeAsistencia, 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
+import { subirDocumentoEmpleado } from '../services/admin.service';
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 11, lineHeight: 1.5 },
@@ -84,14 +85,16 @@ export const generateContractPDF = async (formData, employeeData, facilityData) 
   const blob = await asPdf.toBlob();
   const url = URL.createObjectURL(blob);
 
-  const link = document.createElement('a');
-  link.href = url;
-  const rutOId = employeeData?.idEmpleado || 'Desconocido';
-  link.download = `Contrato_${rutOId}_${formData.fechaInicio}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  window.open(url, '_blank');
+
+  try {
+    const idEmpleado = employeeData?.idEmpleado;
+    if (idEmpleado) {
+      await subirDocumentoEmpleado(idEmpleado, 'Contrato', blob);
+    }
+  } catch (error) {
+    console.error('Error al subir Contrato a Carpeta Digital:', error);
+  }
 };
 
 export const AnexoDocument = ({ contratoAnterior, contratoNuevo }) => {
@@ -174,14 +177,16 @@ export const generateAnexoPDF = async (contratoAnterior, contratoNuevo) => {
   const blob = await asPdf.toBlob();
   const url = URL.createObjectURL(blob);
 
-  const link = document.createElement('a');
-  link.href = url;
-  const codigo = contratoAnterior.codigo || 'XXXX';
-  link.download = `Anexo_${codigo}_${new Date().toISOString().split('T')[0]}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  window.open(url, '_blank');
+
+  try {
+    const idEmpleado = contratoAnterior.idEmpleado || contratoAnterior.empleado?.idEmpleado;
+    if (idEmpleado) {
+      await subirDocumentoEmpleado(idEmpleado, 'Anexo_Condiciones', blob);
+    }
+  } catch (error) {
+    console.error('Error al subir Anexo a Carpeta Digital:', error);
+  }
 };
 
 export const AnexoIndefinidoDocument = ({ contrato, empresa, representante }) => {
@@ -243,14 +248,16 @@ export const generateAnexoIndefinidoPDF = async (contrato, empresa, representant
   const blob = await asPdf.toBlob();
   const url = URL.createObjectURL(blob);
 
-  const link = document.createElement('a');
-  link.href = url;
-  const codigo = contrato.codigo || 'XXXX';
-  link.download = `Anexo_Indefinido_${codigo}_${new Date().toISOString().split('T')[0]}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  window.open(url, '_blank');
+
+  try {
+    const idEmpleado = contrato.idEmpleado || contrato.empleado?.idEmpleado;
+    if (idEmpleado) {
+      await subirDocumentoEmpleado(idEmpleado, 'Anexo_Indefinido', blob);
+    }
+  } catch (error) {
+    console.error('Error al subir Anexo a Carpeta Digital:', error);
+  }
 };
 
 export const AnexoTrasladoDocument = ({ empleado, instalacionAnterior, instalacionNueva }) => {
@@ -311,14 +318,16 @@ export const generateAnexoTrasladoPDF = async (empleado, instalacionAnterior, in
   const blob = await asPdf.toBlob();
   const url = URL.createObjectURL(blob);
 
-  const link = document.createElement('a');
-  link.href = url;
-  const rutClean = (empleado.rut || '').replace(/\./g, '').replace('-', '');
-  link.download = `Anexo_Traslado_${rutClean}_${new Date().toISOString().split('T')[0]}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  window.open(url, '_blank');
+
+  try {
+    const idEmpleado = empleado.idEmpleado;
+    if (idEmpleado) {
+      await subirDocumentoEmpleado(idEmpleado, 'Anexo_Traslado', blob);
+    }
+  } catch (error) {
+    console.error('Error al subir Anexo a Carpeta Digital:', error);
+  }
 };
 
 export const AnexoMultiInstalacionDocument = ({ contrato, payload, instalacionNueva }) => {
@@ -392,12 +401,14 @@ export const generateAnexoMultiInstalacionPDF = async (contrato, payload, instal
   const blob = await asPdf.toBlob();
   const url = URL.createObjectURL(blob);
 
-  const link = document.createElement('a');
-  link.href = url;
-  const rutClean = (contrato.rut || '').replace(/\./g, '').replace('-', '');
-  link.download = `Anexo_MultiInstalacion_${rutClean}_${new Date().toISOString().split('T')[0]}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  window.open(url, '_blank');
+
+  try {
+    const idEmpleado = contrato.idEmpleado || contrato.empleado?.idEmpleado;
+    if (idEmpleado) {
+      await subirDocumentoEmpleado(idEmpleado, 'Anexo_MultiInstalacion', blob);
+    }
+  } catch (error) {
+    console.error('Error al subir Anexo a Carpeta Digital:', error);
+  }
 };

@@ -38,6 +38,9 @@ export async function crearUsuarioService(datosUsuario) {
     } else if (rol === "supervisor") {
       const supervisorRepo = AppDataSource.getRepository(Supervisor);
       await supervisorRepo.save(supervisorRepo.create({ usuario: usuarioGuardado, rut }));
+      
+      const empleadoRepo = AppDataSource.getRepository(Empleado);
+      await empleadoRepo.save(empleadoRepo.create({ usuario: usuarioGuardado, rut }));
     } else if (rol === "administrador") {
       const adminRepo = AppDataSource.getRepository(Administrador);
       await adminRepo.save(adminRepo.create({ usuario: usuarioGuardado }));
@@ -217,16 +220,26 @@ export async function trasladarEmpleadoService(idEmpleado, idInstalacion) {
     });
 
     if (contratoActivo) {
+      const contratoInstalacionRepo = AppDataSource.getRepository("ContratoInstalacion");
+      
+      // Eliminar las asignaciones previas para este contrato
+      await contratoInstalacionRepo.createQueryBuilder()
+        .delete()
+        .where("id_contrato = :idContrato", { idContrato: contratoActivo.idContrato })
+        .execute();
+
       if (idInstalacion) {
         const instalacionRepo = AppDataSource.getRepository("Instalacion");
         const instalacion = await instalacionRepo.findOne({ where: { idInstalacion: parseInt(idInstalacion, 10) } });
         if (instalacion) {
-          contratoActivo.instalacion = instalacion;
-          await contratoRepo.save(contratoActivo);
+          // Asignar la nueva instalación
+          await contratoInstalacionRepo.save(contratoInstalacionRepo.create({
+            contrato: contratoActivo,
+            instalacion,
+            horasSemanales: contratoActivo.jornadaHoras || 45,
+            pagoAdicional: 0
+          }));
         }
-      } else {
-        contratoActivo.instalacion = null;
-        await contratoRepo.save(contratoActivo);
       }
     }
 

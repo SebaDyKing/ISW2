@@ -228,31 +228,45 @@ async function validarDistanciaInstalacion(idContrato, latDispositivo, lonDispos
   const contratoRepo = AppDataSource.getRepository("Contrato");
   const contrato = await contratoRepo.findOne({
     where: { idContrato },
-    relations: ["instalacion"]
+    relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion"]
   });
 
   if (!contrato) {
     throw { status: 404, message: "Contrato no encontrado." };
   }
 
-  if (!contrato.instalacion) {
+  if (!contrato.contratoInstalaciones || contrato.contratoInstalaciones.length === 0) {
     throw { status: 400, message: "El contrato del empleado no tiene una instalación asignada." };
   }
 
-  const instLat = Number(contrato.instalacion.latitud);
-  const instLon = Number(contrato.instalacion.longitud);
+  let instalacionValida = false;
+  let menorDistancia = Infinity;
 
-  const distancia = calcularDistanciaHaversine(
-    Number(latDispositivo),
-    Number(lonDispositivo),
-    instLat,
-    instLon
-  );
+  for (const ci of contrato.contratoInstalaciones) {
+    const instLat = Number(ci.instalacion.latitud);
+    const instLon = Number(ci.instalacion.longitud);
 
-  if (distancia > 150) {
+    const distancia = calcularDistanciaHaversine(
+      Number(latDispositivo),
+      Number(lonDispositivo),
+      instLat,
+      instLon
+    );
+
+    if (distancia < menorDistancia) {
+      menorDistancia = distancia;
+    }
+
+    if (distancia <= 150) {
+      instalacionValida = true;
+      break;
+    }
+  }
+
+  if (!instalacionValida) {
     throw {
       status: 400,
-      message: `Marcaje fuera de rango. Estás a ${Math.round(distancia)} metros del lugar de trabajo asignado, el rango máximo permitido es 150 metros.`
+      message: `Marcaje fuera de rango. Estás a ${Math.round(menorDistancia)} metros del lugar de trabajo más cercano, el rango máximo permitido es 150 metros.`
     };
   }
 }

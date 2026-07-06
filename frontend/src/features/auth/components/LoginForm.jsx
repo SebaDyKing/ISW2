@@ -154,9 +154,8 @@ function LoginForm() {
       toast.success("¡Bienvenido!");
 
       const rol = data.usuario.rol;
-      if      (rol === "administrador") navigate("/admin");
+      if      (rol === "administrador" || rol === "supervisor") navigate("/admin");
       else if (rol === "empleado")      navigate("/empleado");
-      else if (rol === "supervisor")    navigate("/supervisor");
       else {
         const planGuardado = sessionStorage.getItem("planPreseleccionado");
         navigate(planGuardado ? "/cliente/cotizar" : "/cliente");

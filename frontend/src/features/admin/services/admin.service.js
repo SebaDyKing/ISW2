@@ -74,3 +74,21 @@ export async function trasladarEmpleado(idEmpleado, idInstalacion) {
   const res = await api.put(`/usuarios/empleados/${idEmpleado}/traslado`, { idInstalacion });
   return res;
 }
+
+export async function subirDocumentoEmpleado(idEmpleado, tipo, archivoBlob) {
+  const formData = new FormData();
+  formData.append("tipo", tipo);
+  formData.append("archivoPdf", archivoBlob, `${tipo}.pdf`);
+  
+  const res = await api.post(`/empleados/${idEmpleado}/documentos`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res;
+}
+
+export async function getDocumentosEmpleado(idEmpleado) {
+  const res = await api.get(`/empleados/${idEmpleado}/documentos`);
+  return res;
+}
