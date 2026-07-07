@@ -5,46 +5,55 @@ export async function getMetricasDashboard() {
     const hoy = new Date().toISOString().split("T")[0];
 
     const asistenciaHoy = await AppDataSource.getRepository("Asistencia")
-        .count({ where: { fecha: hoy, estado: "PRESENTE" } });
+        .count({ where: { fecha: hoy } });
 
     const personalActivo = await AppDataSource.getRepository("Contrato")
-        .count({ where: { estado: "ACTIVO" } });
+        .createQueryBuilder("contrato")
+        .where("UPPER(contrato.estado) IN (:...estados)", { estados: ["ACTIVO", "POR VENCER"] })
+        .getCount();
 
     const resultado = await AppDataSource.getRepository("Contrato")
         .createQueryBuilder("contrato")
-        .select("COUNT(DISTINCT contrato.id_instalacion)", "count")
-        .where("UPPER(contrato.estado) = :estado", { estado: "ACTIVO" })
+        .innerJoin("contrato.contratoInstalaciones", "ci")
+        .innerJoin("ci.instalacion", "instalacion")
+        .select("COUNT(DISTINCT instalacion.id_instalacion)", "count")
+        .where("UPPER(contrato.estado) IN (:...estados)", { estados: ["ACTIVO", "POR VENCER"] })
         .getRawOne();
     
-    const instalacionesEnCurso = parseInt(resultado.count, 10) || 0;
+    const instalacionesEnCurso = parseInt(resultado?.count || 0, 10);
 
-    const totalEmpleados = await AppDataSource.getRepository("Empleado").count();
-    const porcentajeAsistencia = totalEmpleados > 0 ? Math.round((asistenciaHoy / totalEmpleados) * 100) : 0;
+    const totalInstalaciones = await AppDataSource.getRepository("Instalacion").count();
 
-    return { asistenciaHoy: porcentajeAsistencia, personalActivo, instalacionesEnCurso };
+    const porcentajeAsistencia = personalActivo > 0 ? Math.round((asistenciaHoy / personalActivo) * 100) : 0;
+
+    return { 
+        asistenciaHoy: porcentajeAsistencia, 
+        personalActivo, 
+        instalacionesEnCurso,
+        instalacionesTotales: totalInstalaciones 
+    };
 }
 
 export async function getHistorialReciente() {
-    // Obtenemos los últimos contratos creados como historial
-    const contratos = await AppDataSource.getRepository("Contrato")
+    // Obtenemos los últimos 5 registros de actividad
+    const actividades = await AppDataSource.getRepository("Actividad")
         .find({
-            relations: ["empleado", "instalacion"],
-            order: { fechaInicio: "DESC" },
+            order: { createdAt: "DESC" },
             take: 5
         });
 
-    return contratos.map(c => ({
-        tipo: "Contrato creado",
-        descripcion: `${c.empleado?.nombre} ${c.empleado?.apellido} asignado a ${c.instalacion?.nombre}`,
-        fecha: c.fechaInicio
+    return actividades.map(a => ({
+        tipo: a.tipo,
+        descripcion: a.descripcion,
+        fecha: a.createdAt
     }));
 }
 
 export async function getAlertasPendientes() {
-    return await AppDataSource.getRepository("Alerta")
+    return await AppDataSource.getRepository("Alertas")
         .find({
-            where: { estado: "PENDIENTE" },
-            relations: ["empleado"],
-            order: { fechaCreacion: "DESC" },
+            where: { Estado: "PENDIENTE" },
+            relations: ["Empleado"],
+            order: { FechaCreacion: "DESC" },
         });
 }

@@ -3,7 +3,7 @@ import ContratoRow from '../ContratoRow/ContratoRow'
 import { useContratosTable } from './useContratosTable'
 import styles from './ContratosTable.module.css'
 
-const COLUMNAS = ['TRABAJADOR', 'INSTALACIÓN & ROL', 'CONTRATO', 'PERÍODO', 'ESTADO']
+const COLUMNAS = ['TRABAJADOR', 'INSTALACIÓN & ROL', 'CONTRATO', 'PERÍODO', 'ACCIONES']
 
 function SkeletonRow() {
   return (
@@ -17,8 +17,21 @@ function SkeletonRow() {
   )
 }
 
-export default function ContratosTable({ contratos = [], loading = false, error = null, onSearch }) {
+export default function ContratosTable({ contratos = [], loading = false, error = null, onSearch, roleFilter, setRoleFilter, onAnexo, onFiniquitar, onIndefinido, onAdministrarInstalaciones, onVerDocumentos, onSolicitarTraslado, onNuevoContrato }) {
   const { search, handleSearch } = useContratosTable(onSearch)
+  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+  
+  const allRoles = [
+    { value: '', label: 'Todos los roles' },
+    { value: 'administrador', label: 'Administrador' },
+    { value: 'supervisor', label: 'Supervisor' },
+    { value: 'empleado', label: 'Empleado' },
+    { value: 'cliente', label: 'Cliente' },
+  ];
+
+  const availableRoles = usuario.rol === 'supervisor' 
+    ? allRoles.filter(r => r.value !== 'administrador')
+    : allRoles;
 
   return (
     <div className={styles.container}>
@@ -36,13 +49,17 @@ export default function ContratosTable({ contratos = [], loading = false, error 
             className={styles.searchInput}
           />
         </div>
-        <button className={styles.filterBtn}>
-          <svg className={styles.filterIcon} fill="currentColor" viewBox="0 0 24 24">
-            <circle cx="12" cy="5" r="1.5" />
-            <circle cx="12" cy="12" r="1.5" />
-            <circle cx="12" cy="19" r="1.5" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-2 ml-4">
+          <select
+            value={roleFilter || ''}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer shadow-sm hover:border-slate-400 transition-colors"
+          >
+            {availableRoles.map(r => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Tabla */}
@@ -71,12 +88,12 @@ export default function ContratosTable({ contratos = [], loading = false, error 
                 <td colSpan={5} className={styles.emptyRow}>
                   {search
                     ? <>No se encontraron resultados para <span className={styles.highlightText}>"{search}"</span></>
-                    : 'No hay contratos registrados'}
+                    : 'No hay personal registrado'}
                 </td>
               </tr>
             )}
             {!loading && !error && contratos.map((contrato) => (
-              <ContratoRow key={contrato.id} contrato={contrato} />
+              <ContratoRow key={contrato.id} contrato={contrato} onAnexo={onAnexo} onFiniquitar={onFiniquitar} onIndefinido={onIndefinido} onAdministrarInstalaciones={onAdministrarInstalaciones} onVerDocumentos={onVerDocumentos} onSolicitarTraslado={onSolicitarTraslado} onNuevoContrato={onNuevoContrato} />
             ))}
           </tbody>
         </table>

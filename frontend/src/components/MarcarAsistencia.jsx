@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../config/axios";
+import toast from "react-hot-toast";
 
 // Helper para convertir formato HH:mm:ss o HH:mm a minutos
 function horaAMinutos(horaStr) {
@@ -44,7 +45,7 @@ function formatHoraEspanol(date) {
 }
 
 export default function MarcarAsistencia({ idContratoProp }) {
-  const idContrato = idContratoProp || Number(localStorage.getItem("idContrato")) || 1;
+  const [idContrato, setIdContrato] = useState(idContratoProp || Number(localStorage.getItem("idContrato")) || null);
 
   // Estados del reloj
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -56,6 +57,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
   const [errorText, setErrorText] = useState("");
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [userIp, setUserIp] = useState("Cargando IP...");
+  const [instalacionesAsignadas, setInstalacionesAsignadas] = useState([]);
 
   // Reloj en tiempo real
   useEffect(() => {
@@ -69,6 +71,31 @@ export default function MarcarAsistencia({ idContratoProp }) {
     setErrorText("");
     setLoadingHistory(true);
     try {
+      // Cargar asignación de instalación para el contrato del empleado
+      try {
+        const storedUser = localStorage.getItem("usuario");
+        if (storedUser) {
+          const userObj = JSON.parse(storedUser);
+          if (userObj.rol === "empleado" || userObj.rol === "administrador") {
+            const resAsig = await api.get("/contratos/mis-asignaciones");
+            if (resAsig && resAsig.status === "Success" && resAsig.data) {
+              const activeContract = (idContrato ? resAsig.data.find(c => c.idContrato === idContrato) : null) || resAsig.data[0];
+              if (activeContract) {
+                setIdContrato(activeContract.idContrato);
+                localStorage.setItem("idContrato", activeContract.idContrato);
+                if (activeContract.contratoInstalaciones && activeContract.contratoInstalaciones.length > 0) {
+                  setInstalacionesAsignadas(activeContract.contratoInstalaciones.map(ci => ci.instalacion));
+                } else if (activeContract.instalacion) {
+                  setInstalacionesAsignadas([activeContract.instalacion]);
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("No se pudo obtener la instalación asignada:", err);
+      }
+
       // Obtener todos los registros de asistencia
       const res = await api.get("/asistencias");
       if (res && res.status === "Success") {
@@ -140,6 +167,12 @@ export default function MarcarAsistencia({ idContratoProp }) {
     const horaDispositivo = ahora.toTimeString().split(" ")[0];
 
     const enviarPeticion = (lat, lon) => {
+      if (!idContrato) {
+        setErrorText("No se pudo identificar tu contrato activo.");
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         idContrato,
         latitud: lat,
@@ -172,33 +205,62 @@ export default function MarcarAsistencia({ idContratoProp }) {
 
             cargarDatos();
             if (successCallback) successCallback();
+            
+            // Notificación de éxito
+            let msgExito = "Marcaje registrado con éxito.";
+            if (endpoint.includes("entrada")) msgExito = "Turno de entrada iniciado correctamente.";
+            else if (endpoint.includes("salida")) msgExito = "Turno finalizado correctamente.";
+            else if (endpoint.includes("colacion/inicio")) msgExito = "Inicio de colación registrado.";
+            else if (endpoint.includes("colacion/fin")) msgExito = "Término de colación registrado.";
+            toast.success(msgExito);
           }
         })
         .catch((err) => {
           const mensajeError = err.response?.data?.message || "Ocurrió un error al procesar el marcaje.";
-          setErrorText(mensajeError);
+          
+          // Si el error es de límites/distancia
+          if (
+            mensajeError.toLowerCase().includes("rango") ||
+            mensajeError.toLowerCase().includes("límite") ||
+            mensajeError.toLowerCase().includes("limite") ||
+            mensajeError.toLowerCase().includes("distancia")
+          ) {
+            const msgLimites = "No se puede marcar asistencia usted se encuentra fuera de limites.";
+            setErrorText(msgLimites);
+          } else {
+            setErrorText(mensajeError);
+            toast.error(mensajeError);
+          }
         })
         .finally(() => {
           setLoading(false);
         });
     };
 
-    // Solicitar coordenadas
+    // Solicitar coordenadas de forma obligatoria
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           enviarPeticion(position.coords.latitude, position.coords.longitude);
         },
-        () => {
-          console.warn("Geolocalización rechazada, usando coordenadas de respaldo.");
-          // Coordenadas fallback (Edificio Central)
-          enviarPeticion(-36.827, -73.0498);
+        (error) => {
+          console.warn("Geolocalización rechazada o con error:", error);
+          const msgGeo = "Para registrar tu asistencia debes permitir el acceso a tu ubicación en los permisos de tu navegador.";
+          setErrorText(msgGeo);
+          toast.error(msgGeo);
+          setLoading(false);
         },
-        { timeout: 5000 }
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000 
+        }
       );
     } else {
-      console.warn("Geolocalización no soportada, usando coordenadas de respaldo.");
-      enviarPeticion(-36.827, -73.0498);
+      console.warn("Geolocalización no soportada en este navegador.");
+      const msgNoSoporte = "Tu navegador no soporta la geolocalización, lo cual es obligatorio para marcar asistencia.";
+      setErrorText(msgNoSoporte);
+      toast.error(msgNoSoporte);
+      setLoading(false);
     }
   };
 
@@ -259,10 +321,27 @@ export default function MarcarAsistencia({ idContratoProp }) {
         <p className="text-[44px] font-extrabold text-[#4f46e5] m-0 tracking-tight leading-none">
           {formatHoraEspanol(currentTime)}
         </p>
-        <p className="text-[#8a90a2] text-sm mt-1.5 mb-[34px] font-medium">
+        <p className="text-[#8a90a2] text-sm mt-1.5 mb-[15px] font-medium">
           {formatFechaEspanol(currentTime)}
         </p>
+        {instalacionesAsignadas.length > 0 && (
+          <div className="mb-[34px] inline-block bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl text-slate-600 text-xs font-semibold text-left">
+            📍 Lugares de trabajo asignados:<br/>
+            {instalacionesAsignadas.map((inst, i) => (
+              <span key={i} className="block mt-1 ml-4">
+                - <strong className="text-indigo-600">{inst.nombre}</strong> ({inst.direccion})
+              </span>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Alerta de error si existe */}
+      {errorText && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl max-w-[576px] w-full mb-4 text-xs font-semibold flex items-center gap-2 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
+          ⚠️ {errorText}
+        </div>
+      )}
 
       {/* Acciones Card */}
       <div className="bg-white border border-[#e6e9f2] rounded-2xl p-6 w-full max-w-[576px] mb-[22px] shadow-[0_1px_2px_rgba(20,20,43,0.03)]">

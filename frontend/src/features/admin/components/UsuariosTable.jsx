@@ -12,9 +12,9 @@ const ROLES = ["cliente", "empleado", "supervisor", "administrador"];
 
 const BADGE_ROL = {
   administrador: { bg: "#dbeafe", color: "#1d4ed8" },
-  supervisor:    { bg: "#ede9fe", color: "#6d28d9" },
-  empleado:      { bg: "#dcfce7", color: "#166534" },
-  cliente:       { bg: "#f1f5f9", color: "#475569" },
+  supervisor: { bg: "#ede9fe", color: "#6d28d9" },
+  empleado: { bg: "#dcfce7", color: "#166534" },
+  cliente: { bg: "#f1f5f9", color: "#475569" },
 };
 
 const FORM_VACIO = { nombre: "", apellido: "", rut: "", correo: "", password: "", rol: "cliente" };

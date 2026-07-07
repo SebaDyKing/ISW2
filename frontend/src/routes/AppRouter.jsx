@@ -12,11 +12,13 @@ import EmpleadoLayout from "../features/empleado/components/EmpleadoLayout";
 import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
 import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
 import MisAsignacionesView from "../features/empleado/components/MisAsignacionesView";
+import MisDocumentosView from "../features/empleado/components/MisDocumentosView";
 import LandingPage from "../features/cliente/components/LandingPage";
 import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
 import MarcarAsistencia from "../components/MarcarAsistencia";
 import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
 import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
+import InstalacionesView from "../features/admin/components/InstalacionesView";
 import api from "../config/axios";
 
 function PanelClienteProximamente() {
@@ -59,17 +61,26 @@ function AppRouter() {
       <Toaster position="top-right" />
       <Routes>
         {/* Pública */}
-        <Route path="/" element={<MarcarAsistencia />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/asistencia" element={<MarcarAsistencia />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/registro" element={<RegisterForm />} />
 
-        {/* Admin */}
+        {/* Panel de Administrador y Supervisor */}
         <Route path="/admin" element={<PrivateRoute allowedRoles={["administrador"]}><AdminLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios" element={<UsuariosTable />} />
           <Route path="contratos" element={<ContratosPage />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
+          <Route path="instalaciones" element={<InstalacionesView />} />
+          <Route path="licencias" element={<LicenciasMedicasView />} />
+          <Route path="hojas-vida" element={<HojaVidaView />} />
+        </Route>
+
+        <Route path="/supervisor" element={<PrivateRoute allowedRoles={["supervisor"]}><AdminLayout /></PrivateRoute>}>
+          <Route index element={<Navigate to="contratos" replace />} />
+          <Route path="contratos" element={<ContratosPage />} />
           <Route path="licencias" element={<LicenciasMedicasView />} />
           <Route path="hojas-vida" element={<HojaVidaView />} />
         </Route>
@@ -77,16 +88,16 @@ function AppRouter() {
         <Route path="/cliente/cotizar" element={<PrivateRoute allowedRoles={["cliente"]}><SolicitarCotizacion /></PrivateRoute>} />
 
         <Route path="/empleado" element={<PrivateRoute allowedRoles={["empleado"]}><EmpleadoLayout /></PrivateRoute>}>
-          <Route index             element={<Navigate to="asistencia" replace />} />
+          <Route index element={<Navigate to="asistencia" replace />} />
           <Route path="asistencia" element={<MarcarAsistencia />} />
           <Route path="asignaciones" element={<MisAsignacionesView />} />
-          <Route path="licencias"  element={<MisLicenciasView />} />
-          <Route path="hoja-vida"  element={<MisHojasVidaView />} />
+          <Route path="documentos" element={<MisDocumentosView />} />
+          <Route path="licencias" element={<MisLicenciasView />} />
+          <Route path="hoja-vida" element={<MisHojasVidaView />} />
         </Route>
 
-        <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
         <Route path="/cliente" element={<PrivateRoute allowedRoles={["cliente"]}><Navigate to="/cliente/cotizar" replace /></PrivateRoute>} />
-        <Route path="*"           element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

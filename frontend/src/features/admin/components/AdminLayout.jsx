@@ -99,13 +99,23 @@ function IconClose() {
   );
 }
 
-const NAV = [
-  { to: "/admin/dashboard",    label: "Dashboard",         icon: IconDashboard },
-  { to: "/admin/usuarios",     label: "Usuarios",          icon: IconUsuarios },
-  { to: "/admin/contratos",    label: "Contratos",         icon: IconContratos },
-  { to: "/admin/cotizaciones", label: "Cotizaciones",      icon: IconCotizaciones },
-  { to: "/admin/licencias",    label: "Licencias Médicas", icon: IconLicencia },
-  { to: "/admin/hojas-vida",   label: "Hojas de Vida",     icon: IconHojaVida },
+function IconInstalacion() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
+const getNavLinks = (prefix) => [
+  { to: `${prefix}/dashboard`,    label: "Dashboard",         icon: IconDashboard, roles: ["administrador"] },
+  { to: `${prefix}/usuarios`,     label: "Usuarios",          icon: IconUsuarios, roles: ["administrador"] },
+  { to: `${prefix}/contratos`,    label: "Contratos",         icon: IconContratos, roles: ["administrador", "supervisor"] },
+  { to: `${prefix}/instalaciones`, label: "Instalaciones",     icon: IconInstalacion, roles: ["administrador"] },
+  { to: `${prefix}/cotizaciones`, label: "Cotizaciones",      icon: IconCotizaciones, roles: ["administrador"] },
+  { to: `${prefix}/licencias`,    label: "Licencias Médicas", icon: IconLicencia, roles: ["administrador", "supervisor"] },
+  { to: `${prefix}/hojas-vida`,   label: "Hojas de Vida",     icon: IconHojaVida, roles: ["administrador", "supervisor"] },
 ];
 
 function AdminLayout() {
@@ -129,6 +139,8 @@ function AdminLayout() {
   }
 
   const inicial = (usuario.nombreMostrar || "A").charAt(0).toUpperCase();
+  const routePrefix = usuario.rol === 'supervisor' ? '/supervisor' : '/admin';
+  const navLinks = getNavLinks(routePrefix);
 
   return (
     <div className="min-h-screen lg:flex bg-slate-50">
@@ -155,7 +167,9 @@ function AdminLayout() {
           </div>
           <div className="leading-tight">
             <div className="font-bold text-white">CleanPro</div>
-            <div className="text-[10px] tracking-widest text-slate-500">PANEL ADMIN</div>
+            <div className="text-[10px] tracking-widest text-slate-500 uppercase">
+              {usuario.rol === 'supervisor' ? 'PANEL SUPERVISOR' : 'PANEL ADMIN'}
+            </div>
           </div>
           <button
             onClick={() => setOpen(false)}
@@ -168,7 +182,7 @@ function AdminLayout() {
 
         {/* Navegación */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-          {NAV.map(({ to, label, icon: Icon }) => (
+          {navLinks.filter(item => !item.roles || item.roles.includes(usuario.rol)).map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}

@@ -5,17 +5,24 @@ import { generateContractPDF } from '../../utils/pdfGenerator'
 
 const INITIAL_FORM = {
   idEmpleado: '',
-  idInstalacion: '',
   tipo: '',
   cargo: '',
   sueldo: '',
   jornadaHoras: '',
   fechaInicio: '',
   fechaFin: '',
+  nacionalidad: '',
+  estadoCivil: '',
+  fechaNacimiento: '',
+  domicilio: '',
+  idInstalacion: '',
 }
 
-export function useNuevoContratoModal({ onSuccess } = {}) {
-  const [form, setForm] = useState(INITIAL_FORM)
+export function useNuevoContratoModal({ onSuccess, defaultUser } = {}) {
+  const [form, setForm] = useState({
+    ...INITIAL_FORM,
+    idEmpleado: defaultUser?.empleado?.idEmpleado || ''
+  })
   const [empleados, setEmpleados] = useState([])
   const [instalaciones, setInstalaciones] = useState([])
   const [loading, setLoading] = useState(false)
@@ -63,13 +70,17 @@ export function useNuevoContratoModal({ onSuccess } = {}) {
         sueldo: parseFloat(form.sueldo),
         jornadaHoras: parseInt(form.jornadaHoras, 10),
         idEmpleado: parseInt(form.idEmpleado, 10),
-        idInstalacion: parseInt(form.idInstalacion, 10),
         fechaFin: form.fechaFin || null,               // opcional
+        nacionalidad: form.nacionalidad,
+        estadoCivil: form.estadoCivil,
+        fechaNacimiento: form.fechaNacimiento,
+        domicilio: form.domicilio,
+        idInstalacion: form.idInstalacion ? parseInt(form.idInstalacion, 10) : null,
       })
       const employeeData = empleados.find(e => String(e.idEmpleado) === String(form.idEmpleado))
       const facilityData = instalaciones.find(i => String(i.idInstalacion) === String(form.idInstalacion))
       
-      // Generar PDF
+      // Generar PDF (facilityData puede pasarse vacío ahora que no se asocia a instalación en contrato)
       await generateContractPDF(form, employeeData, facilityData)
 
       reset()
