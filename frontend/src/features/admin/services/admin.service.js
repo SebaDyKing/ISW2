@@ -66,6 +66,36 @@ export async function obtenerClientesService() {
 }
 
 export async function getDashboard() {
-  const res = await api.get('/dashboard');
+  const res = await api.get(`/dashboard?t=${new Date().getTime()}`);
+  return res;
+}
+
+export async function trasladarEmpleado(idEmpleado, idInstalacion) {
+  const res = await api.put(`/usuarios/empleados/${idEmpleado}/traslado`, { idInstalacion });
+  return res;
+}
+
+export async function subirDocumentoEmpleado(idEmpleado, tipo, archivoBlob) {
+  const formData = new FormData();
+  formData.append("tipo", tipo);
+  formData.append("archivoPdf", archivoBlob, `${tipo}.pdf`);
+  
+  const res = await api.post(`/empleados/${idEmpleado}/documentos`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res;
+}
+
+export async function getDocumentosEmpleado(idEmpleado) {
+  const res = await api.get(`/empleados/${idEmpleado}/documentos`);
+  return res;
+}
+
+export async function descargarDocumentoService(idDocumento) {
+  const res = await api.get(`/documentos/${idDocumento}/download`, {
+    responseType: 'blob'
+  });
   return res;
 }

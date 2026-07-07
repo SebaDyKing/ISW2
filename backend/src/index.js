@@ -1,6 +1,7 @@
 "use strict";
 import "dotenv/config";
 import express from "express";
+import path from "path";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";

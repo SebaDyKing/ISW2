@@ -38,6 +38,9 @@ export async function crearUsuarioService(datosUsuario) {
     } else if (rol === "supervisor") {
       const supervisorRepo = AppDataSource.getRepository(Supervisor);
       await supervisorRepo.save(supervisorRepo.create({ usuario: usuarioGuardado, rut }));
+      
+      const empleadoRepo = AppDataSource.getRepository(Empleado);
+      await empleadoRepo.save(empleadoRepo.create({ usuario: usuarioGuardado, rut }));
     } else if (rol === "administrador") {
       const adminRepo = AppDataSource.getRepository(Administrador);
       await adminRepo.save(adminRepo.create({ usuario: usuarioGuardado }));
@@ -52,12 +55,12 @@ export async function crearUsuarioService(datosUsuario) {
 
     // 5. Por seguridad, no se devuelve el passwordHash al frontend
     const { passwordHash: _, ...usuarioSinPassword } = usuarioGuardado;
-    
+
     return usuarioSinPassword;
 
   } catch (error) {
     console.error("Error en crearUsuarioService:", error);
-    throw error; 
+    throw error;
   }
 }
 
@@ -68,7 +71,7 @@ export async function obtenerUsuariosService() {
     const usuarios = await usuarioRepository.find({
       select: ["idUsuario", "nombre", "apellido", "rut", "correo", "rol", "createdAt", "updatedAt"]
     });
-    
+
     return usuarios;
   } catch (error) {
     console.error("Error en obtenerUsuariosService:", error);
@@ -80,9 +83,9 @@ export async function obtenerEmpleadosService() {
   try {
     const empleadoRepo = AppDataSource.getRepository(Empleado);
     const empleadosRaw = await empleadoRepo.find({
-      relations: ["usuario"]
+      relations: ["usuario", "instalacion"]
     });
-    
+
     // Mapear para que el frontend reciba nombre, apellido y correo directamente en el objeto
     const empleadosMapeados = empleadosRaw.map(emp => ({
       idEmpleado: emp.idEmpleado,
@@ -92,6 +95,7 @@ export async function obtenerEmpleadosService() {
       apellido: emp.usuario?.apellido,
       correo: emp.usuario?.correo,
       idUsuario: emp.usuario?.idUsuario,
+      instalacion: emp.instalacion,
     }));
 
     return empleadosMapeados;
@@ -104,7 +108,7 @@ export async function obtenerEmpleadosService() {
 export async function obtenerUsuarioPorIdService(id) {
   try {
     const usuarioRepository = AppDataSource.getRepository(Usuario);
-    
+
     const usuario = await usuarioRepository.findOne({
       where: { idUsuario: id },
       select: ["idUsuario", "nombre", "apellido", "rut", "correo", "createdAt", "updatedAt"]
@@ -122,7 +126,7 @@ export async function obtenerUsuarioPorIdService(id) {
 }
 
 export async function actualizarUsuarioService(id, datosActualizar) {
-try {
+  try {
     const usuarioRepository = AppDataSource.getRepository(Usuario);
     const idNumerico = parseInt(id, 10);
     const usuario = await usuarioRepository.findOne({ where: { idUsuario: idNumerico } });
@@ -176,10 +180,76 @@ export async function eliminarUsuarioService(idAEliminar, idAdminSolicitante) {
 
     // Hard delete: borra el registro permanentemente de PostgreSQL
     await usuarioRepository.remove(usuario);
-    
+
     return true;
   } catch (error) {
     console.error("Error en eliminarUsuarioService:", error);
+    throw error;
+  }
+}
+
+export async function trasladarEmpleadoService(idEmpleado, idInstalacion) {
+  try {
+    const empleadoRepo = AppDataSource.getRepository(Empleado);
+    const empleado = await empleadoRepo.findOne({ 
+      where: { idEmpleado: parseInt(idEmpleado, 10) },
+      relations: ["instalacion", "usuario"]
+    });
+    if (!empleado) throw new Error("Empleado no encontrado");
+
+    if (idInstalacion) {
+      const idInstalacionNum = parseInt(idInstalacion, 10);
+      if (empleado.instalacion && empleado.instalacion.idInstalacion === idInstalacionNum) {
+        throw new Error("El trabajador ya está asignado en ese lugar");
+      }
+
+      const instalacionRepo = AppDataSource.getRepository("Instalacion");
+      const instalacion = await instalacionRepo.findOne({ where: { idInstalacion: idInstalacionNum } });
+      if (!instalacion) throw new Error("Instalación no encontrada");
+      empleado.instalacion = instalacion;
+    } else {
+      empleado.instalacion = null;
+    }
+
+    await empleadoRepo.save(empleado);
+
+    // Actualizar también la instalación del contrato ACTIVO del empleado
+    const contratoRepo = AppDataSource.getRepository("Contrato");
+    const contratoActivo = await contratoRepo.findOne({
+      where: { empleado: { idEmpleado: empleado.idEmpleado }, estado: 'ACTIVO' }
+    });
+
+    if (contratoActivo) {
+      const contratoInstalacionRepo = AppDataSource.getRepository("ContratoInstalacion");
+      
+      // Eliminar las asignaciones previas para este contrato
+      await contratoInstalacionRepo.createQueryBuilder()
+        .delete()
+        .where("id_contrato = :idContrato", { idContrato: contratoActivo.idContrato })
+        .execute();
+
+      if (idInstalacion) {
+        const instalacionRepo = AppDataSource.getRepository("Instalacion");
+        const instalacion = await instalacionRepo.findOne({ where: { idInstalacion: parseInt(idInstalacion, 10) } });
+        if (instalacion) {
+          // Asignar la nueva instalación
+          await contratoInstalacionRepo.save(contratoInstalacionRepo.create({
+            contrato: contratoActivo,
+            instalacion,
+            horasSemanales: contratoActivo.jornadaHoras || 45,
+            pagoAdicional: 0
+          }));
+        }
+      }
+    }
+
+    const instalacionNuevaNombre = idInstalacion 
+      ? (await AppDataSource.getRepository("Instalacion").findOne({ where: { idInstalacion: parseInt(idInstalacion, 10) } }))?.nombre 
+      : "Sin instalación";
+
+    return empleado;
+  } catch (error) {
+    console.error("Error en trasladarEmpleadoService:", error);
     throw error;
   }
 }

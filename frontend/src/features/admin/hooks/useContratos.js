@@ -9,21 +9,40 @@ export function useContratos() {
   const fetchContratos = useCallback(async (params) => {
     try {
       setError(null)
-      const { data } = await contratosService.getAll(params)
+      const response = await contratosService.getAll(params)
       
-      const contratosMapeados = data.data.map(c => ({
-        id: c.idContrato,
-        codigo: `CT-${String(c.idContrato).padStart(4, '0')}`,
-        nombre: c.empleado ? `${c.empleado.nombre} ${c.empleado.apellido}` : 'Sin empleado',
-        rut: c.empleado?.rut || 'Sin RUT',
-        instalacion: c.instalacion?.nombre || 'Sin instalación',
-        rol: c.cargo,
-        tipoContrato: c.tipo,
-        periodoInicio: c.fechaInicio,
-        periodoFin: c.fechaFin,
-        estado: c.estado,
-        tieneAlerta: false
-      }))
+      const contratosMapeados = response.data.map(u => {
+        // Obtenemos el contrato activo si existe, sino el último finalizado
+        let contratoParaMostrar = null;
+        if (u.empleado && u.empleado.contratos && u.empleado.contratos.length > 0) {
+            const sortedContratos = [...u.empleado.contratos].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            const activo = sortedContratos.find(c => c.estado !== 'FINALIZADO');
+            contratoParaMostrar = activo || sortedContratos[0];
+        }
+
+        return {
+          id: contratoParaMostrar ? contratoParaMostrar.idContrato : `u-${u.idUsuario}`, // Fallback ID for UI keys
+          idContrato: contratoParaMostrar?.idContrato,
+          idEmpleado: u.empleado?.idEmpleado,
+          idUsuario: u.idUsuario,
+          codigo: contratoParaMostrar ? `CT-${String(contratoParaMostrar.idContrato).padStart(4, '0')}` : 'N/A',
+          nombre: `${u.nombre} ${u.apellido}`,
+          rut: u.rut,
+          instalacion: contratoParaMostrar?.contratoInstalaciones?.length > 1 
+            ? 'Múltiples instalaciones' 
+            : contratoParaMostrar?.contratoInstalaciones?.[0]?.instalacion?.nombre || (contratoParaMostrar ? 'Sin instalación' : '-'),
+          rolSistema: u.rol,
+          rol: contratoParaMostrar?.cargo || '-',
+          tipoContrato: contratoParaMostrar?.tipo || '-',
+          periodoInicio: contratoParaMostrar?.fechaInicio,
+          periodoFin: contratoParaMostrar?.fechaFin,
+          estado: contratoParaMostrar ? contratoParaMostrar.estado : 'SIN CONTRATO',
+          tieneAlerta: false,
+          contratoInstalacionesData: contratoParaMostrar?.contratoInstalaciones || [],
+          originalContrato: contratoParaMostrar,
+          originalUsuario: u
+        };
+      })
 
       setContratos(contratosMapeados)
     } catch (err) {
@@ -37,5 +56,24 @@ export function useContratos() {
     fetchContratos()
   }, [fetchContratos])
 
-  return { contratos, loading, error, refetch: fetchContratos }
+  const deleteContrato = useCallback(async (id) => {
+    try {
+      await contratosService.delete(id)
+      await fetchContratos()
+    } catch (err) {
+      setError(err?.response?.data?.message ?? 'Error al eliminar el contrato')
+    }
+  }, [fetchContratos])
+
+  const updateContrato = useCallback(async (id, data) => {
+    try {
+      await contratosService.update(id, data)
+      await fetchContratos()
+    } catch (err) {
+      setError(err?.response?.data?.message ?? 'Error al actualizar el contrato')
+      throw err
+    }
+  }, [fetchContratos])
+
+  return { contratos, loading, error, refetch: fetchContratos, deleteContrato, updateContrato }
 }

@@ -3,7 +3,7 @@ import { getDashboard } from '../../services/admin.service'
 
 export function useAdminDashboard() {
   const [data, setData] = useState({
-    metricas: { personalActivo: 0, instalacionesEnCurso: 0, asistenciaHoy: 0 },
+    metricas: { personalActivo: 0, instalacionesEnCurso: 0, instalacionesTotales: 0, asistenciaHoy: 0 },
     alertas: [],
     historial: []
   })
@@ -13,7 +13,9 @@ export function useAdminDashboard() {
     const fetchData = async () => {
       try {
         const res = await getDashboard()
-        setData(res.data.data)
+        if (res?.data) {
+          setData(res.data)
+        }
       } catch (err) {
         console.error("Error cargando dashboard:", err)
       } finally {

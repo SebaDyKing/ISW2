@@ -220,9 +220,9 @@ const S = {
 };
 
 function LandingPage() {
-  const [planes, setPlanes]     = useState([]);
+  const [planes, setPlanes] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [error, setError]       = useState(null);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const usuario = localStorage.getItem("usuario");
