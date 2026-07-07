@@ -60,7 +60,7 @@ function AppRouter() {
       <Toaster position="top-right" />
       <Routes>
         {/* Pública */}
-        <Route path="/" element={<MarcarAsistencia />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/registro" element={<RegisterForm />} />
 

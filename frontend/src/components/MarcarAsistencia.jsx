@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../config/axios";
+import toast from "react-hot-toast";
 
 // Helper para convertir formato HH:mm:ss o HH:mm a minutos
 function horaAMinutos(horaStr) {
@@ -192,11 +193,32 @@ export default function MarcarAsistencia({ idContratoProp }) {
 
             cargarDatos();
             if (successCallback) successCallback();
+            
+            // Notificación de éxito
+            let msgExito = "Marcaje registrado con éxito.";
+            if (endpoint.includes("entrada")) msgExito = "Turno de entrada iniciado correctamente.";
+            else if (endpoint.includes("salida")) msgExito = "Turno finalizado correctamente.";
+            else if (endpoint.includes("colacion/inicio")) msgExito = "Inicio de colación registrado.";
+            else if (endpoint.includes("colacion/fin")) msgExito = "Término de colación registrado.";
+            toast.success(msgExito);
           }
         })
         .catch((err) => {
           const mensajeError = err.response?.data?.message || "Ocurrió un error al procesar el marcaje.";
-          setErrorText(mensajeError);
+          
+          // Si el error es de límites/distancia
+          if (
+            mensajeError.toLowerCase().includes("rango") ||
+            mensajeError.toLowerCase().includes("límite") ||
+            mensajeError.toLowerCase().includes("limite") ||
+            mensajeError.toLowerCase().includes("distancia")
+          ) {
+            const msgLimites = "No se puede marcar asistencia usted se encuentra fuera de limites.";
+            setErrorText(msgLimites);
+          } else {
+            setErrorText(mensajeError);
+            toast.error(mensajeError);
+          }
         })
         .finally(() => {
           setLoading(false);
@@ -211,7 +233,9 @@ export default function MarcarAsistencia({ idContratoProp }) {
         },
         (error) => {
           console.warn("Geolocalización rechazada o con error:", error);
-          setErrorText("Para registrar tu asistencia debes permitir el acceso a tu ubicación en los permisos de tu navegador.");
+          const msgGeo = "Para registrar tu asistencia debes permitir el acceso a tu ubicación en los permisos de tu navegador.";
+          setErrorText(msgGeo);
+          toast.error(msgGeo);
           setLoading(false);
         },
         { 
@@ -221,7 +245,9 @@ export default function MarcarAsistencia({ idContratoProp }) {
       );
     } else {
       console.warn("Geolocalización no soportada en este navegador.");
-      setErrorText("Tu navegador no soporta la geolocalización, lo cual es obligatorio para marcar asistencia.");
+      const msgNoSoporte = "Tu navegador no soporta la geolocalización, lo cual es obligatorio para marcar asistencia.";
+      setErrorText(msgNoSoporte);
+      toast.error(msgNoSoporte);
       setLoading(false);
     }
   };
@@ -292,6 +318,13 @@ export default function MarcarAsistencia({ idContratoProp }) {
           </div>
         )}
       </div>
+
+      {/* Alerta de error si existe */}
+      {errorText && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl max-w-[576px] w-full mb-4 text-xs font-semibold flex items-center gap-2 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
+          ⚠️ {errorText}
+        </div>
+      )}
 
       {/* Acciones Card */}
       <div className="bg-white border border-[#e6e9f2] rounded-2xl p-6 w-full max-w-[576px] mb-[22px] shadow-[0_1px_2px_rgba(20,20,43,0.03)]">
