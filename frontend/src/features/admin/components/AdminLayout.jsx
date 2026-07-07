@@ -112,7 +112,7 @@ const getNavLinks = (prefix) => [
   { to: `${prefix}/dashboard`,    label: "Dashboard",         icon: IconDashboard, roles: ["administrador"] },
   { to: `${prefix}/usuarios`,     label: "Usuarios",          icon: IconUsuarios, roles: ["administrador"] },
   { to: `${prefix}/contratos`,    label: "Contratos",         icon: IconContratos, roles: ["administrador", "supervisor"] },
-  { to: `${prefix}/instalaciones`, label: "Instalaciones",     icon: IconInstalacion, roles: ["administrador", "supervisor"] },
+  { to: `${prefix}/instalaciones`, label: "Instalaciones",     icon: IconInstalacion, roles: ["administrador"] },
   { to: `${prefix}/cotizaciones`, label: "Cotizaciones",      icon: IconCotizaciones, roles: ["administrador"] },
   { to: `${prefix}/licencias`,    label: "Licencias Médicas", icon: IconLicencia, roles: ["administrador", "supervisor"] },
   { to: `${prefix}/hojas-vida`,   label: "Hojas de Vida",     icon: IconHojaVida, roles: ["administrador", "supervisor"] },
