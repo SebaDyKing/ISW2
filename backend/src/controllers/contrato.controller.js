@@ -6,7 +6,6 @@ import {
     createContrato,
     updateContrato,
     updateEstadoContrato,
-    deleteContrato,
     getMisAsignacionesService,
     agregarInstalacionContrato,
     removerInstalacionService
@@ -105,18 +104,6 @@ export const updateEstado = async (req, res) => {
     }
 };
 
-export const remove = async (req, res) => {
-    try {
-        await deleteContrato(Number(req.params.id));
-        handleSuccess(res, 200, "Contrato eliminado exitosamente", null);
-    } catch (error) {
-        if (error.status === 404) {
-            handleErrorClient(res, 404, error.message);
-        } else {
-            handleErrorServer(res, 500, "Error al eliminar contrato", error.message);
-        }
-    }
-};
 
 export const agregarInstalacion = async (req, res) => {
     try {
