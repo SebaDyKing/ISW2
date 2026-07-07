@@ -2,12 +2,13 @@
 import { Router } from "express";
 import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
 import { getAll, getById, getByEmpleado, create,
-        update, updateEstado, remove, getMisAsignaciones, agregarInstalacion, removerInstalacion
+        update, updateEstado, remove, getMisAsignaciones, agregarInstalacion, removerInstalacion, solicitarTraslado, getStaffContratos
 } from "../controllers/contrato.controller.js";
 
 const router = Router();
 
 // Lectura — admin y supervisor pueden ver
+router.get("/staff", authMiddleware, autorizeEntities("administrador", "supervisor"), getStaffContratos);
 router.get("/", authMiddleware, autorizeEntities("administrador", "supervisor"), getAll);
 router.get("/empleado/:id_empleado", authMiddleware, autorizeEntities("administrador", "supervisor"), getByEmpleado);
 router.get("/mis-asignaciones", authMiddleware, autorizeEntities("empleado"), getMisAsignaciones);
@@ -20,5 +21,8 @@ router.patch("/:id/estado", authMiddleware, autorizeEntities("administrador"), u
 router.post("/:idContrato/instalacion", authMiddleware, autorizeEntities("administrador"), agregarInstalacion);
 router.delete("/:idContrato/instalacion/:idInstalacion", authMiddleware, autorizeEntities("administrador"), removerInstalacion);
 router.delete("/:id", authMiddleware, autorizeEntities("administrador"), remove);
+
+// Solicitud de traslado (supervisor)
+router.post("/:id/solicitar-traslado", authMiddleware, autorizeEntities("supervisor"), solicitarTraslado);
 
 export default router;

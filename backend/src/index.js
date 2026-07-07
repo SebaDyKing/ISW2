@@ -28,7 +28,6 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
 app.use("/api/auth", authRouter);
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/", (req, res) => {
   res.send("¡Bienvenido a mi API REST con TypeORM!");

@@ -1,7 +1,12 @@
 "use strict";
 import express from "express";
 import multer from "multer";
-import { subirDocumentoController, getDocumentosByEmpleadoController, getMisDocumentosController } from "../controllers/documento.controller.js";
+import { 
+  subirDocumentoController, 
+  getDocumentosByEmpleadoController, 
+  getMisDocumentosController,
+  downloadDocumentoController 
+} from "../controllers/documento.controller.js";
 import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
 
 const router = express.Router();
@@ -18,9 +23,12 @@ router.use(authMiddleware);
 router.get("/empleados/mis-documentos", autorizeEntities("empleado"), getMisDocumentosController);
 
 // GET /api/empleados/:id/documentos - Obtener historial de documentos de un empleado
-router.get("/empleados/:id/documentos", getDocumentosByEmpleadoController);
+router.get("/empleados/:id/documentos", autorizeEntities("administrador", "supervisor"), getDocumentosByEmpleadoController);
 
 // POST /api/empleados/:id/documentos - Subir un nuevo documento
-router.post("/empleados/:id/documentos", upload.single("archivoPdf"), subirDocumentoController);
+router.post("/empleados/:id/documentos", autorizeEntities("administrador", "supervisor"), upload.single("archivoPdf"), subirDocumentoController);
+
+// GET /api/documentos/:idDocumento/download - Descargar un documento (protegido)
+router.get("/documentos/:idDocumento/download", autorizeEntities("administrador", "supervisor", "empleado"), downloadDocumentoController);
 
 export default router;

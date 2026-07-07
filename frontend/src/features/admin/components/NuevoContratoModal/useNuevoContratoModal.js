@@ -18,8 +18,11 @@ const INITIAL_FORM = {
   idInstalacion: '',
 }
 
-export function useNuevoContratoModal({ onSuccess } = {}) {
-  const [form, setForm] = useState(INITIAL_FORM)
+export function useNuevoContratoModal({ onSuccess, defaultUser } = {}) {
+  const [form, setForm] = useState({
+    ...INITIAL_FORM,
+    idEmpleado: defaultUser?.empleado?.idEmpleado || ''
+  })
   const [empleados, setEmpleados] = useState([])
   const [instalaciones, setInstalaciones] = useState([])
   const [loading, setLoading] = useState(false)

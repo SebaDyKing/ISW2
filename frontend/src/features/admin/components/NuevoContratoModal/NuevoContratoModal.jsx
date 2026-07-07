@@ -1,7 +1,7 @@
 import { useNuevoContratoModal } from './useNuevoContratoModal'
 import { TIPOS_CONTRATO, LEY_LABORAL_CHILE } from '../../constants/contratos.constants'
 import styles from './NuevoContratoModal.module.css'
-export default function NuevoContratoModal({ onClose, onSuccess }) {
+export default function NuevoContratoModal({ onClose, onSuccess, defaultUser }) {
   const {
     form,
     empleados,
@@ -12,6 +12,7 @@ export default function NuevoContratoModal({ onClose, onSuccess }) {
     handleChange,
     submit,
   } = useNuevoContratoModal({
+    defaultUser,
     onSuccess: () => {
       onSuccess?.()
       onClose()

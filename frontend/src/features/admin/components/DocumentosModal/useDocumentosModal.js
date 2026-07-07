@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getDocumentosEmpleado } from '../../services/admin.service'
+import { getDocumentosEmpleado, descargarDocumentoService } from '../../services/admin.service'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const BASE_URL = API_URL.replace('/api', '')
@@ -20,10 +20,28 @@ export function useDocumentosModal(idEmpleado, isOpen) {
     }
   }, [isOpen, idEmpleado])
 
+  const descargarDocumento = async (idDocumento, nombreArchivo) => {
+    try {
+      const res = await descargarDocumentoService(idDocumento);
+      const blob = res.data;
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', nombreArchivo || 'documento.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Error al descargar el documento', err);
+      // Opcional: mostrar un toast de error
+    }
+  }
+
   return {
     documentos,
     loading,
     error,
-    BASE_URL
+    BASE_URL,
+    descargarDocumento
   }
 }

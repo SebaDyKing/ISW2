@@ -9,7 +9,10 @@ export function useContratosPage() {
   const initialSearch = searchParams.get('search') || ''
   const [search, setSearch] = useState(initialSearch)
   const [showModal, setShowModal] = useState(false)
+  const [selectedUsuarioForNuevoContrato, setSelectedUsuarioForNuevoContrato] = useState(null)
   const [showTrasladoModal, setShowTrasladoModal] = useState(false)
+  const [showSolicitudTrasladoModal, setShowSolicitudTrasladoModal] = useState(false)
+  const [selectedContratoForSolicitudTraslado, setSelectedContratoForSolicitudTraslado] = useState(null)
   const [showAnexoModal, setShowAnexoModal] = useState(false)
   const [selectedContratoForAnexo, setSelectedContratoForAnexo] = useState(null)
   
@@ -27,15 +30,26 @@ export function useContratosPage() {
   const [showDocumentosModal, setShowDocumentosModal] = useState(false)
   const [selectedContratoForDocumentos, setSelectedContratoForDocumentos] = useState(null)
 
+  const [roleFilter, setRoleFilter] = useState('')
+
   const contratosFiltrados = useMemo(() => {
-    if (!search) return contratos
-    const term = search.toLowerCase()
-    return contratos.filter((c) =>
-      c.nombre.toLowerCase().includes(term) ||
-      c.rut.toLowerCase().includes(term) ||
-      c.instalacion?.toLowerCase().includes(term)
-    )
-  }, [contratos, search])
+    let filtered = contratos;
+    
+    if (roleFilter) {
+      filtered = filtered.filter(c => c.rolSistema === roleFilter);
+    }
+
+    if (search) {
+      const term = search.toLowerCase()
+      filtered = filtered.filter((c) =>
+        c.nombre.toLowerCase().includes(term) ||
+        c.rut.toLowerCase().includes(term) ||
+        c.instalacion?.toLowerCase().includes(term)
+      )
+    }
+
+    return filtered;
+  }, [contratos, search, roleFilter])
 
   const alertaTrabajador = useMemo(() => {
     return contratos.find(c => c.tieneAlerta) || null
@@ -92,10 +106,18 @@ export function useContratosPage() {
     error,
     search,
     setSearch,
+    roleFilter,
+    setRoleFilter,
     showModal,
     setShowModal,
+    selectedUsuarioForNuevoContrato,
+    setSelectedUsuarioForNuevoContrato,
     showTrasladoModal,
     setShowTrasladoModal,
+    showSolicitudTrasladoModal,
+    setShowSolicitudTrasladoModal,
+    selectedContratoForSolicitudTraslado,
+    setSelectedContratoForSolicitudTraslado,
     showAnexoModal,
     setShowAnexoModal,
     selectedContratoForAnexo,

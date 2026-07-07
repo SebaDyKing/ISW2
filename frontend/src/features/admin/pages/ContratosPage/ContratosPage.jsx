@@ -4,6 +4,7 @@ import AlertaRiesgoLegal from '../../components/AlertaRiesgoLegal/AlertaRiesgoLe
 import ContratosTable from '../../components/ContratosTable/ContratosTable'
 import NuevoContratoModal from '../../components/NuevoContratoModal/NuevoContratoModal'
 import TrasladoModal from '../../components/TrasladoModal/TrasladoModal'
+import SolicitudTrasladoModal from '../../components/SolicitudTrasladoModal/SolicitudTrasladoModal'
 import AnexoModal from '../../components/AnexoModal/AnexoModal'
 import FiniquitoModal from '../../components/FiniquitoModal/FiniquitoModal'
 import IndefinidoModal from '../../components/IndefinidoModal/IndefinidoModal'
@@ -19,10 +20,18 @@ export default function ContratosPage() {
     error,
     search,
     setSearch,
+    roleFilter,
+    setRoleFilter,
     showModal,
     setShowModal,
+    selectedUsuarioForNuevoContrato,
+    setSelectedUsuarioForNuevoContrato,
     showTrasladoModal,
     setShowTrasladoModal,
+    showSolicitudTrasladoModal,
+    setShowSolicitudTrasladoModal,
+    selectedContratoForSolicitudTraslado,
+    setSelectedContratoForSolicitudTraslado,
     showAnexoModal,
     setShowAnexoModal,
     selectedContratoForAnexo,
@@ -68,12 +77,6 @@ export default function ContratosPage() {
                 </svg>
                 Traslado
               </button>
-              <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>
-                <svg className={styles.btnIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Nuevo Contrato
-              </button>
             </div>
           )}
         </div>
@@ -87,9 +90,15 @@ export default function ContratosPage() {
           loading={loading}
           error={error}
           onSearch={setSearch}
+          roleFilter={roleFilter}
+          setRoleFilter={setRoleFilter}
           onAnexo={(contrato) => {
             setSelectedContratoForAnexo(contrato)
             setShowAnexoModal(true)
+          }}
+          onNuevoContrato={(usuarioData) => {
+            setSelectedUsuarioForNuevoContrato(usuarioData)
+            setShowModal(true)
           }}
           onFiniquitar={(contrato) => {
             setSelectedContratoForFiniquito(contrato)
@@ -103,13 +112,21 @@ export default function ContratosPage() {
             setSelectedContratoForInstalaciones(contrato)
             setShowAdministrarInstalacionesModal(true)
           }}
+          onSolicitarTraslado={(contrato) => {
+            setSelectedContratoForSolicitudTraslado(contrato)
+            setShowSolicitudTrasladoModal(true)
+          }}
           onVerDocumentos={handleOpenDocumentos}
         />
       </div>
 
       {showModal && (
         <NuevoContratoModal
-          onClose={() => setShowModal(false)}
+          defaultUser={selectedUsuarioForNuevoContrato}
+          onClose={() => {
+            setShowModal(false)
+            setSelectedUsuarioForNuevoContrato(null)
+          }}
           onSuccess={refetch}
         />
       )}
@@ -117,6 +134,17 @@ export default function ContratosPage() {
       {showTrasladoModal && (
         <TrasladoModal
           onClose={() => setShowTrasladoModal(false)}
+          onSuccess={refetch}
+        />
+      )}
+
+      {showSolicitudTrasladoModal && selectedContratoForSolicitudTraslado && (
+        <SolicitudTrasladoModal
+          contrato={selectedContratoForSolicitudTraslado}
+          onClose={() => {
+            setShowSolicitudTrasladoModal(false)
+            setSelectedContratoForSolicitudTraslado(null)
+          }}
           onSuccess={refetch}
         />
       )}

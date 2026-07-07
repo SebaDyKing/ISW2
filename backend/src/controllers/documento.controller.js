@@ -1,5 +1,9 @@
 "use strict";
-import { subirDocumentoService, getDocumentosByEmpleadoService } from "../services/documento.service.js";
+import { 
+  subirDocumentoService, 
+  getDocumentosByEmpleadoService,
+  downloadDocumentoService
+} from "../services/documento.service.js";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHanders.js";
 
 export const subirDocumentoController = async (req, res) => {
@@ -14,10 +18,10 @@ export const subirDocumentoController = async (req, res) => {
       return handleErrorClient(res, 400, "El tipo de documento es obligatorio");
     }
 
-    const documento = await subirDocumentoService(Number(id), tipo, req.file);
+    const documento = await subirDocumentoService(Number(id), tipo, req.file, req.user);
     handleSuccess(res, 201, "Documento guardado exitosamente", documento);
   } catch (error) {
-    if (error.status === 400 || error.status === 404) {
+    if (error.status === 400 || error.status === 403 || error.status === 404) {
       handleErrorClient(res, error.status, error.message);
     } else {
       handleErrorServer(res, 500, error.message);
@@ -28,10 +32,24 @@ export const subirDocumentoController = async (req, res) => {
 export const getDocumentosByEmpleadoController = async (req, res) => {
   try {
     const { id } = req.params;
-    const documentos = await getDocumentosByEmpleadoService(Number(id));
+    const documentos = await getDocumentosByEmpleadoService(Number(id), req.user);
     handleSuccess(res, 200, "Documentos obtenidos", documentos);
   } catch (error) {
-    if (error.status === 404) {
+    if (error.status === 403 || error.status === 404) {
+      handleErrorClient(res, error.status, error.message);
+    } else {
+      handleErrorServer(res, 500, error.message);
+    }
+  }
+};
+
+export const downloadDocumentoController = async (req, res) => {
+  try {
+    const { idDocumento } = req.params;
+    const filePath = await downloadDocumentoService(Number(idDocumento), req.user);
+    res.download(filePath);
+  } catch (error) {
+    if (error.status === 403 || error.status === 404) {
       handleErrorClient(res, error.status, error.message);
     } else {
       handleErrorServer(res, 500, error.message);

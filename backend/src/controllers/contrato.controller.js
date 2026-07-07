@@ -151,3 +151,23 @@ export const removerInstalacion = async (req, res) => {
         }
     }
 };
+export const getStaffContratos = async (req, res) => {
+  try {
+    const { getStaffContratosService } = await import("../services/contrato.service.js");
+    const contratos = await getStaffContratosService(req.user);
+    res.json({ data: contratos });
+  } catch (error) {
+    console.error("Error en getStaffContratos:", error);
+    res.status(error.status || 500).json({ error: error.message || "Error al obtener contratos de staff" });
+  }
+};
+
+export const solicitarTraslado = async (req, res) => {
+    try {
+        const { solicitarTrasladoService } = await import("../services/contrato.service.js");
+        const data = await solicitarTrasladoService(Number(req.params.id), req.body);
+        res.status(201).json({ message: "Solicitud de traslado enviada exitosamente", data });
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message || "Error al solicitar traslado" });
+    }
+};

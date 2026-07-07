@@ -426,3 +426,107 @@ export async function removerInstalacionService(idContrato, idInstalacion) {
     throw new Error(`Error al remover instalación: ${error.message}`);
   }
 }
+
+export async function solicitarTrasladoService(idContrato, body) {
+    const { idInstalacion, motivo } = body;
+    if (!idInstalacion || !motivo) {
+        throw { status: 400, message: "La instalación de destino y el motivo son obligatorios" };
+    }
+
+    const contrato = await getContratoById(idContrato);
+    if (!contrato.empleado) {
+        throw { status: 404, message: "El contrato no tiene un empleado asociado" };
+    }
+
+    const instalacionRepo = AppDataSource.getRepository("Instalacion");
+    const instalacion = await instalacionRepo.findOne({ where: { idInstalacion } });
+    if (!instalacion) {
+        throw { status: 404, message: "La instalación destino no existe" };
+    }
+
+    const nombreEmpleado = contrato.empleado.usuario ? `${contrato.empleado.usuario.nombre} ${contrato.empleado.usuario.apellido}` : `ID ${contrato.empleado.idEmpleado}`;
+    const mensaje = `Solicitud de traslado para ${nombreEmpleado} a la instalación: ${instalacion.nombre}. Motivo: ${motivo}`;
+
+    const alerta = await crearAlerta(
+        contrato.empleado.idEmpleado,
+        "Solicitud de Traslado",
+        mensaje,
+        "TRASLADOS",
+        idContrato
+    );
+
+    await registrarActividad("Solicitud de traslado", `Se generó una solicitud de traslado para ${nombreEmpleado}`);
+    return alerta;
+}
+
+export async function getStaffContratosService(user = null) {
+    const repo = AppDataSource.getRepository("Usuario");
+    const usuarios = await repo.find({
+        where: [
+            { rol: "empleado" },
+            { rol: "supervisor" }
+        ],
+        relations: [
+            "empleado",
+            "empleado.contratos",
+            "empleado.contratos.contratoInstalaciones",
+            "empleado.contratos.contratoInstalaciones.instalacion",
+            "supervisor"
+        ]
+    });
+
+    let filtrados = usuarios;
+
+    if (user && user.rol === "supervisor") {
+        const supervisor = await AppDataSource.getRepository("Supervisor").findOne({
+            where: { usuario: { idUsuario: user.idUsuario } },
+            relations: [
+                "instalaciones", 
+                "instalaciones.instalacion",
+                "usuario",
+                "usuario.empleado",
+                "usuario.empleado.contratos",
+                "usuario.empleado.contratos.contratoInstalaciones",
+                "usuario.empleado.contratos.contratoInstalaciones.instalacion"
+            ]
+        });
+        
+        let instalacionIds = [];
+        
+        // Desde SupervisorInstalacion
+        if (supervisor && supervisor.instalaciones) {
+            instalacionIds.push(...supervisor.instalaciones.map(si => si.instalacion.idInstalacion));
+        }
+
+        // Desde contratos activos del supervisor
+        if (supervisor && supervisor.usuario && supervisor.usuario.empleado && supervisor.usuario.empleado.contratos) {
+            const activos = supervisor.usuario.empleado.contratos.filter(c => c.estado !== "FINALIZADO");
+            activos.forEach(c => {
+                if (c.contratoInstalaciones) {
+                    c.contratoInstalaciones.forEach(ci => {
+                        if (ci.instalacion) instalacionIds.push(ci.instalacion.idInstalacion);
+                    });
+                }
+            });
+        }
+
+        instalacionIds = [...new Set(instalacionIds)]; // Eliminar duplicados
+
+        if (instalacionIds.length > 0) {
+            filtrados = usuarios.filter(u => {
+                // Permitir ver a empleados y supervisores que no sean el mismo usuario
+                if ((u.rol !== "empleado" && u.rol !== "supervisor") || !u.empleado || !u.empleado.contratos) return false;
+                
+                return u.empleado.contratos.some(c => 
+                    c.estado !== "FINALIZADO" &&
+                    c.contratoInstalaciones && 
+                    c.contratoInstalaciones.some(ci => ci.instalacion && instalacionIds.includes(ci.instalacion.idInstalacion))
+                );
+            });
+        } else {
+            return [];
+        }
+    }
+
+    return filtrados;
+}

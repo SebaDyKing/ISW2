@@ -92,3 +92,10 @@ export async function getDocumentosEmpleado(idEmpleado) {
   const res = await api.get(`/empleados/${idEmpleado}/documentos`);
   return res;
 }
+
+export async function descargarDocumentoService(idDocumento) {
+  const res = await api.get(`/documentos/${idDocumento}/download`, {
+    responseType: 'blob'
+  });
+  return res;
+}

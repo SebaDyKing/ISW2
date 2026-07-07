@@ -67,17 +67,20 @@ function AppRouter() {
         <Route path="/registro" element={<RegisterForm />} />
 
         {/* Panel de Administrador y Supervisor */}
-        <Route path="/admin" element={<PrivateRoute allowedRoles={["administrador", "supervisor"]}><AdminLayout /></PrivateRoute>}>
-          <Route index element={
-            (() => {
-              const u = JSON.parse(localStorage.getItem("usuario") || "{}");
-              return u.rol === "supervisor" ? <Navigate to="contratos" replace /> : <Navigate to="usuarios" replace />;
-            })()
-          } />
+        <Route path="/admin" element={<PrivateRoute allowedRoles={["administrador"]}><AdminLayout /></PrivateRoute>}>
+          <Route index element={<Navigate to="usuarios" replace />} />
           <Route path="usuarios" element={<UsuariosTable />} />
           <Route path="contratos" element={<ContratosPage />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
+          <Route path="instalaciones" element={<InstalacionesView />} />
+          <Route path="licencias" element={<LicenciasMedicasView />} />
+          <Route path="hojas-vida" element={<HojaVidaView />} />
+        </Route>
+
+        <Route path="/supervisor" element={<PrivateRoute allowedRoles={["supervisor"]}><AdminLayout /></PrivateRoute>}>
+          <Route index element={<Navigate to="contratos" replace />} />
+          <Route path="contratos" element={<ContratosPage />} />
           <Route path="instalaciones" element={<InstalacionesView />} />
           <Route path="licencias" element={<LicenciasMedicasView />} />
           <Route path="hojas-vida" element={<HojaVidaView />} />
