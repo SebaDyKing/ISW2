@@ -1,5 +1,6 @@
 "use strict";
 import Joi from "joi";
+import { rutLogicoValido } from "../utils/rutValidation.js";
 
 export const registroSchema = Joi.object({
   nombre: Joi.string()
@@ -24,8 +25,7 @@ export const registroSchema = Joi.object({
       "string.pattern.base": "El apellido solo puede contener letras.",
       "any.required": "El apellido es obligatorio."
     }),
-  rut: Joi.string().max(12).pattern(/^\d{7,8}-[\dkK]$/).required().messages({
-    "string.pattern.base": "El RUT debe tener el formato 12345678-9",
+  rut: Joi.string().max(12).custom(rutLogicoValido, "Validación lógica de RUT").required().messages({
     "any.required": "El RUT es obligatorio."
   }),
   correo: Joi.string().email().max(100).required().messages({

@@ -13,6 +13,8 @@ export const SolicitudCotizacion = new EntitySchema({
     fechaCreacion:   { type: "timestamp", createDate: true },
     fechaLimite:        { type: "timestamp", nullable: true },
     horasHabilesLimite: { type: "int", default: 24 },
+    cantidadEmpleados:  { type: "int", default: 1 },
+    personalAsignado:   { type: "boolean", default: false },
   },
   relations: {
     cliente: {

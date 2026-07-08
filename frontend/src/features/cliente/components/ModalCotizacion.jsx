@@ -30,6 +30,7 @@ const FRECUENCIAS_PERSONALIZADO = [
 const MAX_CHARS      = 500;
 const MAX_SUPERFICIE = 99999;
 const MAX_PERSONAS   = 9999;
+const MAX_EMPLEADOS  = 50;
 
 function ModalConfirmacion({ estilo, onVolver }) {
   return (
@@ -85,6 +86,7 @@ function ModalCotizacion({ onClose, planPreseleccionado }) {
   const [superficie, setSuperficie]               = useState("");
   const [frecuenciaDeseada, setFrecuenciaDeseada] = useState("");
   const [numPersonas, setNumPersonas]             = useState("");
+  const [cantidadEmpleados, setCantidadEmpleados] = useState("1");
   const [medioContacto, setMedioContacto]         = useState("");
   const [horarioContacto, setHorarioContacto]     = useState("");
   const [enviando, setEnviando]                   = useState(false);
@@ -123,6 +125,13 @@ function ModalCotizacion({ onClose, planPreseleccionado }) {
     setNumPersonas(String(num));
   };
 
+  const handleCantidadEmpleados = (e) => {
+    const raw = e.target.value;
+    if (raw === "") { setCantidadEmpleados(""); return; }
+    const num = Math.min(Math.max(1, parseInt(raw, 10) || 1), MAX_EMPLEADOS);
+    setCantidadEmpleados(String(num));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!planSeleccionado) { toast.error("Debes seleccionar un plan."); return; }
@@ -145,11 +154,12 @@ function ModalCotizacion({ onClose, planPreseleccionado }) {
     setEnviando(true);
     try {
       await solicitarCotizacionService({
-        id_plan:         Number(planSeleccionado),
-        id_instalacion:  (idInstalacion && idInstalacion !== "nueva") ? Number(idInstalacion) : null,
-        comentarios:     comentarioFinal,
-        medioContacto:   medioContacto   || null,
-        horarioContacto: horarioContacto || null,
+        id_plan:           Number(planSeleccionado),
+        id_instalacion:    (idInstalacion && idInstalacion !== "nueva") ? Number(idInstalacion) : null,
+        comentarios:       comentarioFinal,
+        medioContacto:     medioContacto   || null,
+        horarioContacto:   horarioContacto || null,
+        cantidadEmpleados: Number(cantidadEmpleados),
       });
       setEstiloModal(estiloActual);
       setModalVisible(true);
@@ -180,7 +190,7 @@ function ModalCotizacion({ onClose, planPreseleccionado }) {
     }
   }
 
-  const btnDeshabilitado  = enviando || !instalacionValida || (esPersonalizado && !comentarios.trim());
+  const btnDeshabilitado  = enviando || !instalacionValida || !cantidadEmpleados || (esPersonalizado && !comentarios.trim());
 
   return (
     <>
@@ -345,6 +355,18 @@ function ModalCotizacion({ onClose, planPreseleccionado }) {
                         ))}
                       </select>
                     )}
+                  </div>
+
+                  <hr style={{ border: "none", borderTop: "1px solid #dde1e9", margin: "1.25rem 0" }} />
+
+                  {/* Empleados necesarios */}
+                  <div style={{ marginBottom: "1.25rem" }}>
+                    <label style={labelStyle}>Empleados necesarios</label>
+                    <input
+                      type="number" min="1" max={MAX_EMPLEADOS}
+                      value={cantidadEmpleados} onChange={handleCantidadEmpleados}
+                      placeholder="Ej: 2" style={inputStyle}
+                    />
                   </div>
 
                   <hr style={{ border: "none", borderTop: "1px solid #dde1e9", margin: "1.25rem 0" }} />

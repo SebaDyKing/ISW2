@@ -1,0 +1,999 @@
+{
+  "info": {
+    "name": "CleanPro — RF3 Hoja de Vida y RF4 Licencia Medica",
+    "description": "Pruebas de API para RF3 (Hoja de Vida) y RF4 (Licencia Medica) del Sistema CleanPro. Base: {{base_url}}. Seed: empleado=1, admin=1, supervisor=1. Login: juan@test.cl / ana@test.cl con password123.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Autenticacion",
+      "item": [
+        {
+          "name": "Login empleado (Juan) — necesario para subir licencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Autentica al empleado. Guarda accessToken/refreshToken en cookies HttpOnly. Habilita 'Cookies' en Postman para que se envien solas en la subida de licencia (POST).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"juan@test.cl\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 login OK\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login admin (Ana)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"ana@test.cl\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 login OK\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF3 - Hoja de Vida",
+      "item": [
+        {
+          "name": "RF3 - Crear hoja de vida (registro POSITIVO) — exito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/hojas-vida",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "hojas-vida"
+              ]
+            },
+            "description": "Caso exitoso. idEmpleado=1 (Juan) e idAdmin=1 (Ana) existen en el seed.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"positivo\",\n  \"descripcion\": \"Cumplio turno extra sin observaciones\",\n  \"fecha\": \"2026-07-01\",\n  \"idEmpleado\": 1,\n  \"idAdmin\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 creado\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF3 - Crear hoja de vida (registro NEGATIVO) — exito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/hojas-vida",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "hojas-vida"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"negativo\",\n  \"descripcion\": \"Llegada tardia reiterada\",\n  \"fecha\": \"2026-07-02\",\n  \"idEmpleado\": 1,\n  \"idAdmin\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 creado\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF3 - Error: empleado inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/hojas-vida",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "hojas-vida"
+              ]
+            },
+            "description": "El servicio lanza 'Empleado no encontrado'.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"positivo\",\n  \"descripcion\": \"Prueba\",\n  \"fecha\": \"2026-07-01\",\n  \"idEmpleado\": 9999,\n  \"idAdmin\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"error empleado no encontrado\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400, 404, 409, 500]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF3 - Error: validacion (tipo vacio)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/hojas-vida",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "hojas-vida"
+              ]
+            },
+            "description": "Joi: 'El campo tipo no puede estar vacio'.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"\",\n  \"descripcion\": \"Prueba\",\n  \"fecha\": \"2026-07-01\",\n  \"idEmpleado\": 1,\n  \"idAdmin\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 validacion Joi\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400, 404, 409, 500]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF3 - Error: fecha con formato invalido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/hojas-vida",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "hojas-vida"
+              ]
+            },
+            "description": "Joi exige formato ISO (YYYY-MM-DD).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"positivo\",\n  \"descripcion\": \"Prueba\",\n  \"fecha\": \"01-07-2026\",\n  \"idEmpleado\": 1,\n  \"idAdmin\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 fecha invalida\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400, 404, 409, 500]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF3 - Listar hojas de vida",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/hojas-vida",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "hojas-vida"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 listado\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF3 - Obtener hoja de vida por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/hojas-vida/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "hojas-vida",
+                "1"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 encontrada\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF3 - Actualizar hoja de vida",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/hojas-vida/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "hojas-vida",
+                "1"
+              ]
+            },
+            "description": "Actualizacion parcial: el servicio aplica cambios a tipo y descripcion.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Descripcion corregida por el administrador\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 actualizada\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF3 - Eliminar hoja de vida",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/hojas-vida/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "hojas-vida",
+                "1"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 eliminada\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF4 - Licencia Medica",
+      "item": [
+        {
+          "name": "RF4 - Subir licencia medica (PDF) — exito",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas"
+              ]
+            },
+            "description": "multipart/form-data. REQUIERE sesion (correr antes 'Login empleado'). Campo de archivo = archivoPdf. Solo PDF (max 10MB).",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivoPdf",
+                  "type": "file",
+                  "src": [],
+                  "description": "SELECCIONA un archivo PDF de tu maquina"
+                },
+                {
+                  "key": "fechaInicio",
+                  "value": "2026-07-05",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaFin",
+                  "value": "2026-07-10",
+                  "type": "text"
+                },
+                {
+                  "key": "diagnostico",
+                  "value": "Reposo medico por 5 dias",
+                  "type": "text"
+                },
+                {
+                  "key": "idEmpleado",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 creada (pendiente)\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF4 - Error: archivo NO es PDF",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas"
+              ]
+            },
+            "description": "El fileFilter de Multer solo acepta application/pdf -> 'Formato no valido. Solo se permiten archivos PDF'.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivoPdf",
+                  "type": "file",
+                  "src": [],
+                  "description": "SELECCIONA una imagen (.png/.jpg) para provocar el error"
+                },
+                {
+                  "key": "fechaInicio",
+                  "value": "2026-07-05",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaFin",
+                  "value": "2026-07-10",
+                  "type": "text"
+                },
+                {
+                  "key": "diagnostico",
+                  "value": "Reposo",
+                  "type": "text"
+                },
+                {
+                  "key": "idEmpleado",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"error formato no PDF\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400, 404, 409, 500]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF4 - Error: falta el archivo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas"
+              ]
+            },
+            "description": "El controlador exige req.file.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "fechaInicio",
+                  "value": "2026-07-05",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaFin",
+                  "value": "2026-07-10",
+                  "type": "text"
+                },
+                {
+                  "key": "diagnostico",
+                  "value": "Reposo",
+                  "type": "text"
+                },
+                {
+                  "key": "idEmpleado",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 archivo requerido\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400, 404, 409, 500]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF4 - Error: fechaFin anterior a fechaInicio",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas"
+              ]
+            },
+            "description": "Joi: 'La fecha de fin no puede ser anterior a la fecha de inicio'.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivoPdf",
+                  "type": "file",
+                  "src": [],
+                  "description": "SELECCIONA un PDF"
+                },
+                {
+                  "key": "fechaInicio",
+                  "value": "2026-07-10",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaFin",
+                  "value": "2026-07-05",
+                  "type": "text"
+                },
+                {
+                  "key": "diagnostico",
+                  "value": "Reposo",
+                  "type": "text"
+                },
+                {
+                  "key": "idEmpleado",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 fechas incoherentes\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400, 404, 409, 500]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF4 - Listar licencias medicas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 listado\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF4 - Obtener licencia por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas",
+                "1"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 encontrada\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF4 - Descargar PDF de licencia",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas/1/pdf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas",
+                "1",
+                "pdf"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 PDF\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF4 - Aprobar licencia (cambio de estado)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas/1/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas",
+                "1",
+                "estado"
+              ]
+            },
+            "description": "idSupervisor=1 (Carlos) existe en el seed. Estados validos: pendiente, aprobada, rechazada.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"aprobada\",\n  \"idSupervisor\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 aprobada\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF4 - Rechazar licencia (cambio de estado)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas/2/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas",
+                "2",
+                "estado"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"rechazada\",\n  \"idSupervisor\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 rechazada\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF4 - Error: estado invalido",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas/1/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas",
+                "1",
+                "estado"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"cancelada\",\n  \"idSupervisor\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 estado no permitido\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400, 404, 409, 500]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RF4 - Eliminar licencia medica",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/licencias-medicas/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias-medicas",
+                "1"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 eliminada\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

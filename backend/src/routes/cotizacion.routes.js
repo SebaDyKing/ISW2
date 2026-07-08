@@ -41,4 +41,5 @@ router.put("/:id/reactivar",
     reactivarSolicitud
 );
 
+
 export default router;

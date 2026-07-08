@@ -30,7 +30,7 @@ function validarForm(form, esEditar = false) {
   if (!soloLetras.test(form.apellido.trim()))
     errores.apellido = "Solo letras y espacios, entre 2 y 50 caracteres.";
   if (!validarRut(normalizarRut(form.rut)))
-    errores.rut = "Formato inválido. Ej: 12345678-9";
+    errores.rut = "RUT inválido. Verifica que esté correctamente escrito.";
   if (!regexCorreo.test(form.correo.trim()))
     errores.correo = "Ingresa un correo válido.";
   if (!esEditar) {
