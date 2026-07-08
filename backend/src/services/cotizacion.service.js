@@ -179,16 +179,14 @@ export async function asignarEmpleadosService(idSolicitud) {
   const supervisorInstalacionRepo = AppDataSource.getRepository(SupervisorInstalacion);
 
   const cotizacion = await cotizacionRepo.findOne({
-    where: { idSolicitud: parseInt(idSolicitud) },
+    where: { idSolicitud: idSolicitud },
     relations: ["instalacion"]
   });
   if (!cotizacion) throw new Error("Cotización no encontrada.");
 
-
   // Solo tiene sentido asignar personal a algo ya aprobado y con un lugar concreto donde trabajar.
   if (cotizacion.estado !== "Aprobada") throw new Error("Solo se pueden asignar empleados a cotizaciones aprobadas.");
   if (!cotizacion.instalacion) throw new Error("Esta cotización no tiene una instalación asociada.");
-
 
   // Guard de idempotencia: sin esto, volver a apretar el botón asignaría empleados de más.
   if (cotizacion.personalAsignado) throw new Error("Esta cotización ya tiene personal asignado.");
@@ -207,7 +205,6 @@ export async function asignarEmpleadosService(idSolicitud) {
       `No hay suficientes empleados libres. Se necesitan ${cotizacion.cantidadEmpleados}, hay ${empleadosLibres.length} disponibles.`
     );
   }
-
 
   //Se busca el primer supervisor que exista
   const [supervisor] = await supervisorRepo.find({
