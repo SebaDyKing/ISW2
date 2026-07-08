@@ -9,6 +9,7 @@ import asistenciaRouter from "./asistencia.routes.js";
 import planRouter from "./plan.routes.js";
 import instalacionRouter from "./instalacion.routes.js";
 import dashboardRouter from "./dashboard.routes.js";
+import documentoRouter from "./documento.routes.js";
 
 
 /**
@@ -30,6 +31,7 @@ export function routerApi(app) {
   router.use("/planes", planRouter);
   router.use("/instalaciones", instalacionRouter);
   router.use("/dashboard", dashboardRouter);
+  router.use("/", documentoRouter);
 
   app.use("/api", router);
 }

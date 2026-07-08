@@ -154,12 +154,17 @@ function LoginForm() {
       toast.success("¡Bienvenido!");
 
       const rol = data.usuario.rol;
-      if      (rol === "administrador") navigate("/admin");
-      else if (rol === "empleado")      navigate("/empleado");
-      else if (rol === "supervisor")    navigate("/supervisor");
+      if (rol === "administrador") navigate("/admin");
+      else if (rol === "supervisor") navigate("/supervisor");
+      else if (rol === "empleado") navigate("/empleado");
       else {
         const planGuardado = sessionStorage.getItem("planPreseleccionado");
-        navigate(planGuardado ? "/cliente/cotizar" : "/cliente");
+        if (planGuardado) {
+          sessionStorage.removeItem("planPreseleccionado");
+          navigate("/cliente/mis-cotizaciones", { state: { abrirModal: true, idPlan: planGuardado } });
+        } else {
+          navigate("/cliente/mis-cotizaciones");
+        }
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Error al iniciar sesión");

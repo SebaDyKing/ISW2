@@ -1,9 +1,11 @@
 import api from '../../../config/axios';
 
 export const contratosService = {
-  getAll: (params) => api.get('/contratos', { params }),
+  getAll: (params) => api.get('/contratos/staff', { params }),
   getById: (id) => api.get(`/contratos/${id}`),
   create: (data) => api.post('/contratos', data),
   update: (id, data) => api.put(`/contratos/${id}`, data),
   delete: (id) => api.delete(`/contratos/${id}`),
+  agregarInstalacion: (idContrato, data) => api.post(`/contratos/${idContrato}/instalacion`, data),
+  removerInstalacion: (idContrato, idInstalacion) => api.delete(`/contratos/${idContrato}/instalacion/${idInstalacion}`),
 }

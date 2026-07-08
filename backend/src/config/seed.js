@@ -155,9 +155,9 @@ export async function seedDatabase() {
     },
   ]);
 
-  // Contrato vinculando al Empleado Juan con la Instalación de cliente 1
+  // Contrato vinculando al Empleado Juan
   const contratoRepo = AppDataSource.getRepository(Contrato);
-  await contratoRepo.save({
+  const contratoGuardado = await contratoRepo.save({
     tipo: "indefinido",
     cargo: "Guardia de seguridad",
     sueldo: 500000,
@@ -165,7 +165,14 @@ export async function seedDatabase() {
     fechaInicio: "2026-01-01",
     estado: "activo",
     empleado,
-    instalacion,
+  });
+
+  const ciRepo = AppDataSource.getRepository("ContratoInstalacion");
+  await ciRepo.save({
+    contrato: { idContrato: contratoGuardado.idContrato },
+    instalacion: { idInstalacion: instalacion.idInstalacion },
+    horasSemanales: 8,
+    pagoAdicional: 0
   });
 
   console.log("=> Seed: Datos insertados correctamente");

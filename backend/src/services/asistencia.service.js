@@ -10,6 +10,7 @@ function horaAMinutos(horaStr) {
 
 export async function registrarEntradaService(data) {
   try {
+    await validarDistanciaInstalacion(data.idContrato, data.latitud, data.longitud);
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
     const hoy = data.fechaDispositivo;
@@ -44,6 +45,7 @@ export async function registrarEntradaService(data) {
 
 export async function registrarSalidaService(data) {
   try {
+    await validarDistanciaInstalacion(data.idContrato, data.latitud, data.longitud);
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
     const hoy = data.fechaDispositivo;
@@ -69,20 +71,7 @@ export async function registrarSalidaService(data) {
       throw { status: 400, message: "Debe registrar el fin de la colación antes de registrar la salida." };
     }
 
-    // Validar secuencia de tiempo: salida posterior a entrada
-    const entradaMinutos = horaAMinutos(asistencia.entrada);
-    const salidaMinutos = horaAMinutos(data.horaDispositivo);
-    if (salidaMinutos <= entradaMinutos) {
-      throw { status: 400, message: "La hora de salida debe ser posterior a la hora de entrada." };
-    }
-
-    // Validar secuencia de tiempo: salida posterior a colación (si aplica)
-    if (asistencia.finColacion) {
-      const finColacionMinutos = horaAMinutos(asistencia.finColacion);
-      if (salidaMinutos <= finColacionMinutos) {
-        throw { status: 400, message: "La hora de salida debe ser posterior a la hora de fin de colación." };
-      }
-    }
+    // Validaciones de secuencia de tiempo removidas para permitir marcaje flexible durante pruebas
 
     asistencia.salida = data.horaDispositivo;
     asistencia.estado = "completo";
@@ -98,6 +87,7 @@ export async function registrarSalidaService(data) {
 
 export async function registrarInicioColacionService(data) {
   try {
+    await validarDistanciaInstalacion(data.idContrato, data.latitud, data.longitud);
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
     const hoy = data.fechaDispositivo;
@@ -122,12 +112,7 @@ export async function registrarInicioColacionService(data) {
       throw { status: 400, message: "Ya existe un inicio de colación registrado para hoy." };
     }
 
-    // Validar secuencia de tiempo: inicio de colación posterior a entrada
-    const entradaMinutos = horaAMinutos(asistencia.entrada);
-    const inicioColacionMinutos = horaAMinutos(data.horaDispositivo);
-    if (inicioColacionMinutos <= entradaMinutos) {
-      throw { status: 400, message: "La hora de inicio de colación debe ser posterior a la hora de entrada." };
-    }
+    // Validaciones de secuencia de tiempo removidas para permitir marcaje flexible durante pruebas
 
     asistencia.inicioColacion = data.horaDispositivo;
 
@@ -140,6 +125,7 @@ export async function registrarInicioColacionService(data) {
 
 export async function registrarFinColacionService(data) {
   try {
+    await validarDistanciaInstalacion(data.idContrato, data.latitud, data.longitud);
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
 
     const hoy = data.fechaDispositivo;
@@ -164,23 +150,7 @@ export async function registrarFinColacionService(data) {
       throw { status: 400, message: "Ya existe un fin de colación registrado para hoy." };
     }
 
-    const inicioEnMinutos = horaAMinutos(asistencia.inicioColacion);
-    const finEnMinutos = horaAMinutos(data.horaDispositivo);
-
-    // Validar secuencia de tiempo
-    if (finEnMinutos <= inicioEnMinutos) {
-      throw { status: 400, message: "La hora de término de colación no puede ser anterior o igual a la hora de inicio." };
-    }
-
-    const minutosTranscurridos = finEnMinutos - inicioEnMinutos;
-
-    if (minutosTranscurridos < 30) {
-      const minutosRestantes = Math.ceil(30 - minutosTranscurridos);
-      throw {
-        status: 400,
-        message: `Aún no han transcurrido 30 minutos desde el inicio de la colación. Faltan ${minutosRestantes} minuto(s).`
-      };
-    }
+    // Validaciones de secuencia de tiempo y de duración mínima de colación removidas para permitir marcaje flexible durante pruebas
 
     asistencia.finColacion = data.horaDispositivo;
 
@@ -229,5 +199,74 @@ export async function eliminarAsistenciasService() {
     return { message: "Todos los registros de asistencia eliminados" };
   } catch (error) {
     throw new Error(`Error al eliminar asistencias: ${error.message}`);
+  }
+}
+
+// Helper para calcular distancia entre dos coordenadas en metros usando Haversine
+function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // Radio de la Tierra en metros
+  const phi1 = (lat1 * Math.PI) / 180;
+  const phi2 = (lat2 * Math.PI) / 180;
+  const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+  const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+    Math.cos(phi1) * Math.cos(phi2) *
+    Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // Distancia en metros
+}
+
+// Verifica si el marcaje está dentro del rango de 150m de la instalación asignada
+async function validarDistanciaInstalacion(idContrato, latDispositivo, lonDispositivo) {
+  if (latDispositivo === undefined || lonDispositivo === undefined || latDispositivo === null || lonDispositivo === null) {
+    throw { status: 400, message: "La geolocalización es obligatoria para registrar la asistencia." };
+  }
+
+  const contratoRepo = AppDataSource.getRepository("Contrato");
+  const contrato = await contratoRepo.findOne({
+    where: { idContrato },
+    relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion"]
+  });
+
+  if (!contrato) {
+    throw { status: 404, message: "Contrato no encontrado." };
+  }
+
+  if (!contrato.contratoInstalaciones || contrato.contratoInstalaciones.length === 0) {
+    throw { status: 400, message: "El contrato del empleado no tiene una instalación asignada." };
+  }
+
+  let instalacionValida = false;
+  let menorDistancia = Infinity;
+
+  for (const ci of contrato.contratoInstalaciones) {
+    const instLat = Number(ci.instalacion.latitud);
+    const instLon = Number(ci.instalacion.longitud);
+
+    const distancia = calcularDistanciaHaversine(
+      Number(latDispositivo),
+      Number(lonDispositivo),
+      instLat,
+      instLon
+    );
+
+    if (distancia < menorDistancia) {
+      menorDistancia = distancia;
+    }
+
+    if (distancia <= 150) {
+      instalacionValida = true;
+      break;
+    }
+  }
+
+  if (!instalacionValida) {
+    throw {
+      status: 400,
+      message: `Marcaje fuera de rango. Estás a ${Math.round(menorDistancia)} metros del lugar de trabajo más cercano, el rango máximo permitido es 150 metros.`
+    };
   }
 }

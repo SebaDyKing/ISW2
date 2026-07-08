@@ -1,5 +1,6 @@
 "use strict";
 import Joi from "joi";
+import { rutLogicoValido } from "../utils/rutValidation.js";
 
 // RUT: sin puntos, con guión
 const rutRegex = /^\d{7,8}-[\dkK]$/;
@@ -19,8 +20,7 @@ export const usuarioBodyValidation = Joi.object({
     "string.pattern.base": "El apellido solo puede contener letras.",
     "any.required": "El apellido es obligatorio.",
   }),
-  rut: Joi.string().max(12).pattern(rutRegex).required().messages({
-    "string.pattern.base": "El RUT debe tener el formato 12345678-9 (sin puntos).",
+  rut: Joi.string().max(12).custom(rutLogicoValido, "Validación lógica de RUT").required().messages({
     "any.required": "El RUT es obligatorio.",
   }),
   correo: Joi.string().email().max(150).required().messages({

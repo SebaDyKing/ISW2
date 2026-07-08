@@ -220,9 +220,9 @@ const S = {
 };
 
 function LandingPage() {
-  const [planes, setPlanes]     = useState([]);
+  const [planes, setPlanes] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [error, setError]       = useState(null);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const usuario = localStorage.getItem("usuario");
@@ -239,7 +239,7 @@ function LandingPage() {
       sessionStorage.setItem("planPreseleccionado", idPlan);
       navigate("/login");
     } else {
-      navigate("/cliente/cotizar", { state: { idPlan } });
+      navigate("/cliente/mis-cotizaciones", { state: { abrirModal: true, idPlan } });
     }
   };
 
@@ -302,7 +302,7 @@ function LandingPage() {
           <div style={S.ctaRow}>
             <button
               style={S.btnPrimary}
-              onClick={() => navigate(usuario ? "/cliente/cotizar" : "/login")}
+              onClick={() => navigate(usuario ? "/cliente/mis-cotizaciones" : "/login", usuario ? { state: { abrirModal: true } } : undefined)}
               onMouseEnter={(e) => { e.currentTarget.style.background = "#4238a3"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "#534AB7"; }}
             >

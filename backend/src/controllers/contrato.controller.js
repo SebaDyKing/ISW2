@@ -6,8 +6,9 @@ import {
     createContrato,
     updateContrato,
     updateEstadoContrato,
-    deleteContrato,
     getMisAsignacionesService,
+    agregarInstalacionContrato,
+    removerInstalacionService
 } from "../services/contrato.service.js";
 import {
     handleSuccess,
@@ -17,7 +18,7 @@ import {
 
 export const getAll = async (req, res) => {
     try {
-        const data = await getAllContratos();
+        const data = await getAllContratos(req.user);
         handleSuccess(res, 200, "Contratos obtenidos exitosamente", data);
     } catch (error) {
         handleErrorServer(res, 500, "Error al obtener contratos", error.message);
@@ -63,6 +64,7 @@ export const getMisAsignaciones = async (req, res) => {
     }
 };
 
+
 export const create = async (req, res) => {
     try {
         const data = await createContrato(req.body);
@@ -102,15 +104,57 @@ export const updateEstado = async (req, res) => {
     }
 };
 
-export const remove = async (req, res) => {
+
+export const agregarInstalacion = async (req, res) => {
     try {
-        await deleteContrato(Number(req.params.id));
-        handleSuccess(res, 200, "Contrato eliminado exitosamente", null);
-    } catch (error) {
-        if (error.status === 404) {
-            handleErrorClient(res, 404, error.message);
-        } else {
-            handleErrorServer(res, 500, "Error al eliminar contrato", error.message);
+        const { idContrato } = req.params;
+        const { idInstalacion, horasSemanales, pagoAdicional } = req.body;
+
+        if (!idInstalacion || !horasSemanales) {
+            return handleErrorClient(res, 400, "Instalacion y horas semanales son requeridos");
         }
+
+        const data = await agregarInstalacionContrato(Number(idContrato), Number(idInstalacion), Number(horasSemanales), Number(pagoAdicional) || 0);
+        handleSuccess(res, 201, "Instalación agregada exitosamente al contrato", data);
+    } catch (error) {
+        if (error.status === 400 || error.status === 404) {
+            handleErrorClient(res, error.status, error.message);
+        } else {
+            handleErrorServer(res, 500, "Error al agregar instalación", error.message);
+        }
+    }
+};
+
+export const removerInstalacion = async (req, res) => {
+    try {
+        const { idContrato, idInstalacion } = req.params;
+        const data = await removerInstalacionService(Number(idContrato), Number(idInstalacion));
+        handleSuccess(res, 200, "Instalación removida del contrato", data);
+    } catch (error) {
+        if (error.status === 400 || error.status === 404) {
+            handleErrorClient(res, error.status, error.message);
+        } else {
+            handleErrorServer(res, 500, error.message);
+        }
+    }
+};
+export const getStaffContratos = async (req, res) => {
+  try {
+    const { getStaffContratosService } = await import("../services/contrato.service.js");
+    const contratos = await getStaffContratosService(req.user);
+    res.json({ data: contratos });
+  } catch (error) {
+    console.error("Error en getStaffContratos:", error);
+    res.status(error.status || 500).json({ error: error.message || "Error al obtener contratos de staff" });
+  }
+};
+
+export const solicitarTraslado = async (req, res) => {
+    try {
+        const { solicitarTrasladoService } = await import("../services/contrato.service.js");
+        const data = await solicitarTrasladoService(Number(req.params.id), req.body);
+        res.status(201).json({ message: "Solicitud de traslado enviada exitosamente", data });
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message || "Error al solicitar traslado" });
     }
 };

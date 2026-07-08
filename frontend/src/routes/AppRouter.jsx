@@ -1,22 +1,25 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import LoginForm    from "../features/auth/components/LoginForm";
+import LoginForm from "../features/auth/components/LoginForm";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import PrivateRoute from "./PrivateRoute";
-import AdminLayout       from "../features/admin/components/AdminLayout";
-import UsuariosTable     from "../features/admin/components/UsuariosTable";
+import AdminLayout from "../features/admin/components/AdminLayout";
+import UsuariosTable from "../features/admin/components/UsuariosTable";
 import CotizacionesTable from "../features/admin/components/CotizacionesTable";
 import LicenciasMedicasView from "../features/admin/components/LicenciasMedicasView";
-import HojaVidaView         from "../features/admin/components/HojaVidaView";
-import EmpleadoLayout  from "../features/empleado/components/EmpleadoLayout";
+import HojaVidaView from "../features/admin/components/HojaVidaView";
+import EmpleadoLayout from "../features/empleado/components/EmpleadoLayout";
 import MisLicenciasView from "../features/empleado/components/MisLicenciasView";
 import MisHojasVidaView from "../features/empleado/components/MisHojasVidaView";
 import MisAsignacionesView from "../features/empleado/components/MisAsignacionesView";
-import LandingPage         from "../features/cliente/components/LandingPage";
-import SolicitarCotizacion from "../features/cliente/components/SolicitarCotizacion";
+import MisDocumentosView from "../features/empleado/components/MisDocumentosView";
+import LandingPage from "../features/cliente/components/LandingPage";
+import ClienteLayout from "../features/cliente/components/ClienteLayout";
+import MisCotizacionesView from "../features/cliente/components/MisCotizacionesView";
 import MarcarAsistencia from "../components/MarcarAsistencia";
 import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
 import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
+import InstalacionesView from "../features/admin/components/InstalacionesView";
 import api from "../config/axios";
 
 function PanelClienteProximamente() {
@@ -58,33 +61,45 @@ function AppRouter() {
     <BrowserRouter>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/"         element={<LandingPage />} />
-        <Route path="/login"    element={<LoginForm />} />
+        {/* Pública */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/asistencia" element={<MarcarAsistencia />} />
+        <Route path="/login" element={<LoginForm />} />
         <Route path="/registro" element={<RegisterForm />} />
 
+        {/* Panel de Administrador y Supervisor */}
         <Route path="/admin" element={<PrivateRoute allowedRoles={["administrador"]}><AdminLayout /></PrivateRoute>}>
-          <Route index               element={<Navigate to="usuarios" replace />} />
-          <Route path="usuarios"     element={<UsuariosTable />} />
-          <Route path="contratos"    element={<ContratosPage />} />
-          <Route path="dashboard"    element={<AdminDashboard />} />
+          <Route index element={<Navigate to="usuarios" replace />} />
+          <Route path="usuarios" element={<UsuariosTable />} />
+          <Route path="contratos" element={<ContratosPage />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="cotizaciones" element={<CotizacionesTable />} />
-          <Route path="licencias"    element={<LicenciasMedicasView />} />
-          <Route path="hojas-vida"   element={<HojaVidaView />} />
+          <Route path="instalaciones" element={<InstalacionesView />} />
+          <Route path="licencias" element={<LicenciasMedicasView />} />
+          <Route path="hojas-vida" element={<HojaVidaView />} />
         </Route>
 
-        <Route path="/cliente/cotizar" element={<PrivateRoute allowedRoles={["cliente"]}><SolicitarCotizacion /></PrivateRoute>} />
+        <Route path="/supervisor" element={<PrivateRoute allowedRoles={["supervisor"]}><AdminLayout /></PrivateRoute>}>
+          <Route index element={<Navigate to="contratos" replace />} />
+          <Route path="contratos" element={<ContratosPage />} />
+          <Route path="licencias" element={<LicenciasMedicasView />} />
+          <Route path="hojas-vida" element={<HojaVidaView />} />
+        </Route>
+
+        <Route path="/cliente" element={<PrivateRoute allowedRoles={["cliente"]}><ClienteLayout /></PrivateRoute>}>
+          <Route index element={<Navigate to="mis-cotizaciones" replace />} />
+          <Route path="mis-cotizaciones" element={<MisCotizacionesView />} />
+        </Route>
 
         <Route path="/empleado" element={<PrivateRoute allowedRoles={["empleado"]}><EmpleadoLayout /></PrivateRoute>}>
-          <Route index             element={<Navigate to="asistencia" replace />} />
+          <Route index element={<Navigate to="asistencia" replace />} />
           <Route path="asistencia" element={<MarcarAsistencia />} />
           <Route path="asignaciones" element={<MisAsignacionesView />} />
-          <Route path="licencias"  element={<MisLicenciasView />} />
-          <Route path="hoja-vida"  element={<MisHojasVidaView />} />
+          <Route path="documentos" element={<MisDocumentosView />} />
+          <Route path="licencias" element={<MisLicenciasView />} />
+          <Route path="hoja-vida" element={<MisHojasVidaView />} />
         </Route>
-
-        <Route path="/supervisor" element={<div>Panel supervisor — próximamente</div>} />
-        <Route path="/cliente" element={<PrivateRoute allowedRoles={["cliente"]}><Navigate to="/cliente/cotizar" replace /></PrivateRoute>} />
-        <Route path="*"           element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
