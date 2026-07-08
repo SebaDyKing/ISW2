@@ -18,7 +18,7 @@ export const crearSolicitud = async (req, res) => {
       });
     }
 
-    const { comentarios, id_plan, id_instalacion, medioContacto, horarioContacto } = value;
+    const { comentarios, id_plan, id_instalacion, medioContacto, horarioContacto, cantidadEmpleados } = value;
     const idUsuario = req.user.idUsuario;
 
     const nuevaCotizacion = await crearCotizacionService({
@@ -28,6 +28,7 @@ export const crearSolicitud = async (req, res) => {
       id_instalacion,
       medioContacto,
       horarioContacto,
+      cantidadEmpleados,
     });
 
     res.status(201).json({
@@ -86,6 +87,7 @@ export const actualizarEstado = async (req, res) => {
     }
 
     const cotizacionActualizada = await actualizarEstadoService(id, estado, motivo);
+
     res.status(200).json({
       message: "Estado de cotización actualizado correctamente",
       data: cotizacionActualizada
@@ -103,7 +105,7 @@ export const reactivarSolicitud = async (req, res) => {
   try {
     const { id } = req.params;
     const cotizacionReactivada = await reactivarCotizacionService(id);
-    
+
     res.status(200).json({
       message: "Cotización reactivada correctamente",
       data: cotizacionReactivada
@@ -116,3 +118,4 @@ export const reactivarSolicitud = async (req, res) => {
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };
+

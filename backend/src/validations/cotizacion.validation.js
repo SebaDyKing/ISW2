@@ -9,6 +9,10 @@ export const cotizacionSchema = Joi.object({
   id_instalacion: Joi.number().integer().allow(null, "").optional().messages({
     "number.base": "El ID de la instalación debe ser un número."
   }),
+  cantidadEmpleados: Joi.number().integer().min(1).required().messages({
+    "number.min": "Debes solicitar al menos 1 empleado.",
+    "any.required": "Debes indicar cuántos empleados necesitás."
+  }),
   comentarios: Joi.string().max(600).allow(null, "").optional().messages({
     "string.max": "Los comentarios no pueden superar los 600 caracteres."
   }),

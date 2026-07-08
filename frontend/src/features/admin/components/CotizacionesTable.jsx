@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { obtenerCotizacionesService, actualizarEstadoCotizacionService, reactivarCotizacionService } from "../services/admin.service";
+import { obtenerCotizacionesService, actualizarEstadoCotizacionService, reactivarCotizacionService, asignarEmpleadosCotizacionService } from "../services/admin.service";
 import toast from "react-hot-toast";
 
 const BADGE = {
@@ -66,7 +66,7 @@ function TiempoRestante({ fechaLimite, estado }) {
 }
 
 // ── Modal detalle ──────────────────────────────────────────────────────────────
-function ModalDetalle({ cotizacion, onCerrar, onResolver, onReactivar, actualizandoId }) {
+function ModalDetalle({ cotizacion, onCerrar, onResolver, onReactivar, onAsignarEmpleados, actualizandoId }) {
   if (!cotizacion) return null;
   const estadoN = cotizacion.estado?.toLowerCase();
   const badge   = BADGE[estadoN] ?? { bg: "#f1f5f9", color: "#475569" };
@@ -104,8 +104,9 @@ function ModalDetalle({ cotizacion, onCerrar, onResolver, onReactivar, actualiza
           </Seccion>
 
           <Seccion titulo="Plan solicitado">
-            <Fila label="Tipo"       valor={cotizacion.plan?.tipo       || "—"} />
-            <Fila label="Frecuencia" valor={cotizacion.plan?.frecuencia || "—"} />
+            <Fila label="Tipo"               valor={cotizacion.plan?.tipo       || "—"} />
+            <Fila label="Frecuencia"         valor={cotizacion.plan?.frecuencia || "—"} />
+            <Fila label="Empleados requeridos" valor={cotizacion.cantidadEmpleados ?? "—"} />
           </Seccion>
 
           {cotizacion.fechaLimite && (
@@ -148,13 +149,28 @@ function ModalDetalle({ cotizacion, onCerrar, onResolver, onReactivar, actualiza
             </button>
           )}
           {cotizacion.estado === "Vencida" && (
-            <button 
-              onClick={() => onReactivar(cotizacion)} 
+            <button
+              onClick={() => onReactivar(cotizacion)}
               style={{ ...btnPrimario, background: "#8b5cf6" }}
               disabled={actualizandoId === cotizacion.idSolicitud}
             >
               {actualizandoId === cotizacion.idSolicitud ? "Reactivando..." : "Reactivar cotización ↺"}
             </button>
+          )}
+          {cotizacion.estado === "Aprobada" && cotizacion.instalacion && (
+            cotizacion.personalAsignado ? (
+              <span style={{ padding: "6px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 600, background: "#dcfce7", color: "#166534" }}>
+                Personal asignado ✓
+              </span>
+            ) : (
+              <button
+                onClick={() => onAsignarEmpleados(cotizacion)}
+                style={{ ...btnPrimario, background: "#0f172a" }}
+                disabled={actualizandoId === cotizacion.idSolicitud}
+              >
+                {actualizandoId === cotizacion.idSolicitud ? "Asignando..." : "Asignar Empleados →"}
+              </button>
+            )
           )}
         </div>
       </div>
@@ -351,13 +367,51 @@ function CotizacionesTable() {
       actualizarEstadoCotizacionService(c.idSolicitud, nuevoEstado, motivo),
       {
         loading: "Enviando correo al cliente...",
-        success: "Estado actualizado y correo enviado.",
+        success: (res) => {
+          if (nuevoEstado !== "Aprobada") return "Estado actualizado y correo enviado.";
+          if (res.data.asignacion) {
+            const { empleados, supervisor } = res.data.asignacion;
+            const nombres = empleados.map((e) => `${e.nombre} ${e.apellido}`).join(", ");
+            return `Cotización aprobada. Se asignaron ${empleados.length} empleado(s) (${nombres}) y el supervisor ${supervisor.nombre} ${supervisor.apellido}.`;
+          }
+          if (res.data.avisoAsignacion) {
+            return `Cotización aprobada, pero no se pudo asignar personal automáticamente: ${res.data.avisoAsignacion}`;
+          }
+          return "Estado actualizado y correo enviado.";
+        },
         error:   "Error al actualizar el estado.",
       }
-    ).catch(() => {
+    ).then((res) => {
+      if (nuevoEstado === "Aprobada" && res.data.asignacion) {
+        setCotizaciones((prev) =>
+          prev.map((x) => x.idSolicitud === c.idSolicitud ? { ...x, personalAsignado: true } : x)
+        );
+      }
+    }).catch(() => {
       setCotizaciones((prev) =>
         prev.map((x) => x.idSolicitud === c.idSolicitud ? { ...x, estado: estadoAnterior } : x)
       );
+    }).finally(() => setActualizandoId(null));
+  }
+
+  async function handleAsignarEmpleados(c) {
+    setActualizandoId(c.idSolicitud);
+    toast.promise(
+      asignarEmpleadosCotizacionService(c.idSolicitud),
+      {
+        loading: "Asignando empleados...",
+        success: (res) => {
+          const { empleados, supervisor } = res.data;
+          const nombres = empleados.map((e) => `${e.nombre} ${e.apellido}`).join(", ");
+          return `Se asignaron ${empleados.length} empleado(s) (${nombres}) y el supervisor ${supervisor.nombre} ${supervisor.apellido}.`;
+        },
+        error: (err) => err?.response?.data?.message || "Error al asignar empleados.",
+      }
+    ).then(() => {
+      setCotizaciones((prev) =>
+        prev.map((x) => x.idSolicitud === c.idSolicitud ? { ...x, personalAsignado: true } : x)
+      );
+      setModalDetalle((prev) => prev && prev.idSolicitud === c.idSolicitud ? { ...prev, personalAsignado: true } : prev);
     }).finally(() => setActualizandoId(null));
   }
 
@@ -453,6 +507,7 @@ function CotizacionesTable() {
           onCerrar={() => setModalDetalle(null)}
           onResolver={(c) => setModalResolver(c)}
           onReactivar={handleReactivar}
+          onAsignarEmpleados={handleAsignarEmpleados}
           actualizandoId={actualizandoId}
         />
       )}
@@ -547,7 +602,7 @@ function CotizacionesTable() {
         </div>
 
         {/* Tabla */}
-        <div style={{ background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+        <div style={{ background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
             <thead>
               <tr style={{ background: "#f1f5f9", textAlign: "left" }}>
