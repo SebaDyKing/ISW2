@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { 
-  getInstalaciones, 
-  crearInstalacionService, 
-  actualizarInstalacionService, 
-  eliminarInstalacionService, 
-  obtenerClientesService 
+import {
+  getInstalaciones,
+  crearInstalacionService,
+  actualizarInstalacionService,
+  eliminarInstalacionService,
+  obtenerClientesService
 } from "../services/admin.service";
 import toast from "react-hot-toast";
 import L from "leaflet";
