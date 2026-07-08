@@ -16,6 +16,7 @@ import MisDocumentosView from "../features/empleado/components/MisDocumentosView
 import LandingPage from "../features/cliente/components/LandingPage";
 import ClienteLayout from "../features/cliente/components/ClienteLayout";
 import MisCotizacionesView from "../features/cliente/components/MisCotizacionesView";
+import ClienteInstalacionesView from "../features/cliente/components/ClienteInstalacionesView";
 import MisDocumentosClienteView from "../features/cliente/components/MisDocumentosView";
 import MarcarAsistencia from "../components/MarcarAsistencia";
 import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
@@ -92,6 +93,7 @@ function AppRouter() {
         <Route path="/cliente" element={<PrivateRoute allowedRoles={["cliente"]}><ClienteLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="mis-cotizaciones" replace />} />
           <Route path="mis-cotizaciones" element={<MisCotizacionesView />} />
+          <Route path="instalaciones" element={<ClienteInstalacionesView />} />
           <Route path="mis-documentos" element={<MisDocumentosClienteView />} />
         </Route>
 

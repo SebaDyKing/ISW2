@@ -25,19 +25,19 @@ router.get("/mis-instalaciones",
 
 router.post("/",
   authMiddleware,
-  autorizeEntities("administrador"),
+  autorizeEntities("administrador", "cliente"),
   crearInstalacion
 );
 
 router.put("/:id",
   authMiddleware,
-  autorizeEntities("administrador"),
+  autorizeEntities("administrador", "cliente"),
   actualizarInstalacion
 );
 
 router.delete("/:id",
   authMiddleware,
-  autorizeEntities("administrador"),
+  autorizeEntities("administrador", "cliente"),
   eliminarInstalacion
 );
 
