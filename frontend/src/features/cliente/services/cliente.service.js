@@ -14,3 +14,8 @@ export async function obtenerMisInstalacionesService() {
   const res = await api.get(`/instalaciones/mis-instalaciones`);
   return res.data;
 }
+
+export async function obtenerMisCotizacionesService() {
+  const res = await api.get(`/cotizaciones/mis-cotizaciones`);
+  return res.data;
+}
