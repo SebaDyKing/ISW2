@@ -361,8 +361,10 @@ export async function updateContrato(id, body) {
     if (fin && new Date(fin) <= new Date(inicio)) {
         throw { status: 400, message: "La fecha fin debe ser posterior a la de inicio" };
     }
-    if (jornadaActual < 1 || jornadaActual > 42) {
-        throw { status: 400, message: "La jornada laboral debe ser entre 1 y 42 horas semanales" };
+    if (contrato.tipoContratoPadre === "Laboral") {
+        if (jornadaActual < 1 || jornadaActual > 42) {
+            throw { status: 400, message: "La jornada laboral debe ser entre 1 y 42 horas semanales" };
+        }
     }
 
     const nacimientoAValidar = fechaNacimiento !== undefined ? fechaNacimiento : contrato.fechaNacimiento;

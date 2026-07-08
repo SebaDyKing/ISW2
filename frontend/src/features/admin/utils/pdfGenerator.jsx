@@ -3,12 +3,29 @@ import { Document, Page, Text, View, StyleSheet, pdf, Image } from '@react-pdf/r
 import { subirDocumentoEmpleado, subirDocumentoCliente, getFirmaAdminService } from '../services/admin.service';
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 11, lineHeight: 1.5, paddingBottom: 60 },
+  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 11, lineHeight: 1.5, paddingBottom: 85 },
   title: { fontSize: 14, textAlign: 'center', marginBottom: 20 },
   paragraph: { marginBottom: 10, textAlign: 'justify' },
-  signatures: { marginTop: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   signatureLine: { borderTopWidth: 1, borderColor: '#000', width: 200, paddingTop: 5, textAlign: 'center' }
 });
+
+const SignatureBlock = ({ firmaAdmin, tituloIzquierda = "EL EMPLEADOR", tituloDerecha = "EL TRABAJADOR" }) => (
+  <View style={{ marginTop: 'auto', paddingTop: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <View style={{ alignItems: 'center' }}>
+      {firmaAdmin && (
+        <Image src={firmaAdmin} style={{ width: 100, height: 50, marginBottom: 5 }} />
+      )}
+      <View style={styles.signatureLine}>
+        <Text>{tituloIzquierda}</Text>
+      </View>
+    </View>
+    <View style={{ alignItems: 'center' }}>
+      <View style={styles.signatureLine}>
+        <Text>{tituloDerecha}</Text>
+      </View>
+    </View>
+  </View>
+);
 
 export const ContractDocument = ({ formData, employeeData, facilityData, firmaAdmin }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
@@ -59,21 +76,7 @@ export const ContractDocument = ({ formData, employeeData, facilityData, firmaAd
           Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
         </Text>
 
-        <View style={styles.signatures}>
-          <View style={{ alignItems: 'center' }}>
-            {firmaAdmin && (
-              <Image src={firmaAdmin} style={{ width: 100, height: 50, marginBottom: 5 }} />
-            )}
-            <View style={styles.signatureLine}>
-              <Text>EL EMPLEADOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL TRABAJADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL EMPLEADOR" tituloDerecha="EL TRABAJADOR" />
       </Page>
     </Document>
   );
@@ -144,21 +147,7 @@ export const CommercialContractDocument = ({ formData, clientData, firmaAdmin })
           En señal de conformidad y aceptación de todas las cláusulas anteriores, las partes firman el presente contrato en dos ejemplares del mismo tenor y fecha.
         </Text>
 
-        <View style={styles.signatures}>
-          <View style={{ alignItems: 'center' }}>
-            {firmaAdmin && (
-              <Image src={firmaAdmin} style={{ width: 100, height: 50, marginBottom: 5 }} />
-            )}
-            <View style={styles.signatureLine}>
-              <Text>EL VENDEDOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL COMPRADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL VENDEDOR" tituloDerecha="EL COMPRADOR" />
       </Page>
     </Document>
   );
@@ -203,7 +192,7 @@ export const generateContractPDF = async (formData, entityData, facilityData) =>
   }
 };
 
-export const AnexoDocument = ({ contratoAnterior, contratoNuevo }) => {
+export const AnexoDocument = ({ contratoAnterior, contratoNuevo, firmaAdmin }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
 
   // Extraemos las modificaciones comparando el anterior con el nuevo
@@ -257,25 +246,20 @@ export const AnexoDocument = ({ contratoAnterior, contratoNuevo }) => {
           Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
         </Text>
 
-        <View style={styles.signatures}>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL EMPLEADOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL TRABAJADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL EMPLEADOR" tituloDerecha="EL TRABAJADOR" />
       </Page>
     </Document>
   );
 };
 
 export const generateAnexoPDF = async (contratoAnterior, contratoNuevo) => {
-  const doc = <AnexoDocument contratoAnterior={contratoAnterior} contratoNuevo={contratoNuevo} />;
+  let firmaAdmin = null;
+  try {
+    const res = await getFirmaAdminService();
+    if (res.data?.firmaBase64) firmaAdmin = res.data.firmaBase64;
+  } catch (err) { console.error("Error al cargar la firma del admin", err); }
+
+  const doc = <AnexoDocument contratoAnterior={contratoAnterior} contratoNuevo={contratoNuevo} firmaAdmin={firmaAdmin} />;
 
   const asBlob = await pdf(doc).toBlob();
   const blob = new Blob([asBlob], { type: 'application/pdf' });
@@ -293,7 +277,7 @@ export const generateAnexoPDF = async (contratoAnterior, contratoNuevo) => {
   }
 };
 
-export const AnexoIndefinidoDocument = ({ contrato, empresa, representante }) => {
+export const AnexoIndefinidoDocument = ({ contrato, empresa, representante, firmaAdmin }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
   const nombreEmpleado = contrato.nombre || 'Trabajador';
   const rutEmpleado = contrato.rut || 'RUT Desconocido';
@@ -326,25 +310,20 @@ export const AnexoIndefinidoDocument = ({ contrato, empresa, representante }) =>
           Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
         </Text>
 
-        <View style={styles.signatures}>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL EMPLEADOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL TRABAJADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL EMPLEADOR" tituloDerecha="EL TRABAJADOR" />
       </Page>
     </Document>
   );
 };
 
 export const generateAnexoIndefinidoPDF = async (contrato, empresa, representante) => {
-  const doc = <AnexoIndefinidoDocument contrato={contrato} empresa={empresa} representante={representante} />;
+  let firmaAdmin = null;
+  try {
+    const res = await getFirmaAdminService();
+    if (res.data?.firmaBase64) firmaAdmin = res.data.firmaBase64;
+  } catch (err) { console.error("Error al cargar la firma del admin", err); }
+
+  const doc = <AnexoIndefinidoDocument contrato={contrato} empresa={empresa} representante={representante} firmaAdmin={firmaAdmin} />;
 
   const asPdf = pdf([]);
   asPdf.updateContainer(doc);
@@ -364,7 +343,7 @@ export const generateAnexoIndefinidoPDF = async (contrato, empresa, representant
   }
 };
 
-export const AnexoTrasladoDocument = ({ empleado, instalacionAnterior, instalacionNueva }) => {
+export const AnexoTrasladoDocument = ({ empleado, instalacionAnterior, instalacionNueva, firmaAdmin }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
   const nombreEmpleado = `${empleado.nombre} ${empleado.apellido}`;
   const rutEmpleado = empleado.rut || 'RUT Desconocido';
@@ -396,25 +375,20 @@ export const AnexoTrasladoDocument = ({ empleado, instalacionAnterior, instalaci
           Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
         </Text>
 
-        <View style={styles.signatures}>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL EMPLEADOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL TRABAJADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL EMPLEADOR" tituloDerecha="EL TRABAJADOR" />
       </Page>
     </Document>
   );
 };
 
 export const generateAnexoTrasladoPDF = async (empleado, instalacionAnterior, instalacionNueva) => {
-  const doc = <AnexoTrasladoDocument empleado={empleado} instalacionAnterior={instalacionAnterior} instalacionNueva={instalacionNueva} />;
+  let firmaAdmin = null;
+  try {
+    const res = await getFirmaAdminService();
+    if (res.data?.firmaBase64) firmaAdmin = res.data.firmaBase64;
+  } catch (err) { console.error("Error al cargar la firma del admin", err); }
+
+  const doc = <AnexoTrasladoDocument empleado={empleado} instalacionAnterior={instalacionAnterior} instalacionNueva={instalacionNueva} firmaAdmin={firmaAdmin} />;
 
   const asPdf = pdf([]);
   asPdf.updateContainer(doc);
@@ -434,7 +408,7 @@ export const generateAnexoTrasladoPDF = async (empleado, instalacionAnterior, in
   }
 };
 
-export const AnexoMultiInstalacionDocument = ({ contrato, payload, instalacionNueva }) => {
+export const AnexoMultiInstalacionDocument = ({ contrato, payload, instalacionNueva, firmaAdmin }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
   const nombreEmpleado = contrato.nombre || 'Trabajador';
   const rutEmpleado = contrato.rut || 'RUT Desconocido';
@@ -479,25 +453,20 @@ export const AnexoMultiInstalacionDocument = ({ contrato, payload, instalacionNu
           Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
         </Text>
 
-        <View style={styles.signatures}>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL EMPLEADOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL TRABAJADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL EMPLEADOR" tituloDerecha="EL TRABAJADOR" />
       </Page>
     </Document>
   );
 };
 
 export const generateAnexoMultiInstalacionPDF = async (contrato, payload, instalacionNueva) => {
-  const doc = <AnexoMultiInstalacionDocument contrato={contrato} payload={payload} instalacionNueva={instalacionNueva} />;
+  let firmaAdmin = null;
+  try {
+    const res = await getFirmaAdminService();
+    if (res.data?.firmaBase64) firmaAdmin = res.data.firmaBase64;
+  } catch (err) { console.error("Error al cargar la firma del admin", err); }
+
+  const doc = <AnexoMultiInstalacionDocument contrato={contrato} payload={payload} instalacionNueva={instalacionNueva} firmaAdmin={firmaAdmin} />;
 
   const asPdf = pdf([]);
   asPdf.updateContainer(doc);

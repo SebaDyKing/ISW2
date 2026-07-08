@@ -41,7 +41,7 @@ export default function MisDocumentosView() {
       setDocumentoAFirmar(null);
       cargarDatos();
     } catch (error) {
-      toast.error("Error al firmar el documento");
+      toast.error(error.response?.data?.message || "Error al firmar el documento");
       throw error;
     }
   };

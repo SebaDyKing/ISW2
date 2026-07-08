@@ -27,7 +27,7 @@ export async function obtenerMisDocumentosClienteService() {
 
 export async function descargarDocumentoClienteService(idDocumento) {
   const res = await api.get(`/documentos/${idDocumento}/download`, { responseType: 'blob' });
-  return res.data;
+  return res;
 }
 
 export async function firmarDocumentoClienteService(idDocumento, firmaBase64) {

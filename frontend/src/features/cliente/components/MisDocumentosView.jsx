@@ -11,8 +11,8 @@ export default function MisDocumentosView() {
   async function cargarDatos() {
     try {
       const res = await obtenerMisDocumentosClienteService();
-      // res.data trae la lista de documentos
-      setDocumentos(res.data || []);
+      // el servicio ya retorna res.data
+      setDocumentos(res || []);
     } catch (error) {
       toast.error("Error al cargar la carpeta digital");
     } finally {
@@ -41,7 +41,7 @@ export default function MisDocumentosView() {
       setDocumentoAFirmar(null);
       cargarDatos();
     } catch (error) {
-      toast.error("Error al firmar el documento");
+      toast.error(error.response?.data?.message || "Error al firmar el documento");
       throw error;
     }
   };

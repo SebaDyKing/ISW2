@@ -118,7 +118,7 @@ export const firmarDocumentoController = async (req, res) => {
     const result = await firmarDocumentoService(Number(idDocumento), req.user, firmaBase64);
     handleSuccess(res, 200, result.message, result);
   } catch (error) {
-    if (error.status === 403 || error.status === 404) {
+    if (error.status === 400 || error.status === 403 || error.status === 404) {
       handleErrorClient(res, error.status, error.message);
     } else {
       handleErrorServer(res, 500, error.message);

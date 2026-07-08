@@ -220,6 +220,18 @@ export async function firmarDocumentoService(idDocumento, user, firmaBase64) {
       throw { status: 403, message: "Rol no autorizado para firmar" };
     }
 
+    if (documento.tipo.startsWith("Anexo")) {
+      const whereCondition = documento.empleado 
+        ? { empleado: { idEmpleado: documento.empleado.idEmpleado }, tipo: "Contrato", estadoFirma: "FIRMADO" }
+        : { cliente: { idCliente: documento.cliente.idCliente }, tipo: "Contrato", estadoFirma: "FIRMADO" };
+        
+      const contratoSigned = await documentoRepo.findOne({ where: whereCondition });
+
+      if (!contratoSigned) {
+        throw { status: 400, message: "Debes firmar primero el contrato principal antes de firmar un anexo." };
+      }
+    }
+
     documento.estadoFirma = "FIRMADO";
     documento.fechaFirma = new Date();
     documento.firmaBase64 = firmaBase64;
@@ -263,7 +275,7 @@ export async function firmarDocumentoService(idDocumento, user, firmaBase64) {
         const pdfBytes = fs.readFileSync(filePath);
         const pdfDoc = await PDFDocument.load(pdfBytes);
         const pages = pdfDoc.getPages();
-        const firstPage = pages[0]; // Stamp on first page
+        const lastPage = pages[pages.length - 1]; // Stamp on last page where SignatureBlock is
 
         const firmaBuffer = Buffer.from(firmaBase64.replace(/^data:image\/\w+;base64,/, ""), "base64");
         let firmaImage;
@@ -275,9 +287,9 @@ export async function firmarDocumentoService(idDocumento, user, firmaBase64) {
 
         const imgDims = firmaImage.scale(0.5); // scale down
 
-        firstPage.drawImage(firmaImage, {
-            x: 422, // Coordinates for worker signature
-            y: 105, // Just above the absolute position of the line
+        lastPage.drawImage(firmaImage, {
+            x: 422, // Coordinates for worker signature (right column)
+            y: 105, // Matches the new absolute bottom: 80 positioning
             width: 100,
             height: 50,
         });
