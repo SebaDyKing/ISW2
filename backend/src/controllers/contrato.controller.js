@@ -93,7 +93,7 @@ export const update = async (req, res) => {
 
 export const updateEstado = async (req, res) => {
     try {
-        const data = await updateEstadoContrato(Number(req.params.id), req.body.estado);
+        const data = await updateEstadoContrato(Number(req.params.id), req.body.estado, req.body.causalTermino);
         handleSuccess(res, 200, "Estado actualizado exitosamente", data);
     } catch (error) {
         if (error.status === 400 || error.status === 404) {

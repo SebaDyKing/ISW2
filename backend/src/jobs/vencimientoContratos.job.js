@@ -1,6 +1,7 @@
 "use strict";
 import cron from "node-cron";
 import { AppDataSource } from "../config/configDb.js";
+import { In } from "typeorm";
 import { crearAlerta } from "../services/crearAlerta.service.js";
 
 export async function revisarVencimientos() {
@@ -8,17 +9,18 @@ export async function revisarVencimientos() {
         console.log("[CRON] Iniciando revisión de vencimientos de contratos...");
         const contratoRepo = AppDataSource.getRepository("Contrato");
         const hoy = new Date();
-        
-        // Obtener todos los contratos a plazo fijo que sigan activos
+
+        // Obtener todos los contratos a plazo fijo que sigan activos o por vencer
         const contratos = await contratoRepo.find({
             where: {
                 tipo: "Plazo Fijo",
-                estado: "ACTIVO"
+                estado: In(["ACTIVO", "POR VENCER"])
             },
             relations: ["empleado", "empleado.usuario"]
         });
 
-        let contratosActualizados = 0;
+        let contratosPorVencer = 0;
+        let contratosFinalizados = 0;
 
         for (const contrato of contratos) {
             if (!contrato.fechaFin) continue;
@@ -27,11 +29,29 @@ export async function revisarVencimientos() {
             const diffTime = fechaFin - hoy;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            if (diffDays <= 15) {
+            if (diffDays <= 0 && contrato.estado !== "FINALIZADO") {
+                // Cambiar estado a FINALIZADO
+                contrato.estado = "FINALIZADO";
+                await contratoRepo.save(contrato);
+                contratosFinalizados++;
+
+                // Generar alerta en el dashboard
+                if (contrato.empleado) {
+                    const nombreEmpleado = contrato.empleado.usuario ? `${contrato.empleado.usuario.nombre} ${contrato.empleado.usuario.apellido}` : `ID ${contrato.empleado.idEmpleado}`;
+                    const mensaje = `El contrato a plazo fijo de ${nombreEmpleado} ha finalizado el ${contrato.fechaFin}.`;
+                    await crearAlerta(
+                        contrato.empleado.idEmpleado,
+                        "CONTRATO FINALIZADO",
+                        mensaje,
+                        "FINALIZADO",
+                        contrato.idContrato
+                    );
+                }
+            } else if (diffDays > 0 && diffDays <= 15 && contrato.estado === "ACTIVO") {
                 // Cambiar estado a POR VENCER
                 contrato.estado = "POR VENCER";
                 await contratoRepo.save(contrato);
-                contratosActualizados++;
+                contratosPorVencer++;
 
                 // Generar alerta en el dashboard
                 if (contrato.empleado) {
@@ -48,7 +68,7 @@ export async function revisarVencimientos() {
             }
         }
 
-        console.log(`[CRON] Revisión finalizada. Contratos actualizados a 'POR VENCER': ${contratosActualizados}`);
+        console.log(`[CRON] Revisión finalizada. Contratos actualizados a 'POR VENCER': ${contratosPorVencer}, a 'FINALIZADO': ${contratosFinalizados}`);
     } catch (error) {
         console.error("[CRON] Error al revisar vencimientos de contratos:", error);
     }

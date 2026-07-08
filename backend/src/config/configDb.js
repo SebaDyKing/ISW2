@@ -18,7 +18,7 @@ import { ReporteCliente } from '../models/ReporteCliente.js';
 import { SolicitudCotizacion } from '../models/SolicitudCotizacion.js';
 import { Alertas } from '../models/Alertas.js';
 import { Actividad } from '../models/Actividad.js';
-import { DocumentoEmpleado } from '../models/DocumentoEmpleado.js';
+import { Documento } from '../models/Documento.js';
 
 /**
  * Configuración de la fuente de datos (DataSource) de TypeORM.
@@ -39,7 +39,7 @@ export const AppDataSource = new DataSource({
     Cliente, Plan, ClientePlan, Instalacion,
     SupervisorInstalacion, Contrato, ContratoInstalacion, Asistencia,
     LicenciaMedica, HojaVida, ReporteCliente,
-    SolicitudCotizacion, Alertas, Actividad, DocumentoEmpleado
+    SolicitudCotizacion, Alertas, Actividad, Documento
   ],
   synchronize: true,
   logging: false,

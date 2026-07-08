@@ -81,6 +81,7 @@ function AppRouter() {
         <Route path="/supervisor" element={<PrivateRoute allowedRoles={["supervisor"]}><AdminLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="contratos" replace />} />
           <Route path="contratos" element={<ContratosPage />} />
+          <Route path="documentos" element={<MisDocumentosView />} />
           <Route path="instalaciones" element={<InstalacionesView />} />
           <Route path="licencias" element={<LicenciasMedicasView />} />
           <Route path="hojas-vida" element={<HojaVidaView />} />

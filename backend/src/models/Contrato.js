@@ -22,12 +22,32 @@ export const Contrato = new EntitySchema({
     },
     sueldo: {
       type: "decimal",
-      precision: 10,
+      precision: 15,
       scale: 2,
+      nullable: true,
+    },
+    montoServicio: {
+      name: "monto_servicio",
+      type: "decimal",
+      precision: 15,
+      scale: 2,
+      nullable: true,
     },
     jornadaHoras: {
       name: "jornada_horas",
       type: "int",
+      nullable: true,
+    },
+    descripcionServicio: {
+      name: "descripcion_servicio",
+      type: "text",
+      nullable: true,
+    },
+    condicionPago: {
+      name: "condicion_pago",
+      type: "varchar",
+      length: 255,
+      nullable: true,
     },
     fechaInicio: {
       name: "fecha_inicio",
@@ -41,6 +61,12 @@ export const Contrato = new EntitySchema({
     estado: {
       type: "varchar",
       length: 20,
+    },
+    causalTermino: {
+      name: "causal_termino",
+      type: "varchar",
+      length: 255,
+      nullable: true,
     },
     nacionalidad: {
       type: "varchar",
@@ -80,6 +106,18 @@ export const Contrato = new EntitySchema({
         name: "id_empleado",
         referencedColumnName: "idEmpleado",
       },
+      nullable: true,
+    },
+    cliente: {
+      type: "many-to-one",
+      target: "Cliente",
+      inverseSide: "contratos",
+      onDelete: "CASCADE",
+      joinColumn: {
+        name: "id_cliente",
+        referencedColumnName: "idCliente",
+      },
+      nullable: true,
     },
     asistencias: {
       type: "one-to-many",

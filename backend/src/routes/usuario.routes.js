@@ -1,10 +1,12 @@
 "use strict";
 import { Router } from "express";
-import { crearUsuario, obtenerUsuarios, obtenerUsuario, actualizarUsuario, eliminarUsuario, obtenerEmpleados, trasladarEmpleado, obtenerClientes } from "../controllers/usuario.controller.js";
+import { crearUsuario, obtenerUsuarios, obtenerUsuario, actualizarUsuario, eliminarUsuario, obtenerEmpleados, trasladarEmpleado, obtenerClientes, obtenerFirmaAdmin, guardarFirmaAdmin } from "../controllers/usuario.controller.js";
 import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
 
 const router = Router();
 
+router.get("/admin/firma", authMiddleware, autorizeEntities("administrador"), obtenerFirmaAdmin);
+router.post("/admin/firma", authMiddleware, autorizeEntities("administrador"), guardarFirmaAdmin);
 router.post("/", authMiddleware, autorizeEntities("administrador"), crearUsuario);
 router.get("/", authMiddleware, autorizeEntities("administrador"), obtenerUsuarios);
 router.get("/empleados", authMiddleware, autorizeEntities("administrador", "supervisor"), obtenerEmpleados);

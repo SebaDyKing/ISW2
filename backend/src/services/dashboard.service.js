@@ -10,6 +10,7 @@ export async function getMetricasDashboard() {
     const personalActivo = await AppDataSource.getRepository("Contrato")
         .createQueryBuilder("contrato")
         .where("UPPER(contrato.estado) IN (:...estados)", { estados: ["ACTIVO", "POR VENCER"] })
+        .andWhere("contrato.id_empleado IS NOT NULL")
         .getCount();
 
     const resultado = await AppDataSource.getRepository("Contrato")

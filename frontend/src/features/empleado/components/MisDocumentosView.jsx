@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { obtenerMisDocumentosService } from "../services/empleado.service";
+import { obtenerMisDocumentosService, descargarDocumentoEmpleadoService, firmarDocumentoEmpleadoService } from "../services/empleado.service";
 import { toast } from "react-hot-toast";
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-const BASE_URL = API_URL.replace('/api', '');
+import FirmaDocumentoModal from "./FirmaDocumentoModal";
 
 export default function MisDocumentosView() {
   const [documentos, setDocumentos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [documentoAFirmar, setDocumentoAFirmar] = useState(null);
 
   async function cargarDatos() {
     try {
@@ -24,6 +23,28 @@ export default function MisDocumentosView() {
   useEffect(() => {
     cargarDatos();
   }, []);
+
+  const handleVerDocumento = async (idDocumento) => {
+    try {
+      const blob = await descargarDocumentoEmpleadoService(idDocumento);
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+    } catch (error) {
+      toast.error("Error al abrir el documento");
+    }
+  };
+
+  const handleGuardarFirma = async (firmaBase64) => {
+    try {
+      await firmarDocumentoEmpleadoService(documentoAFirmar.idDocumento, firmaBase64);
+      toast.success("Documento firmado exitosamente");
+      setDocumentoAFirmar(null);
+      cargarDatos();
+    } catch (error) {
+      toast.error("Error al firmar el documento");
+      throw error;
+    }
+  };
 
   if (cargando) {
     return (
@@ -57,6 +78,7 @@ export default function MisDocumentosView() {
               <tr>
                 <th className="px-6 py-4">Documento</th>
                 <th className="px-6 py-4">Fecha de Creación</th>
+                <th className="px-6 py-4 text-center">Estado</th>
                 <th className="px-6 py-4 text-right">Acción</th>
               </tr>
             </thead>
@@ -71,19 +93,47 @@ export default function MisDocumentosView() {
                       day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
                     })}
                   </td>
+                  <td className="px-6 py-4 text-center">
+                    {doc.estadoFirma === 'FIRMADO' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Firmado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Pendiente
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-right">
-                    <a
-                      href={`${BASE_URL}${doc.rutaArchivo}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm text-indigo-600 hover:bg-indigo-50 font-semibold rounded-lg transition-colors border border-transparent hover:border-indigo-100"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      Ver PDF
-                    </a>
+                    <div className="flex items-center justify-end gap-2">
+                      {doc.estadoFirma === 'PENDIENTE' && (
+                        <button
+                          onClick={() => setDocumentoAFirmar(doc)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-emerald-600 hover:bg-emerald-50 font-semibold rounded-lg transition-colors border border-transparent hover:border-emerald-100 cursor-pointer"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                          Firmar
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleVerDocumento(doc.idDocumento)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 font-semibold rounded-lg transition-colors border border-transparent hover:border-indigo-100 cursor-pointer"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Ver PDF
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -91,6 +141,12 @@ export default function MisDocumentosView() {
           </table>
         </div>
       )}
+
+      <FirmaDocumentoModal 
+        isOpen={!!documentoAFirmar}
+        onClose={() => setDocumentoAFirmar(null)}
+        onFirmar={handleGuardarFirma}
+      />
     </div>
   );
 }

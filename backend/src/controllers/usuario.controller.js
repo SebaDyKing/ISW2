@@ -1,6 +1,24 @@
 "use strict";
 import { usuarioBodyValidation, usuarioUpdateValidation } from "../validations/usuario.validation.js";
-import { crearUsuarioService, obtenerUsuariosService, obtenerUsuarioPorIdService, actualizarUsuarioService, eliminarUsuarioService, obtenerEmpleadosService, trasladarEmpleadoService, obtenerClientesService } from "../services/usuario.service.js";
+import { crearUsuarioService, obtenerUsuariosService, obtenerUsuarioPorIdService, actualizarUsuarioService, eliminarUsuarioService, obtenerEmpleadosService, trasladarEmpleadoService, obtenerClientesService, obtenerFirmaAdminService, guardarFirmaAdminService } from "../services/usuario.service.js";
+
+export const obtenerFirmaAdmin = async (req, res) => {
+  try {
+    const data = await obtenerFirmaAdminService(req.user.idUsuario);
+    res.status(200).json({ message: "Firma obtenida", data });
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener firma", error: error.message });
+  }
+};
+
+export const guardarFirmaAdmin = async (req, res) => {
+  try {
+    const data = await guardarFirmaAdminService(req.user.idUsuario, req.body.firmaBase64);
+    res.status(200).json({ message: "Firma guardada exitosamente", data });
+  } catch (error) {
+    res.status(500).json({ message: "Error al guardar firma", error: error.message });
+  }
+};
 
 export const crearUsuario = async (req, res) => {
   try {

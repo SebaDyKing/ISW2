@@ -10,6 +10,7 @@ import FiniquitoModal from '../../components/FiniquitoModal/FiniquitoModal'
 import IndefinidoModal from '../../components/IndefinidoModal/IndefinidoModal'
 import AdministrarInstalacionesModal from '../../components/AdministrarInstalacionesModal/AdministrarInstalacionesModal'
 import DocumentosModal from '../../components/DocumentosModal/DocumentosModal'
+import FirmaAdminModal from '../../components/FirmaAdminModal'
 import styles from './ContratosPage.module.css'
 
 export default function ContratosPage() {
@@ -58,6 +59,8 @@ export default function ContratosPage() {
     setShowDocumentosModal,
     selectedContratoForDocumentos,
     handleOpenDocumentos,
+    showFirmaAdminModal,
+    setShowFirmaAdminModal,
   } = useContratosPage()
 
   return (
@@ -70,6 +73,12 @@ export default function ContratosPage() {
           </div>
           {usuario.rol === 'administrador' && (
             <div className={styles.actions}>
+              <button className={styles.btnSecondary} onClick={() => setShowFirmaAdminModal(true)}>
+                <svg className={styles.btnIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Mi Firma
+              </button>
               <button className={styles.btnSecondary} onClick={() => setShowTrasladoModal(true)}>
                 <svg className={styles.btnIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -119,6 +128,11 @@ export default function ContratosPage() {
           onVerDocumentos={handleOpenDocumentos}
         />
       </div>
+
+      <FirmaAdminModal
+        isOpen={showFirmaAdminModal}
+        onClose={() => setShowFirmaAdminModal(false)}
+      />
 
       {showModal && (
         <NuevoContratoModal

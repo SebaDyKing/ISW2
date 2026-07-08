@@ -12,6 +12,11 @@ export const Administrador = new EntitySchema({
       primary: true,
       generated: "increment",
     },
+    firmaBase64: {
+      name: "firma_base64",
+      type: "text",
+      nullable: true,
+    },
     createdAt: {
       name: "created_at",
       type: "timestamp",
