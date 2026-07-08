@@ -3,128 +3,6 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { loginService } from "../services/auth.service";
 
-const S = {
-  page: {
-    height: "100vh",
-    display: "flex",
-    fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
-    position: "relative",
-    overflow: "hidden",
-  },
-  bg: {
-    position: "absolute", inset: 0,
-    backgroundImage: "url('/Fondo_LandingPage.png')",
-    backgroundSize: "cover",
-    backgroundPosition: "center 20%",
-    filter: "blur(2px) brightness(0.55)",
-    transform: "scale(1.04)",
-    zIndex: 0,
-  },
-  overlay: {
-    position: "absolute", inset: 0,
-    background: "linear-gradient(to right, rgba(10,18,40,0.80) 40%, rgba(10,18,40,0.50) 100%)",
-    zIndex: 1,
-  },
-  left: {
-    position: "relative", zIndex: 2,
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    padding: "3rem 3rem 3rem 4rem",
-    maxWidth: "480px",
-  },
-  leftInner: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  logoWrap: {
-    display: "flex", alignItems: "center", gap: "10px",
-    marginBottom: "2rem",
-  },
-  logoIcon: {
-    width: "32px", height: "32px", borderRadius: "8px",
-    background: "rgba(255,255,255,0.15)",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: "16px", color: "#fff",
-    border: "1px solid rgba(255,255,255,0.25)",
-  },
-  logoText: {
-    fontSize: "15px", fontWeight: 600, color: "#fff", letterSpacing: "-0.2px",
-  },
-  heroTagline: {
-    fontSize: "11px", fontWeight: 500,
-    color: "rgba(255,255,255,0.6)",
-    letterSpacing: "0.1em", textTransform: "uppercase",
-    marginBottom: "1rem",
-  },
-  heroH1: {
-    fontSize: "32px", fontWeight: 700,
-    color: "#fff", lineHeight: 1.2,
-    letterSpacing: "-0.5px", marginBottom: "1rem",
-  },
-  heroP: {
-    fontSize: "14px", color: "rgba(255,255,255,0.65)",
-    lineHeight: 1.7, maxWidth: "360px",
-  },
-  right: {
-    position: "relative", zIndex: 2,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    flex: 1, padding: "2rem",
-  },
-  card: {
-    background: "#f4f5f8",
-    borderRadius: "14px",
-    padding: "2rem",
-    width: "100%", maxWidth: "400px",
-    border: "1px solid #dde1e9",
-  },
-  backBtn: {
-    background: "none", border: "none", padding: 0,
-    fontSize: "13px", color: "#64748b", cursor: "pointer",
-    marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "6px",
-    fontFamily: "inherit",
-  },
-  title: {
-    fontSize: "20px", fontWeight: 600, color: "#0f172a", marginBottom: "4px",
-  },
-  subtitle: {
-    fontSize: "13px", color: "#64748b", marginBottom: "1.75rem",
-  },
-  label: {
-    display: "block", fontSize: "13px", fontWeight: 500,
-    color: "#475569", marginBottom: "6px",
-  },
-  input: {
-    width: "100%", padding: "9px 12px",
-    border: "1px solid #dde1e9", borderRadius: "8px",
-    fontSize: "13px", background: "#fff", color: "#0f172a",
-    outline: "none", fontFamily: "inherit",
-    boxSizing: "border-box",
-  },
-  fieldWrap: { marginBottom: "1rem" },
-  checkRow: {
-    display: "flex", alignItems: "center", gap: "8px",
-    marginTop: "8px", fontSize: "13px", color: "#64748b", cursor: "pointer",
-  },
-  btnPrimary: {
-    width: "100%", padding: "10px",
-    background: "#534AB7", color: "#fff",
-    border: "none", borderRadius: "8px",
-    fontSize: "14px", fontWeight: 500,
-    cursor: "pointer", fontFamily: "inherit",
-    marginTop: "0.5rem", transition: "background .15s",
-  },
-  btnDisabled: {
-    background: "#94a3b8", cursor: "not-allowed",
-  },
-  footer: {
-    textAlign: "center", fontSize: "13px",
-    color: "#64748b", marginTop: "1.25rem",
-  },
-  link: { color: "#534AB7", textDecoration: "none", fontWeight: 500 },
-};
-
 function LoginForm() {
   const [correo, setCorreo]         = useState("");
   const [password, setPassword]     = useState("");
@@ -174,21 +52,21 @@ function LoginForm() {
   };
 
   return (
-    <div style={S.page}>
+    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden font-sans bg-slate-900">
       {/* Fondo */}
-      <div style={S.bg} />
-      <div style={S.overlay} />
+      <div className="absolute inset-0 bg-[url('/Fondo_LandingPage.png')] bg-cover bg-[center_20%] blur-[2px] brightness-[0.55] scale-105 z-0" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0a1228cc] from-40% to-[#0a122880] z-10" />
 
       {/* Panel izquierdo — branding */}
-      <div style={S.left}>
-        <div style={S.leftInner}>
-          <div style={S.logoWrap}>
-            <div style={S.logoIcon}>✦</div>
-            <span style={S.logoText}>CleanPro</span>
+      <div className="relative z-20 flex-1 flex flex-col justify-center px-8 py-10 lg:p-16 lg:pr-12 lg:max-w-lg">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2.5 mb-8 lg:mb-12">
+            <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center text-base text-white border border-white/25">✦</div>
+            <span className="text-base font-semibold text-white tracking-tight">CleanPro</span>
           </div>
-          <p style={S.heroTagline}>Plataforma empresarial</p>
-          <h1 style={S.heroH1}>Bienvenido<br />de vuelta</h1>
-          <p style={S.heroP}>
+          <p className="text-[11px] font-medium text-white/60 tracking-widest uppercase mb-4">Plataforma empresarial</p>
+          <h1 className="text-3xl lg:text-4xl font-bold text-white leading-tight tracking-tight mb-4">Bienvenido<br className="hidden lg:block" /> de vuelta</h1>
+          <p className="text-sm text-white/65 leading-relaxed max-w-sm">
             Accede a tu cuenta para gestionar tus instalaciones,
             revisar cotizaciones y coordinar con nuestro equipo.
           </p>
@@ -196,49 +74,47 @@ function LoginForm() {
       </div>
 
       {/* Panel derecho — formulario */}
-      <div style={S.right}>
-        <div style={S.card}>
+      <div className="relative z-20 flex-1 flex items-center justify-center p-4 lg:p-8">
+        <div className="bg-[#f4f5f8] rounded-2xl p-6 lg:p-8 w-full max-w-[400px] border border-[#dde1e9] shadow-2xl">
           <button
-            style={S.backBtn}
             onClick={() => navigate("/")}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#0f172a"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "#64748b"; }}
+            className="flex items-center gap-1.5 text-[13px] text-slate-500 hover:text-slate-900 mb-6 transition-colors"
           >
             ← Volver al inicio
           </button>
 
-          <p style={S.title}>Iniciar sesión</p>
-          <p style={S.subtitle}>Ingresa tus credenciales para continuar.</p>
+          <p className="text-xl font-semibold text-slate-900 mb-1">Iniciar sesión</p>
+          <p className="text-[13px] text-slate-500 mb-7">Ingresa tus credenciales para continuar.</p>
 
-          <form onSubmit={handleSubmit}>
-            <div style={S.fieldWrap}>
-              <label style={S.label}>Correo electrónico</label>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-[13px] font-medium text-slate-600 mb-1.5">Correo electrónico</label>
               <input
                 type="email"
                 value={correo}
                 onChange={(e) => setCorreo(e.target.value)}
                 placeholder="tucorreo@ejemplo.cl"
                 required
-                style={S.input}
+                className="w-full px-3 py-2 bg-white border border-[#dde1e9] rounded-lg text-[13px] text-slate-900 outline-none focus:border-[#534AB7] focus:ring-1 focus:ring-[#534AB7] transition-all"
               />
             </div>
 
-            <div style={S.fieldWrap}>
-              <label style={S.label}>Contraseña</label>
+            <div>
+              <label className="block text-[13px] font-medium text-slate-600 mb-1.5">Contraseña</label>
               <input
                 type={verPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                style={S.input}
+                className="w-full px-3 py-2 bg-white border border-[#dde1e9] rounded-lg text-[13px] text-slate-900 outline-none focus:border-[#534AB7] focus:ring-1 focus:ring-[#534AB7] transition-all"
               />
-              <label style={S.checkRow}>
+              <label className="flex items-center gap-2 mt-2 text-[13px] text-slate-500 cursor-pointer w-fit hover:text-slate-700">
                 <input
                   type="checkbox"
                   checked={verPassword}
                   onChange={() => setVerPassword(!verPassword)}
-                  style={{ cursor: "pointer" }}
+                  className="cursor-pointer rounded border-slate-300 text-[#534AB7] focus:ring-[#534AB7]"
                 />
                 Mostrar contraseña
               </label>
@@ -247,17 +123,17 @@ function LoginForm() {
             <button
               type="submit"
               disabled={cargando}
-              style={{ ...S.btnPrimary, ...(cargando ? S.btnDisabled : {}) }}
-              onMouseEnter={(e) => { if (!cargando) e.currentTarget.style.background = "#4238a3"; }}
-              onMouseLeave={(e) => { if (!cargando) e.currentTarget.style.background = "#534AB7"; }}
+              className={`w-full py-2.5 mt-2 rounded-lg text-sm font-medium text-white transition-colors flex items-center justify-center gap-2 ${
+                cargando ? "bg-slate-400 cursor-not-allowed" : "bg-[#534AB7] hover:bg-[#4238a3] cursor-pointer"
+              }`}
             >
               {cargando ? "Iniciando sesión..." : "Iniciar sesión →"}
             </button>
           </form>
 
-          <p style={S.footer}>
+          <p className="text-center text-[13px] text-slate-500 mt-6">
             ¿No tienes cuenta?{" "}
-            <a href="/registro" style={S.link}>Regístrate aquí</a>
+            <a href="/registro" className="text-[#534AB7] font-medium hover:underline">Regístrate aquí</a>
           </p>
         </div>
       </div>

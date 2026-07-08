@@ -602,7 +602,7 @@ function CotizacionesTable() {
         </div>
 
         {/* Tabla */}
-        <div style={{ background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+        <div style={{ background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
             <thead>
               <tr style={{ background: "#f1f5f9", textAlign: "left" }}>
