@@ -96,6 +96,8 @@ export default function MisAsignacionesView() {
             else if (isPorVencer) badgeClasses = "bg-amber-100 text-amber-800";
             else if (isFinalizado) badgeClasses = "bg-rose-100 text-rose-800";
 
+            const instalacion = c.contratoInstalaciones?.[0]?.instalacion;
+
             return (
               <div key={c.idContrato} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col gap-4 transition-shadow hover:shadow-md">
                 
@@ -103,10 +105,10 @@ export default function MisAsignacionesView() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-base font-bold text-slate-900 leading-tight">
-                      {c.instalacion?.nombre || "Instalación Desconocida"}
+                      {instalacion?.nombre || "Instalación Desconocida"}
                     </h3>
                     <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                      📍 {c.instalacion?.direccion || "Sin dirección"}
+                      📍 {instalacion?.direccion || "Sin dirección"}
                     </p>
                   </div>
                   <span className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${badgeClasses}`}>
@@ -118,7 +120,7 @@ export default function MisAsignacionesView() {
                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Empresa Cliente</p>
                   <p className="text-sm font-semibold text-slate-700">
-                    {c.instalacion?.cliente?.nombreEmpresa || "—"}
+                    {instalacion?.cliente?.nombreEmpresa || "—"}
                   </p>
                 </div>
 
