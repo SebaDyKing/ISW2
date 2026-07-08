@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { registroService } from "../services/auth.service";
-import { normalizarRut } from "../../../utils/rut";
+import { normalizarRut, validarRut } from "../../../utils/rut";
 
 const S = {
   page: {
@@ -173,6 +173,10 @@ function RegisterForm() {
     e.preventDefault();
     if (form.password !== form.confirmarPassword) {
       toast.error("Las contraseñas no coinciden");
+      return;
+    }
+    if (!validarRut(form.rut)) {
+      toast.error("RUT inválido. Verifica que esté correctamente escrito.");
       return;
     }
     setCargando(true);

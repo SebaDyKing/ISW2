@@ -1,10 +1,10 @@
-export function normalizarRut(valor) {
-  return valor.replace(/\./g, "").replace(/k$/, "K");
-}
+"use strict";
 
-export function validarRut(valor) {
-  if (!/^\d{7,8}-[\dkK]$/.test(valor)) return false;
-  
+export function rutLogicoValido(valor, helpers) {
+  if (!/^\d{7,8}-[\dkK]$/.test(valor)) {
+    return helpers.message("El RUT debe tener el formato 12345678-9 (sin puntos).");
+  }
+
   const [numero, dv] = valor.split('-');
   let suma = 0;
   let multiplicador = 2;
@@ -20,5 +20,9 @@ export function validarRut(valor) {
   if (dvEsperadoNum === 11) dvEsperadoStr = '0';
   else if (dvEsperadoNum === 10) dvEsperadoStr = 'K';
   
-  return dv.toUpperCase() === dvEsperadoStr;
+  if (dv.toUpperCase() !== dvEsperadoStr) {
+    return helpers.message("El RUT ingresado no es válido matemáticamente. Verifica que esté bien escrito.");
+  }
+  
+  return valor;
 }
