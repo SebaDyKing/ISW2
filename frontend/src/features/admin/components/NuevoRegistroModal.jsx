@@ -1,9 +1,5 @@
-import { useState } from "react"
-
-// TODO: reemplazar con fetch real cuando exista GET /api/empleados
-const EMPLEADOS_MOCK = [
-  { idEmpleado: 1, nombre: "Juan", apellido: "Pérez" },
-]
+import { useState, useEffect } from "react"
+import { getEmpleados } from "../services/admin.service"
 
 function getInitials(nombre = "", apellido = "") {
   return `${nombre[0] ?? ""}${apellido[0] ?? ""}`.toUpperCase() || "??"
@@ -16,6 +12,25 @@ export default function NuevoRegistroModal({ isOpen, onClose, onCreate }) {
   const [idEmpleado, setIdEmpleado] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
+  const [empleados, setEmpleados] = useState([])
+  const [loadingEmpleados, setLoadingEmpleados] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const fetchEmpleados = async () => {
+      try {
+        setLoadingEmpleados(true)
+        const res = await getEmpleados()
+        setEmpleados(res.data)
+      } catch {
+        setError("Error al cargar la lista de empleados")
+      } finally {
+        setLoadingEmpleados(false)
+      }
+    }
+    fetchEmpleados()
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -117,7 +132,13 @@ export default function NuevoRegistroModal({ isOpen, onClose, onCreate }) {
               Empleado
             </label>
             <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-48 overflow-y-auto">
-              {EMPLEADOS_MOCK.map((emp) => {
+              {loadingEmpleados && (
+                <p className="text-xs text-slate-400 px-3 py-2.5">Cargando empleados...</p>
+              )}
+              {!loadingEmpleados && empleados.length === 0 && (
+                <p className="text-xs text-slate-400 px-3 py-2.5">No hay empleados disponibles</p>
+              )}
+              {empleados.map((emp) => {
                 const seleccionado = Number(idEmpleado) === emp.idEmpleado
                 return (
                   <button
