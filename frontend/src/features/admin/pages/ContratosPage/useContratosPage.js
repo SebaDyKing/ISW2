@@ -9,6 +9,7 @@ export function useContratosPage() {
   const initialSearch = searchParams.get('search') || ''
   const [search, setSearch] = useState(initialSearch)
   const [showModal, setShowModal] = useState(false)
+  const [showFirmaAdminModal, setShowFirmaAdminModal] = useState(false)
   const [selectedUsuarioForNuevoContrato, setSelectedUsuarioForNuevoContrato] = useState(null)
   const [showTrasladoModal, setShowTrasladoModal] = useState(false)
   const [showSolicitudTrasladoModal, setShowSolicitudTrasladoModal] = useState(false)
@@ -57,10 +58,10 @@ export function useContratosPage() {
 
 
 
-  const handleFiniquitar = useCallback(async (id, fechaFin) => {
+  const handleFiniquitar = useCallback(async (id, fechaFin, causalTermino) => {
     try {
       setIsFiniquitando(true)
-      await updateContrato(id, { fechaFin, estado: 'FINALIZADO' })
+      await updateContrato(id, { fechaFin, estado: 'FINALIZADO', causalTermino })
       setShowFiniquitoModal(false)
       setSelectedContratoForFiniquito(null)
     } catch (err) {
@@ -144,5 +145,7 @@ export function useContratosPage() {
     setShowDocumentosModal,
     selectedContratoForDocumentos,
     handleOpenDocumentos,
+    showFirmaAdminModal,
+    setShowFirmaAdminModal,
   }
 }

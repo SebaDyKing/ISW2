@@ -1,21 +1,38 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
-import { subirDocumentoEmpleado } from '../services/admin.service';
+import { Document, Page, Text, View, StyleSheet, pdf, Image } from '@react-pdf/renderer';
+import { subirDocumentoEmpleado, subirDocumentoCliente, getFirmaAdminService } from '../services/admin.service';
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 11, lineHeight: 1.5 },
-  title: { fontSize: 14, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
+  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 11, lineHeight: 1.5, paddingBottom: 85 },
+  title: { fontSize: 14, textAlign: 'center', marginBottom: 20 },
   paragraph: { marginBottom: 10, textAlign: 'justify' },
-  signatures: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 80 },
   signatureLine: { borderTopWidth: 1, borderColor: '#000', width: 200, paddingTop: 5, textAlign: 'center' }
 });
 
-export const ContractDocument = ({ formData, employeeData, facilityData }) => {
+const SignatureBlock = ({ firmaAdmin, tituloIzquierda = "EL EMPLEADOR", tituloDerecha = "EL TRABAJADOR" }) => (
+  <View style={{ marginTop: 'auto', paddingTop: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <View style={{ alignItems: 'center' }}>
+      {firmaAdmin && (
+        <Image src={firmaAdmin} style={{ width: 100, height: 50, marginBottom: 5 }} />
+      )}
+      <View style={styles.signatureLine}>
+        <Text>{tituloIzquierda}</Text>
+      </View>
+    </View>
+    <View style={{ alignItems: 'center' }}>
+      <View style={styles.signatureLine}>
+        <Text>{tituloDerecha}</Text>
+      </View>
+    </View>
+  </View>
+);
+
+export const ContractDocument = ({ formData, employeeData, facilityData, firmaAdmin }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
   const tipoTexto = formData.tipo.replace('_', ' ');
-  
-  const fechaFinTexto = formData.tipo === 'Plazo Fijo' 
-    ? `hasta el ${formData.fechaFin}` 
+
+  const fechaFinTexto = formData.tipo === 'Plazo Fijo'
+    ? `hasta el ${formData.fechaFin}`
     : `de carácter indefinido`;
 
   // Asegurar que employeeData y facilityData existan por precaución
@@ -59,45 +76,123 @@ export const ContractDocument = ({ formData, employeeData, facilityData }) => {
           Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
         </Text>
 
-        <View style={styles.signatures}>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL EMPLEADOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL TRABAJADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL EMPLEADOR" tituloDerecha="EL TRABAJADOR" />
       </Page>
     </Document>
   );
 };
 
-export const generateContractPDF = async (formData, employeeData, facilityData) => {
-  const doc = <ContractDocument formData={formData} employeeData={employeeData} facilityData={facilityData} />;
+export const CommercialContractDocument = ({ formData, clientData, firmaAdmin }) => {
+  const currentDate = new Date().toLocaleDateString('es-CL');
+  const cli = clientData || {};
 
-  const asPdf = pdf([]);
-  asPdf.updateContainer(doc);
+  return (
+    <Document>
+      <Page size="LETTER" style={styles.page}>
+        <Text style={styles.title}>CONTRATO DE COMPRAVENTA COMERCIAL</Text>
+        <Text style={styles.paragraph}>
+          Con constancia en la ciudad de Concepción, a {currentDate}, se celebra el presente contrato comercial entre las partes:
+        </Text>
+        
+        <Text style={styles.paragraph}>I. COMPARECIENTES</Text>
+        <Text style={styles.paragraph}>
+          EL PRESTADOR: CleanPro SpA, RUT 76.000.000-K, con domicilio en Collao 1202, representada legalmente por Heriberto Mora Vargas, Cédula de Identidad 12.345.678-9.
+        </Text>
+        <Text style={styles.paragraph}>
+          EL CLIENTE: {cli.nombreEmpresa || 'Cliente'}, RUT {cli.usuario?.rut || cli.rut || 'No especificado'}, con domicilio en {formData.domicilio || 'No especificado'}, representada legalmente por {cli.usuario?.nombre ? `${cli.usuario.nombre} ${cli.usuario.apellido}` : 'su Representante Legal'}, Cédula de Identidad {cli.usuario?.rut || 'No especificada'}.
+        </Text>
+        <Text style={styles.paragraph}>
+         Ambas partes declaran ser mayores de edad, tener la capacidad legal para contratar y obligarse, y acuerdan lo siguiente:
+        </Text>
 
-  const blob = await asPdf.toBlob();
+        <Text style={styles.paragraph}>II. CLÁUSULAS</Text>
+        <Text style={styles.paragraph}>
+          PRIMERA: Objeto del Contrato
+          El Vendedor vende, cede y transfiere al Comprador, quien compra y adquiere para sí, las siguientes mercancías/productos:
+          {formData.descripcionServicio || '[Descripción detallada del producto, marca, modelo, cantidad y estado]'}.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          SEGUNDA: Precio y Forma de Pago
+          El precio total de venta acordado por las partes asciende a la suma de ${Number(formData.montoServicio).toLocaleString('es-CL')} CLP.
+          El Comprador pagará dicho monto al Vendedor de la siguiente forma:
+          {formData.condicionPago || '[Ejemplo: El 50% mediante transferencia bancaria al momento de la firma y el 50% restante contra entrega de los productos]'}.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          TERCERA: Plazo y Condiciones de Entrega
+          El Vendedor se compromete a entregar los productos a más tardar el día {formData.fechaFin || 'cumplimiento del servicio'}.
+          La entrega se realizará en el domicilio del Comprador ubicado en {formData.domicilio || 'la dirección acordada'}.
+          Los gastos de transporte y seguro correrán por cuenta del Vendedor.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          CUARTA: Garantía y Saneamiento
+          El Vendedor garantiza que los productos se encuentran libres de gravámenes, prohibiciones, embargos o vicios ocultos que impidan su uso normal.
+          El Vendedor responderá por cualquier defecto de fabricación durante un plazo de 6 meses a contar de la entrega.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          QUINTA: Incumplimiento y Cláusula Penal
+          En caso de retraso en la entrega de los productos o en el pago del precio, la parte infractora pagará a la otra parte una multa equivalente al 1% del valor total del contrato por cada día de retraso.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          SEXTA: Resolución de Conflictos
+          Cualquier controversia derivada de la interpretación o ejecución de este contrato se resolverá ante los Tribunales Ordinarios de Justicia de la ciudad de Concepción, renunciando las partes a cualquier otro fuero que pudiera corresponderles.
+        </Text>
+
+        <Text style={styles.paragraph}>III. CIERRE Y FIRMAS</Text>
+        <Text style={styles.paragraph}>
+          En señal de conformidad y aceptación de todas las cláusulas anteriores, las partes firman el presente contrato en dos ejemplares del mismo tenor y fecha.
+        </Text>
+
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL VENDEDOR" tituloDerecha="EL COMPRADOR" />
+      </Page>
+    </Document>
+  );
+};
+
+export const generateContractPDF = async (formData, entityData, facilityData) => {
+  const isComercial = formData.tipoContratoPadre === 'Comercial';
+  
+  let firmaAdmin = null;
+  try {
+    const res = await getFirmaAdminService();
+    if (res.data?.firmaBase64) {
+      firmaAdmin = res.data.firmaBase64;
+    }
+  } catch (err) {
+    console.error("Error al cargar la firma del admin", err);
+  }
+
+  const doc = isComercial 
+    ? <CommercialContractDocument formData={formData} clientData={entityData} firmaAdmin={firmaAdmin} />
+    : <ContractDocument formData={formData} employeeData={entityData} facilityData={facilityData} firmaAdmin={firmaAdmin} />;
+  const asBlob = await pdf(doc).toBlob();
+  const blob = new Blob([asBlob], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
 
   window.open(url, '_blank');
 
   try {
-    const idEmpleado = employeeData?.idEmpleado;
-    if (idEmpleado) {
-      await subirDocumentoEmpleado(idEmpleado, 'Contrato', blob);
+    if (!isComercial) {
+      const idEmpleado = entityData?.idEmpleado;
+      if (idEmpleado) {
+        await subirDocumentoEmpleado(idEmpleado, 'Contrato', blob);
+      }
+    } else {
+      const idCliente = entityData?.idCliente;
+      if (idCliente) {
+        await subirDocumentoCliente(idCliente, 'Contrato', blob);
+      }
     }
   } catch (error) {
     console.error('Error al subir Contrato a Carpeta Digital:', error);
   }
 };
 
-export const AnexoDocument = ({ contratoAnterior, contratoNuevo }) => {
+export const AnexoDocument = ({ contratoAnterior, contratoNuevo, firmaAdmin }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
 
   // Extraemos las modificaciones comparando el anterior con el nuevo
@@ -151,30 +246,23 @@ export const AnexoDocument = ({ contratoAnterior, contratoNuevo }) => {
           Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
         </Text>
 
-        <View style={styles.signatures}>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL EMPLEADOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL TRABAJADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL EMPLEADOR" tituloDerecha="EL TRABAJADOR" />
       </Page>
     </Document>
   );
 };
 
 export const generateAnexoPDF = async (contratoAnterior, contratoNuevo) => {
-  const doc = <AnexoDocument contratoAnterior={contratoAnterior} contratoNuevo={contratoNuevo} />;
+  let firmaAdmin = null;
+  try {
+    const res = await getFirmaAdminService();
+    if (res.data?.firmaBase64) firmaAdmin = res.data.firmaBase64;
+  } catch (err) { console.error("Error al cargar la firma del admin", err); }
 
-  const asPdf = pdf([]);
-  asPdf.updateContainer(doc);
+  const doc = <AnexoDocument contratoAnterior={contratoAnterior} contratoNuevo={contratoNuevo} firmaAdmin={firmaAdmin} />;
 
-  const blob = await asPdf.toBlob();
+  const asBlob = await pdf(doc).toBlob();
+  const blob = new Blob([asBlob], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
 
   window.open(url, '_blank');
@@ -189,7 +277,7 @@ export const generateAnexoPDF = async (contratoAnterior, contratoNuevo) => {
   }
 };
 
-export const AnexoIndefinidoDocument = ({ contrato, empresa, representante }) => {
+export const AnexoIndefinidoDocument = ({ contrato, empresa, representante, firmaAdmin }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
   const nombreEmpleado = contrato.nombre || 'Trabajador';
   const rutEmpleado = contrato.rut || 'RUT Desconocido';
@@ -222,25 +310,20 @@ export const AnexoIndefinidoDocument = ({ contrato, empresa, representante }) =>
           Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
         </Text>
 
-        <View style={styles.signatures}>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL EMPLEADOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL TRABAJADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL EMPLEADOR" tituloDerecha="EL TRABAJADOR" />
       </Page>
     </Document>
   );
 };
 
 export const generateAnexoIndefinidoPDF = async (contrato, empresa, representante) => {
-  const doc = <AnexoIndefinidoDocument contrato={contrato} empresa={empresa} representante={representante} />;
+  let firmaAdmin = null;
+  try {
+    const res = await getFirmaAdminService();
+    if (res.data?.firmaBase64) firmaAdmin = res.data.firmaBase64;
+  } catch (err) { console.error("Error al cargar la firma del admin", err); }
+
+  const doc = <AnexoIndefinidoDocument contrato={contrato} empresa={empresa} representante={representante} firmaAdmin={firmaAdmin} />;
 
   const asPdf = pdf([]);
   asPdf.updateContainer(doc);
@@ -260,7 +343,7 @@ export const generateAnexoIndefinidoPDF = async (contrato, empresa, representant
   }
 };
 
-export const AnexoTrasladoDocument = ({ empleado, instalacionAnterior, instalacionNueva }) => {
+export const AnexoTrasladoDocument = ({ empleado, instalacionAnterior, instalacionNueva, firmaAdmin }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
   const nombreEmpleado = `${empleado.nombre} ${empleado.apellido}`;
   const rutEmpleado = empleado.rut || 'RUT Desconocido';
@@ -292,25 +375,20 @@ export const AnexoTrasladoDocument = ({ empleado, instalacionAnterior, instalaci
           Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
         </Text>
 
-        <View style={styles.signatures}>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL EMPLEADOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL TRABAJADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL EMPLEADOR" tituloDerecha="EL TRABAJADOR" />
       </Page>
     </Document>
   );
 };
 
 export const generateAnexoTrasladoPDF = async (empleado, instalacionAnterior, instalacionNueva) => {
-  const doc = <AnexoTrasladoDocument empleado={empleado} instalacionAnterior={instalacionAnterior} instalacionNueva={instalacionNueva} />;
+  let firmaAdmin = null;
+  try {
+    const res = await getFirmaAdminService();
+    if (res.data?.firmaBase64) firmaAdmin = res.data.firmaBase64;
+  } catch (err) { console.error("Error al cargar la firma del admin", err); }
+
+  const doc = <AnexoTrasladoDocument empleado={empleado} instalacionAnterior={instalacionAnterior} instalacionNueva={instalacionNueva} firmaAdmin={firmaAdmin} />;
 
   const asPdf = pdf([]);
   asPdf.updateContainer(doc);
@@ -330,15 +408,15 @@ export const generateAnexoTrasladoPDF = async (empleado, instalacionAnterior, in
   }
 };
 
-export const AnexoMultiInstalacionDocument = ({ contrato, payload, instalacionNueva }) => {
+export const AnexoMultiInstalacionDocument = ({ contrato, payload, instalacionNueva, firmaAdmin }) => {
   const currentDate = new Date().toLocaleDateString('es-CL');
   const nombreEmpleado = contrato.nombre || 'Trabajador';
   const rutEmpleado = contrato.rut || 'RUT Desconocido';
-  const empresaNombre = 'CleanPro SpA'; 
+  const empresaNombre = 'CleanPro SpA';
   const instalacionOriginal = contrato.instalacion || 'Instalación principal';
 
-  const pagoAdicionalFormat = payload.pagoAdicional 
-    ? `$${Number(payload.pagoAdicional).toLocaleString('es-CL')}` 
+  const pagoAdicionalFormat = payload.pagoAdicional
+    ? `$${Number(payload.pagoAdicional).toLocaleString('es-CL')}`
     : '$0';
 
   return (
@@ -375,25 +453,20 @@ export const AnexoMultiInstalacionDocument = ({ contrato, payload, instalacionNu
           Para constancia de lo acordado, y en señal de aceptación, las partes firman en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
         </Text>
 
-        <View style={styles.signatures}>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL EMPLEADOR</Text>
-            </View>
-          </View>
-          <View>
-            <View style={styles.signatureLine}>
-              <Text>EL TRABAJADOR</Text>
-            </View>
-          </View>
-        </View>
+        <SignatureBlock firmaAdmin={firmaAdmin} tituloIzquierda="EL EMPLEADOR" tituloDerecha="EL TRABAJADOR" />
       </Page>
     </Document>
   );
 };
 
 export const generateAnexoMultiInstalacionPDF = async (contrato, payload, instalacionNueva) => {
-  const doc = <AnexoMultiInstalacionDocument contrato={contrato} payload={payload} instalacionNueva={instalacionNueva} />;
+  let firmaAdmin = null;
+  try {
+    const res = await getFirmaAdminService();
+    if (res.data?.firmaBase64) firmaAdmin = res.data.firmaBase64;
+  } catch (err) { console.error("Error al cargar la firma del admin", err); }
+
+  const doc = <AnexoMultiInstalacionDocument contrato={contrato} payload={payload} instalacionNueva={instalacionNueva} firmaAdmin={firmaAdmin} />;
 
   const asPdf = pdf([]);
   asPdf.updateContainer(doc);

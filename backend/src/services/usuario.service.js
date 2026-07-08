@@ -275,3 +275,33 @@ export async function obtenerClientesService() {
     throw new Error("Error al obtener la lista de clientes");
   }
 }
+
+export async function obtenerFirmaAdminService(idUsuario) {
+  try {
+    const adminRepo = AppDataSource.getRepository("Administrador");
+    const admin = await adminRepo.findOne({
+      where: { usuario: { idUsuario } }
+    });
+    if (!admin) throw new Error("Administrador no encontrado");
+    return { firmaBase64: admin.firmaBase64 || null };
+  } catch (error) {
+    console.error("Error en obtenerFirmaAdminService:", error);
+    throw new Error("Error al obtener la firma del administrador");
+  }
+}
+
+export async function guardarFirmaAdminService(idUsuario, firmaBase64) {
+  try {
+    const adminRepo = AppDataSource.getRepository("Administrador");
+    const admin = await adminRepo.findOne({
+      where: { usuario: { idUsuario } }
+    });
+    if (!admin) throw new Error("Administrador no encontrado");
+    admin.firmaBase64 = firmaBase64;
+    await adminRepo.save(admin);
+    return { success: true };
+  } catch (error) {
+    console.error("Error en guardarFirmaAdminService:", error);
+    throw new Error("Error al guardar la firma del administrador");
+  }
+}
