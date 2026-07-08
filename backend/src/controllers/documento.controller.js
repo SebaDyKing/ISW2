@@ -84,6 +84,28 @@ export const getMisDocumentosController = async (req, res) => {
   }
 };
 
+export const getMisDocumentosClienteController = async (req, res) => {
+  try {
+    const { AppDataSource } = await import("../config/configDb.js");
+    const clienteRepo = AppDataSource.getRepository("Cliente");
+    
+    const cliente = await clienteRepo.findOne({ where: { usuario: { idUsuario: req.user.idUsuario } } });
+    
+    if (!cliente) {
+      return handleErrorClient(res, 404, "Perfil de cliente no encontrado");
+    }
+
+    const documentos = await getDocumentosByEmpleadoService(cliente.idCliente, req.user, true);
+    handleSuccess(res, 200, "Mis documentos obtenidos", documentos);
+  } catch (error) {
+    if (error.status === 404) {
+      handleErrorClient(res, error.status, error.message);
+    } else {
+      handleErrorServer(res, 500, error.message);
+    }
+  }
+};
+
 export const firmarDocumentoController = async (req, res) => {
   try {
     const { idDocumento } = req.params;

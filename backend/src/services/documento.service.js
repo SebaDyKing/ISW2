@@ -92,14 +92,22 @@ export async function subirDocumentoService(idEntidad, tipo, file, user = null, 
   }
 }
 
-export async function getDocumentosByEmpleadoService(idEmpleado, user = null) {
+export async function getDocumentosByEmpleadoService(idEntidad, user = null, isCliente = false) {
   try {
     const documentoRepo = AppDataSource.getRepository("Documento");
+
+    if (isCliente) {
+      return await documentoRepo.find({
+        where: { cliente: { idCliente: idEntidad } },
+        order: { fechaCreacion: "DESC" },
+      });
+    }
+
     // Verificamos permisos para supervisor igual
     if (user && user.rol === "supervisor") {
       const empleadoRepo = AppDataSource.getRepository("Empleado");
       const empleado = await empleadoRepo.findOne({ 
-        where: { idEmpleado },
+        where: { idEmpleado: idEntidad },
         relations: ["contratos", "contratos.contratoInstalaciones", "contratos.contratoInstalaciones.instalacion"] 
       });
       if (empleado && empleado.usuario?.idUsuario !== user.idUsuario) {
@@ -116,7 +124,7 @@ export async function getDocumentosByEmpleadoService(idEmpleado, user = null) {
     }
 
     return await documentoRepo.find({
-      where: { empleado: { idEmpleado } },
+      where: { empleado: { idEmpleado: idEntidad } },
       order: { fechaCreacion: "DESC" },
     });
   } catch (error) {
@@ -168,6 +176,10 @@ export async function downloadDocumentoService(idDocumento, user) {
       if (documento.empleado && documento.empleado.usuario.idUsuario !== user.idUsuario) {
         throw { status: 403, message: "No puedes acceder a documentos de otro empleado" };
       }
+    } else if (user.rol === "cliente") {
+      if (documento.cliente && documento.cliente.usuario.idUsuario !== user.idUsuario) {
+        throw { status: 403, message: "No puedes acceder a documentos de otro cliente" };
+      }
     }
 
     const fileName = path.basename(documento.rutaArchivo);
@@ -214,16 +226,28 @@ export async function firmarDocumentoService(idDocumento, user, firmaBase64) {
 
     await documentoRepo.save(documento);
 
-    // Si el documento firmado es un contrato, activamos el contrato del empleado
-    if (documento.tipo === "Contrato" && documento.empleado) {
+    // Si el documento firmado es un contrato, activamos el contrato asociado
+    if (documento.tipo === "Contrato") {
       const contratoRepo = AppDataSource.getRepository("Contrato");
-      const contrato = await contratoRepo.findOne({
-        where: {
-          empleado: { idEmpleado: documento.empleado.idEmpleado },
-          estado: "PENDIENTE DE FIRMA"
-        },
-        order: { fechaInicio: "DESC" }
-      });
+      let contrato;
+      
+      if (documento.empleado) {
+        contrato = await contratoRepo.findOne({
+          where: {
+            empleado: { idEmpleado: documento.empleado.idEmpleado },
+            estado: "PENDIENTE DE FIRMA"
+          },
+          order: { fechaInicio: "DESC" }
+        });
+      } else if (documento.cliente) {
+        contrato = await contratoRepo.findOne({
+          where: {
+            cliente: { idCliente: documento.cliente.idCliente },
+            estado: "PENDIENTE DE FIRMA"
+          },
+          order: { fechaInicio: "DESC" }
+        });
+      }
 
       if (contrato) {
         contrato.estado = "ACTIVO";

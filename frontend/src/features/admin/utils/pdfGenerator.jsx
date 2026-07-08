@@ -3,10 +3,10 @@ import { Document, Page, Text, View, StyleSheet, pdf, Image } from '@react-pdf/r
 import { subirDocumentoEmpleado, subirDocumentoCliente, getFirmaAdminService } from '../services/admin.service';
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 11, lineHeight: 1.5 },
+  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 11, lineHeight: 1.5, paddingBottom: 60 },
   title: { fontSize: 14, textAlign: 'center', marginBottom: 20 },
   paragraph: { marginBottom: 10, textAlign: 'justify' },
-  signatures: { position: 'absolute', bottom: 80, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+  signatures: { marginTop: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   signatureLine: { borderTopWidth: 1, borderColor: '#000', width: 200, paddingTop: 5, textAlign: 'center' }
 });
 

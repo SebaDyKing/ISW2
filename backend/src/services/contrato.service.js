@@ -249,7 +249,7 @@ export async function createContrato(body) {
         }
     }
 
-    let estadoInicial = idEmpleado ? "PENDIENTE DE FIRMA" : "ACTIVO";
+    let estadoInicial = "PENDIENTE DE FIRMA";
     if (fechaFin) {
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0); // Ignorar la hora para comparar solo días

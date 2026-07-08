@@ -5,6 +5,7 @@ import {
   subirDocumentoController, 
   getDocumentosByEmpleadoController, 
   getMisDocumentosController,
+  getMisDocumentosClienteController,
   downloadDocumentoController,
   firmarDocumentoController
 } from "../controllers/documento.controller.js";
@@ -28,6 +29,9 @@ router.get("/empleados/:id/documentos", autorizeEntities("administrador", "super
 
 // POST /api/empleados/:id/documentos - Subir un nuevo documento
 router.post("/empleados/:id/documentos", autorizeEntities("administrador", "supervisor"), upload.single("archivoPdf"), subirDocumentoController);
+
+// GET /api/clientes/mis-documentos - Obtener historial de documentos del propio cliente
+router.get("/clientes/mis-documentos", autorizeEntities("cliente"), getMisDocumentosClienteController);
 
 // GET /api/clientes/:id/documentos - Obtener historial de documentos de un cliente
 router.get("/clientes/:id/documentos", autorizeEntities("administrador"), getDocumentosByEmpleadoController);

@@ -8,11 +8,18 @@ export default function AdminDashboard() {
   const navigate = useNavigate()
 
   const handleAlertClick = (alerta) => {
-    // Intentamos extraer el nombre del empleado del mensaje. 
-    // El formato del mensaje es "El empleado Nombre Apellido registrará..."
-    const match = alerta.mensaje.match(/El empleado (.+) registrará/)
-    const nombre = match ? match[1] : ''
-    navigate(`/admin/contratos?search=${encodeURIComponent(nombre)}`)
+    if (alerta.tipoOriginal === 'cotizacion') {
+      navigate('/admin/cotizaciones')
+    } else if (alerta.tipoOriginal === 'licencia') {
+      navigate('/admin/licencias')
+    } else if (alerta.tipoOriginal === 'contrato' || alerta.tipoOriginal === 'firma') {
+      navigate('/admin/contratos')
+    } else {
+      // Intentamos extraer el nombre del empleado por defecto (alertas antiguas/generales)
+      const match = alerta.mensaje?.match(/El empleado (.+) registrará/)
+      const nombre = match ? match[1] : ''
+      navigate(`/admin/contratos?search=${encodeURIComponent(nombre)}`)
+    }
   }
 
   if (loading) {
