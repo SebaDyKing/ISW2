@@ -5,7 +5,8 @@ import {
     obtenerCotizaciones, //para el admin
     obtenerMisCotizaciones, //para el cliente
     actualizarEstado,
-    reactivarSolicitud
+    reactivarSolicitud,
+    asignarEmpleados
 } from "../controllers/cotizacion.controller.js";
 import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
 
@@ -39,6 +40,12 @@ router.put("/:id/reactivar",
     authMiddleware,
     autorizeEntities("administrador"),
     reactivarSolicitud
+);
+
+router.post("/:id/asignar-empleados",
+    authMiddleware,
+    autorizeEntities("administrador"),
+    asignarEmpleados
 );
 
 export default router;
