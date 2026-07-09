@@ -25,10 +25,7 @@ export async function reactivarCotizacionService(id) {
   return res;
 }
 
-export async function asignarEmpleadosCotizacionService(id) {
-  const res = await api.post(`/cotizaciones/${id}/asignar-empleados`);
-  return res;
-}
+
 
 export async function crearUsuarioService(datos) {
   const res = await api.post(`/usuarios`, datos);

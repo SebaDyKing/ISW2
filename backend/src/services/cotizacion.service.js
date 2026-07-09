@@ -22,6 +22,7 @@ export async function crearCotizacionService(datosCotizacion) {
   });
   if (!clienteActual) throw new Error("Perfil de cliente no encontrado para este usuario.");
 
+  let instalacionValida = null;
   if (id_instalacion) {
     instalacionValida = await instalacionRepo.findOne({
       where: { idInstalacion: id_instalacion, cliente: { idCliente: clienteActual.idCliente } },
