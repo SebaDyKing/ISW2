@@ -34,7 +34,7 @@ async function getInstalacionesSupervisor(user) {
         activos.forEach(c => {
             if (c.contratoInstalaciones) {
                 c.contratoInstalaciones.forEach(ci => {
-                    if (ci.instalacion) instalacionIds.push(ci.instalacion.idInstalacion);
+                    if (ci.instalacion && ci.estadoFirma === "FIRMADO") instalacionIds.push(ci.instalacion.idInstalacion);
                 });
             }
         });
@@ -169,6 +169,8 @@ export async function downloadDocumentoService(idDocumento, user) {
         if (!isAssigned) {
           throw { status: 403, message: "No tienes permisos para descargar este documento" };
         }
+      } else if (documento.cliente) {
+        // Permitir a supervisores descargar documentos de clientes (ver contratos comerciales)
       } else {
         throw { status: 403, message: "No tienes permisos" };
       }
@@ -264,6 +266,21 @@ export async function firmarDocumentoService(idDocumento, user, firmaBase64) {
       if (contrato) {
         contrato.estado = "ACTIVO";
         await contratoRepo.save(contrato);
+      }
+    } else if (documento.tipo === "Anexo_MultiInstalacion" && documento.empleado) {
+      // Activar la asignación de instalación pendiente
+      const ciRepo = AppDataSource.getRepository("ContratoInstalacion");
+      const ciPendiente = await ciRepo.findOne({
+        where: { 
+          estadoFirma: "PENDIENTE",
+          contrato: { empleado: { idEmpleado: documento.empleado.idEmpleado } }
+        },
+        relations: ["contrato", "contrato.empleado"],
+        order: { createdAt: "DESC" }
+      });
+      if (ciPendiente) {
+        ciPendiente.estadoFirma = "FIRMADO";
+        await ciRepo.save(ciPendiente);
       }
     }
 

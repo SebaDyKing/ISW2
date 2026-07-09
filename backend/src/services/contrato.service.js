@@ -52,10 +52,19 @@ export async function getContratosByEmpleado(idEmpleado) {
         .findOne({ where: { idEmpleado } });
     if (!empleado) throw { status: 404, message: "Empleado no encontrado" };
 
-    return await getRepo().find({
+    const contratos = await getRepo().find({
         where: { empleado: { idEmpleado } },
         relations: ["empleado", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
+        order: { fechaInicio: "DESC" }
     });
+
+    contratos.forEach(c => {
+        if (c.contratoInstalaciones) {
+            c.contratoInstalaciones = c.contratoInstalaciones.filter(ci => ci.estadoFirma === "FIRMADO");
+        }
+    });
+
+    return contratos;
 }
 
 export async function getMisAsignacionesService(idUsuario) {
@@ -63,11 +72,19 @@ export async function getMisAsignacionesService(idUsuario) {
         .findOne({ where: { usuario: { idUsuario } } });
     if (!empleado) throw { status: 404, message: "Perfil de empleado no encontrado" };
 
-    return await getRepo().find({
+    const asignaciones = await getRepo().find({
         where: { empleado: { idEmpleado: empleado.idEmpleado } },
         relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion", "contratoInstalaciones.instalacion.cliente"],
         order: { fechaInicio: "DESC" }
     });
+
+    asignaciones.forEach(a => {
+        if (a.contratoInstalaciones) {
+            a.contratoInstalaciones = a.contratoInstalaciones.filter(ci => ci.estadoFirma === "FIRMADO");
+        }
+    });
+
+    return asignaciones;
 }
 
 export async function createContrato(body) {
@@ -514,7 +531,8 @@ export async function agregarInstalacionContrato(idContrato, idInstalacion, hora
         contrato: { idContrato },
         instalacion: { idInstalacion },
         horasSemanales: Number(horasSemanales),
-        pagoAdicional: Number(pagoAdicional)
+        pagoAdicional: Number(pagoAdicional),
+        estadoFirma: "PENDIENTE"
     });
 
     await ciRepo.save(nuevaAsignacion);
