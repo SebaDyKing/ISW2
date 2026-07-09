@@ -136,7 +136,9 @@ export async function getAlertasPendientes() {
             relations: ["empleado", "empleado.usuario", "cliente", "cliente.usuario"]
         });
 
-    documentosPendientes.forEach(doc => {
+    const documentosSinContratos = documentosPendientes.filter(doc => doc.tipo?.toLowerCase() !== "contrato");
+
+    documentosSinContratos.forEach(doc => {
         const emp = doc.empleado?.usuario;
         const cliente = doc.cliente;
     
@@ -205,10 +207,10 @@ export async function getAlertasPendientes() {
         });
 
     cotizaciones.forEach(cot => {
-        const cli = cot.cliente?.usuario;
+        const nombreEmpresa = cot.cliente?.nombreEmpresa || 'Empresa desconocida';
         alertasAgregadas.push({
             idAlerta: `cotizacion_${cot.idSolicitud}`,
-            mensaje: `Cotización sin revisar: ${cli ? cli.nombre + ' ' + cli.apellido : 'Cliente desconocido'}`,
+            mensaje: `Cotización sin revisar: ${nombreEmpresa}`,
             FechaCreacion: cot.fechaCreacion || new Date(),
             tipoOriginal: 'cotizacion'
         });

@@ -541,10 +541,21 @@ export async function agregarInstalacionContrato(idContrato, idInstalacion, hora
         horasTotalesActuales += Number(asig.horasSemanales);
     }
 
-    const maxHorasLegales = 42; // LEY_LABORAL_CHILE
-    if ((horasTotalesActuales + Number(horasSemanales)) > maxHorasLegales) {
-        throw { status: 400, message: `No se puede exceder el límite legal de ${maxHorasLegales} horas. Total proyectado: ${horasTotalesActuales + Number(horasSemanales)} horas.` };
+    // Fallback: si por datos antiguos no hay asignaciones en la BD, usamos la jornada original
+    if (horasTotalesActuales === 0 && contrato.jornadaHoras) {
+        horasTotalesActuales = Number(contrato.jornadaHoras);
     }
+
+    const maxHorasLegales = 42; // LEY_LABORAL_CHILE
+    const nuevoTotal = horasTotalesActuales + Number(horasSemanales);
+
+    if (nuevoTotal > maxHorasLegales) {
+        throw { status: 400, message: `No se puede exceder el límite legal de ${maxHorasLegales} horas. Total proyectado: ${nuevoTotal} horas (Actual: ${horasTotalesActuales}h + Nuevas: ${horasSemanales}h).` };
+    }
+
+    // Actualizamos las horas totales del contrato para que refleje la realidad
+    contrato.jornadaHoras = nuevoTotal;
+    await AppDataSource.getRepository("Contrato").save(contrato);
 
     const nuevaAsignacion = ciRepo.create({
         contrato: { idContrato },

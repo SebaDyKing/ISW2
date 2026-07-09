@@ -94,7 +94,7 @@ export default function ContratosTable({ contratos = [], loading = false, error 
             )}
             {!loading && !error && contratos.map((c) => (
               <ContratoRow 
-                key={c.idContrato} 
+                key={c.id} 
                 contrato={c} 
                 onAnexo={onAnexo}
                 onFiniquitar={onFiniquitar}
@@ -103,6 +103,7 @@ export default function ContratosTable({ contratos = [], loading = false, error 
                 onSolicitarTraslado={onSolicitarTraslado}
                 onTrasladar={onTrasladar}
                 onVerDocumentos={onVerDocumentos}
+                onNuevoContrato={onNuevoContrato}
               />
             ))}
           </tbody>
