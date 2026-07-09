@@ -29,6 +29,8 @@ export default function ContratosPage() {
     setSelectedUsuarioForNuevoContrato,
     showTrasladoModal,
     setShowTrasladoModal,
+    selectedContratoForTraslado,
+    setSelectedContratoForTraslado,
     showSolicitudTrasladoModal,
     setShowSolicitudTrasladoModal,
     selectedContratoForSolicitudTraslado,
@@ -79,13 +81,6 @@ export default function ContratosPage() {
                 </svg>
                 Mi Firma
               </button>
-              <button className={styles.btnSecondary} onClick={() => setShowTrasladoModal(true)}>
-                <svg className={styles.btnIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                Traslado
-              </button>
             </div>
           )}
         </div>
@@ -104,6 +99,10 @@ export default function ContratosPage() {
           onAnexo={(contrato) => {
             setSelectedContratoForAnexo(contrato)
             setShowAnexoModal(true)
+          }}
+          onTrasladar={(contrato) => {
+            setSelectedContratoForTraslado(contrato)
+            setShowTrasladoModal(true)
           }}
           onNuevoContrato={(usuarioData) => {
             setSelectedUsuarioForNuevoContrato(usuarioData)
@@ -147,8 +146,13 @@ export default function ContratosPage() {
 
       {showTrasladoModal && (
         <TrasladoModal
-          onClose={() => setShowTrasladoModal(false)}
+          onClose={() => {
+            setShowTrasladoModal(false)
+            setSelectedContratoForTraslado(null)
+          }}
           onSuccess={refetch}
+          defaultEmpleadoId={selectedContratoForTraslado?.idEmpleado}
+          contrato={selectedContratoForTraslado}
         />
       )}
 

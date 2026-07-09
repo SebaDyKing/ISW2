@@ -17,7 +17,7 @@ function SkeletonRow() {
   )
 }
 
-export default function ContratosTable({ contratos = [], loading = false, error = null, onSearch, roleFilter, setRoleFilter, onAnexo, onFiniquitar, onIndefinido, onAdministrarInstalaciones, onVerDocumentos, onSolicitarTraslado, onNuevoContrato }) {
+export default function ContratosTable({ contratos = [], loading = false, error = null, onSearch, roleFilter, setRoleFilter, onAnexo, onFiniquitar, onIndefinido, onAdministrarInstalaciones, onVerDocumentos, onSolicitarTraslado, onTrasladar, onNuevoContrato }) {
   const { search, handleSearch } = useContratosTable(onSearch)
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   
@@ -92,8 +92,18 @@ export default function ContratosTable({ contratos = [], loading = false, error 
                 </td>
               </tr>
             )}
-            {!loading && !error && contratos.map((contrato) => (
-              <ContratoRow key={contrato.id} contrato={contrato} onAnexo={onAnexo} onFiniquitar={onFiniquitar} onIndefinido={onIndefinido} onAdministrarInstalaciones={onAdministrarInstalaciones} onVerDocumentos={onVerDocumentos} onSolicitarTraslado={onSolicitarTraslado} onNuevoContrato={onNuevoContrato} />
+            {!loading && !error && contratos.map((c) => (
+              <ContratoRow 
+                key={c.idContrato} 
+                contrato={c} 
+                onAnexo={onAnexo}
+                onFiniquitar={onFiniquitar}
+                onIndefinido={onIndefinido}
+                onAdministrarInstalaciones={onAdministrarInstalaciones}
+                onSolicitarTraslado={onSolicitarTraslado}
+                onTrasladar={onTrasladar}
+                onVerDocumentos={onVerDocumentos}
+              />
             ))}
           </tbody>
         </table>

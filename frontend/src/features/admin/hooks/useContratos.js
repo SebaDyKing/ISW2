@@ -11,7 +11,7 @@ export function useContratos() {
       setError(null)
       const response = await contratosService.getAll(params)
 
-      const contratosMapeados = response.data.map(u => {
+      let contratosMapeados = response.data.map(u => {
         let contratoParaMostrar = null;
         let esCliente = u.rol === 'cliente';
         let contratosList = [];
@@ -52,6 +52,11 @@ export function useContratos() {
           originalUsuario: u
         };
       })
+
+      const usuarioActual = JSON.parse(localStorage.getItem('usuario') || '{}');
+      if (usuarioActual.rol === 'supervisor') {
+        contratosMapeados = contratosMapeados.filter(c => c.idUsuario !== usuarioActual.idUsuario);
+      }
 
       setContratos(contratosMapeados)
     } catch (err) {

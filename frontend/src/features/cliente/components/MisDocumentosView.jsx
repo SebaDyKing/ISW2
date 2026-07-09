@@ -27,10 +27,17 @@ export default function MisDocumentosView() {
   const handleVerDocumento = async (idDocumento) => {
     try {
       const blob = await descargarDocumentoClienteService(idDocumento);
+      
+      if (blob.type === 'application/json') {
+        const text = await blob.text();
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.message || 'Error al abrir el documento');
+      }
+
       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
       window.open(url, '_blank');
     } catch (error) {
-      toast.error("Error al abrir el documento");
+      toast.error(error.message || "Error al abrir el documento");
     }
   };
 
@@ -55,7 +62,7 @@ export default function MisDocumentosView() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="w-full max-w-6xl mx-auto px-4 py-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Mis Contratos</h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -64,7 +71,7 @@ export default function MisDocumentosView() {
       </header>
 
       {documentos.length === 0 ? (
-        <div className="bg-white border border-dashed border-slate-300 rounded-xl px-6 py-12 text-center flex flex-col items-center">
+        <div className="w-full bg-white border border-dashed border-slate-300 rounded-xl px-6 py-12 text-center flex flex-col items-center">
           <svg className="w-12 h-12 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>

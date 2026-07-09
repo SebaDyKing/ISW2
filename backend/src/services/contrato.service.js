@@ -68,8 +68,25 @@ export async function getContratosByEmpleado(idEmpleado) {
 }
 
 export async function getMisAsignacionesService(idUsuario) {
-    const empleado = await AppDataSource.getRepository("Empleado")
-        .findOne({ where: { usuario: { idUsuario } } });
+    const usuarioRepo = AppDataSource.getRepository("Usuario");
+    const user = await usuarioRepo.findOne({ where: { idUsuario }, relations: ["empleado", "cliente"] });
+    if (!user) throw { status: 404, message: "Usuario no encontrado" };
+
+    if (user.rol === "cliente" && user.cliente) {
+        const asignaciones = await getRepo().find({
+            where: { cliente: { idCliente: user.cliente.idCliente } },
+            relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion"],
+            order: { fechaInicio: "DESC" }
+        });
+        asignaciones.forEach(a => {
+            if (a.contratoInstalaciones) {
+                a.contratoInstalaciones = a.contratoInstalaciones.filter(ci => ci.estadoFirma === "FIRMADO");
+            }
+        });
+        return asignaciones;
+    }
+
+    const empleado = user.empleado;
     if (!empleado) throw { status: 404, message: "Perfil de empleado no encontrado" };
 
     const asignaciones = await getRepo().find({
@@ -137,7 +154,8 @@ export async function createContrato(body) {
 
     if (fechaNacimiento) {
         const hoy = new Date();
-        const nacimiento = new Date(fechaNacimiento);
+        const partes = String(fechaNacimiento).split('T')[0].split('-');
+        const nacimiento = new Date(partes[0], partes[1] - 1, partes[2]);
         let edad = hoy.getFullYear() - nacimiento.getFullYear();
         const m = hoy.getMonth() - nacimiento.getMonth();
         if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
@@ -396,7 +414,8 @@ export async function updateContrato(id, body) {
     const nacimientoAValidar = fechaNacimiento !== undefined ? fechaNacimiento : contrato.fechaNacimiento;
     if (nacimientoAValidar) {
         const hoy = new Date();
-        const nacimiento = new Date(nacimientoAValidar);
+        const partes = String(nacimientoAValidar).split('T')[0].split('-');
+        const nacimiento = new Date(partes[0], partes[1] - 1, partes[2]);
         let edad = hoy.getFullYear() - nacimiento.getFullYear();
         const m = hoy.getMonth() - nacimiento.getMonth();
         if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {

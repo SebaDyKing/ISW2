@@ -7,13 +7,22 @@ const INITIAL_FORM = {
   idInstalacion: '',
 }
 
-export function useTrasladoModal({ onSuccess } = {}) {
-  const [form, setForm] = useState(INITIAL_FORM)
+export function useTrasladoModal({ onSuccess, defaultEmpleadoId, contrato } = {}) {
+  const [form, setForm] = useState({
+    ...INITIAL_FORM,
+    idEmpleado: defaultEmpleadoId || '',
+  })
   const [empleados, setEmpleados] = useState([])
   const [instalaciones, setInstalaciones] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingOptions, setLoadingOptions] = useState(true)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (defaultEmpleadoId) {
+      setForm(prev => ({ ...prev, idEmpleado: defaultEmpleadoId }))
+    }
+  }, [defaultEmpleadoId])
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -33,6 +42,25 @@ export function useTrasladoModal({ onSuccess } = {}) {
     }
     fetchOptions()
   }, [])
+
+  const instalacionesFiltradas = instalaciones.filter((inst) => {
+    if (!form.idEmpleado) return true;
+    
+    // Si tenemos el contrato preseleccionado, usamos sus instalaciones actuales
+    if (contrato && String(contrato.idEmpleado) === String(form.idEmpleado)) {
+      const instalacionesActuales = (contrato.contratoInstalacionesData || [])
+        .map(ci => ci.instalacion?.idInstalacion);
+      return !instalacionesActuales.includes(inst.idInstalacion);
+    }
+    
+    // Fallback: Si no tenemos el contrato (ej. se cambió el empleado manualmente)
+    const empId = parseInt(form.idEmpleado, 10);
+    const empleado = empleados.find(e => e.idEmpleado === empId);
+    if (!empleado) return true;
+    
+    const currentInstalacionId = empleado.instalacion?.idInstalacion;
+    return inst.idInstalacion !== currentInstalacionId;
+  });
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target
@@ -85,6 +113,7 @@ export function useTrasladoModal({ onSuccess } = {}) {
     form,
     empleados,
     instalaciones,
+    instalacionesFiltradas,
     loading,
     loadingOptions,
     error,

@@ -284,6 +284,25 @@ export async function firmarDocumentoService(idDocumento, user, firmaBase64) {
       }
     }
 
+    // NUEVO: Si el documento firmado es un Anexo (ej. Traslado), resolver la alerta de "Solicitud de Traslado"
+    if (documento.tipo.startsWith("Anexo") && documento.empleado) {
+      const alertaRepo = AppDataSource.getRepository("Alertas");
+      const alertasPendientes = await alertaRepo.find({
+        where: {
+          tipo: "Solicitud de Traslado",
+          Estado: "PENDIENTE",
+          Empleado: { idEmpleado: documento.empleado.idEmpleado }
+        }
+      });
+      
+      if (alertasPendientes && alertasPendientes.length > 0) {
+        for (let alerta of alertasPendientes) {
+          alerta.Estado = "RESUELTO"; // o el estado que use el sistema para cerrarla
+          await alertaRepo.save(alerta);
+        }
+      }
+    }
+
     try {
       const fileName = path.basename(documento.rutaArchivo);
       const filePath = path.join(UPLOADS_DIR, fileName);

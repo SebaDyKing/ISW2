@@ -16,7 +16,15 @@ export function useSolicitudTrasladoModal({ contrato, onSuccess }) {
     try {
       setLoadingOptions(true);
       const resInstalaciones = await api.get('/instalaciones');
-      setInstalaciones(resInstalaciones.data || []);
+      
+      const instalacionesActuales = (contrato.contratoInstalacionesData || [])
+        .map(ci => ci.instalacion?.idInstalacion);
+
+      const instalacionesFiltradas = resInstalaciones.data?.filter(
+        inst => !instalacionesActuales.includes(inst.idInstalacion)
+      ) || [];
+
+      setInstalaciones(instalacionesFiltradas);
     } catch (err) {
       console.error('Error fetching options:', err);
       setError('Error al cargar opciones');

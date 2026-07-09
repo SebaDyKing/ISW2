@@ -30,7 +30,7 @@ function IconPersona() {
   )
 }
 
-export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefinido, onAdministrarInstalaciones, onVerDocumentos, onSolicitarTraslado, onNuevoContrato }) {
+export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefinido, onAdministrarInstalaciones, onVerDocumentos, onSolicitarTraslado, onTrasladar, onNuevoContrato }) {
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
   const { esTraslado, iniciales, avatarColor } = useContratoRow(contrato)
   
@@ -77,7 +77,7 @@ export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefin
       <td className={styles.cell}>
         <div className={styles.typeWrapper}>
           <p className={styles.typeText}>
-            {esTraslado && <IconTraslado />}
+              {esTraslado && <IconTraslado />}
             {sinContrato ? '-' : contrato.tipoContrato}
           </p>
           {sinContrato ? (
@@ -126,7 +126,7 @@ export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefin
                 </svg>
               </button>
 
-              {usuario.rol === 'supervisor' && isActive && (
+              {usuario.rol === 'supervisor' && isActive && contrato.rolSistema !== 'cliente' && (
                 <button 
                   className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
                   onClick={() => onSolicitarTraslado(contrato)}
@@ -138,7 +138,17 @@ export default function ContratoRow({ contrato, onAnexo, onFiniquitar, onIndefin
                 </button>
               )}
 
-              {usuario.rol === 'administrador' && isActive && (
+              {usuario.rol === 'administrador' && isActive && contrato.rolSistema !== 'cliente' && (
+                <button 
+                  className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
+                  onClick={() => onTrasladar(contrato)}
+                  title="Trasladar"
+                >
+                  <IconTraslado />
+                </button>
+              )}
+
+              {usuario.rol === 'administrador' && isActive && contrato.rolSistema === 'cliente' && (
                 <button 
                   className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer flex items-center justify-center"
                   onClick={() => onAdministrarInstalaciones(contrato)}
