@@ -80,8 +80,8 @@ export async function createContrato(body) {
     } = body;
 
     // Validaciones de campos obligatorios
-    if (!tipo || !cargo || !fechaInicio) {
-        throw { status: 400, message: "Tipo, cargo y fecha de inicio son obligatorios" };
+    if (!tipo || !cargo || !fechaInicio || !idInstalacion) {
+        throw { status: 400, message: "Tipo, cargo, fecha de inicio e instalación son obligatorios" };
     }
     
     if (!idEmpleado && !idCliente) {
@@ -93,9 +93,6 @@ export async function createContrato(body) {
     }
 
     if (idEmpleado) {
-        if (!idInstalacion) {
-            throw { status: 400, message: "La instalación es obligatoria para contratos de empleados" };
-        }
         if (!sueldo || !jornadaHoras) {
             throw { status: 400, message: "El sueldo y la jornada son obligatorios para empleados" };
         }
@@ -170,6 +167,18 @@ export async function createContrato(body) {
         
         if (cargo !== "Cliente") {
             throw { status: 400, message: 'El cargo debe ser "Cliente" para contratos comerciales.' };
+        }
+
+        const cotizacionAprobada = await AppDataSource.getRepository("SolicitudCotizacion").findOne({
+            where: {
+                cliente: { idCliente },
+                instalacion: { idInstalacion },
+                estado: In(["Aprobada", "aprobada", "Aprobado", "aprobado"])
+            }
+        });
+        
+        if (!cotizacionAprobada) {
+            throw { status: 400, message: "No se puede generar un contrato porque no existe una cotización aprobada para esta instalación." };
         }
     }
 
@@ -288,7 +297,7 @@ export async function createContrato(body) {
         const ci = ciRepo.create({
             contrato: { idContrato: contratoGuardado.idContrato },
             instalacion: { idInstalacion: idInstalacion },
-            horasSemanales: jornadaHoras,
+            horasSemanales: jornadaHoras || 0,
             pagoAdicional: 0
         });
         await ciRepo.save(ci);

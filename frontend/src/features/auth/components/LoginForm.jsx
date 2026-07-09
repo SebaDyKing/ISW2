@@ -27,6 +27,7 @@ function LoginForm() {
         nombreCompleto,
         nombreMostrar,
         rol: data.usuario.rol,
+        empresa: data.usuario.empresa,
       }));
 
       toast.success("¡Bienvenido!");

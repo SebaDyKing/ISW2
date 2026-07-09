@@ -76,6 +76,7 @@ function IconInstalacion() {
 const NAV = [
   { to: "/cliente/mis-cotizaciones", label: "Cotizaciones", icon: IconMisCotizaciones },
   { to: "/cliente/instalaciones", label: "Instalaciones", icon: IconInstalacion },
+  { to: "/cliente/mis-documentos", label: "Mis Contratos", icon: IconDocumento },
 ];
 
 function ClienteLayout() {
@@ -91,7 +92,7 @@ function ClienteLayout() {
   async function cerrarSesion() {
     try {
       await api.post("/auth/logout");
-    } catch (_) {}
+    } catch (_) { }
     finally {
       localStorage.removeItem("usuario");
       navigate("/login");
@@ -142,10 +143,9 @@ function ClienteLayout() {
               to={to}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-white text-slate-900"
-                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
+                  ? "bg-white text-slate-900"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
                 }`
               }
             >
@@ -161,7 +161,9 @@ function ClienteLayout() {
               {inicial}
             </div>
             <div className="min-w-0 leading-tight">
-              <div className="text-sm font-medium text-white truncate">{usuario.nombreMostrar}</div>
+              <div className="text-sm font-medium text-white truncate">
+                {usuario.empresa || usuario.nombreMostrar}
+              </div>
               <div className="text-[10px] tracking-wider text-slate-500 capitalize">{usuario.rol}</div>
             </div>
           </div>

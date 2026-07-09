@@ -64,16 +64,26 @@ export async function loginService(correo, password) {
   const accessToken  = jwt.sign(payload, JWT_SECRET,           { expiresIn: ACCESS_TOKEN_EXPIRY });
   const refreshToken = jwt.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
 
+  const responseUsuario = {
+    id: usuario.idUsuario,
+    correo: usuario.correo,
+    rol: usuario.rol,
+    nombre: usuario.nombre,
+    apellido: usuario.apellido,
+  };
+
+  if (usuario.rol === "cliente") {
+    const clienteRepo = AppDataSource.getRepository("Cliente");
+    const cliente = await clienteRepo.findOne({ where: { usuario: { idUsuario: usuario.idUsuario } } });
+    if (cliente) {
+      responseUsuario.empresa = cliente.nombreEmpresa;
+    }
+  }
+
   return {
     accessToken,
     refreshToken,
-    usuario: {
-      id: usuario.idUsuario,
-      correo: usuario.correo,
-      rol: usuario.rol,
-      nombre: usuario.nombre,
-      apellido: usuario.apellido,
-    },
+    usuario: responseUsuario,
   };
 }
 

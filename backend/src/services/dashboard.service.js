@@ -20,18 +20,18 @@ export async function getMetricasDashboard() {
         .select("COUNT(DISTINCT instalacion.id_instalacion)", "count")
         .where("UPPER(contrato.estado) IN (:...estados)", { estados: ["ACTIVO", "POR VENCER"] })
         .getRawOne();
-    
+
     const instalacionesEnCurso = parseInt(resultado?.count || 0, 10);
 
     const totalInstalaciones = await AppDataSource.getRepository("Instalacion").count();
 
     const porcentajeAsistencia = personalActivo > 0 ? Math.round((asistenciaHoy / personalActivo) * 100) : 0;
 
-    return { 
-        asistenciaHoy: porcentajeAsistencia, 
-        personalActivo, 
+    return {
+        asistenciaHoy: porcentajeAsistencia,
+        personalActivo,
         instalacionesEnCurso,
-        instalacionesTotales: totalInstalaciones 
+        instalacionesTotales: totalInstalaciones
     };
 }
 
@@ -52,14 +52,14 @@ export async function getHistorialReciente() {
 
 export async function getAlertasPendientes() {
     const { LessThanOrEqual } = await import("typeorm");
-    
+
     // 0. Alertas Base
     const alertasBase = await AppDataSource.getRepository("Alertas")
         .find({
             where: { Estado: "PENDIENTE" },
             relations: ["Empleado"],
         });
-        
+
     let alertasAgregadas = alertasBase.map(a => ({
         idAlerta: a.idAlerta,
         mensaje: a.mensaje || `Alerta: ${a.tipo}`,
@@ -71,11 +71,12 @@ export async function getAlertasPendientes() {
     const contratosVencer = await AppDataSource.getRepository("Contrato")
         .find({
             where: { estado: "POR VENCER" },
-            relations: ["empleado", "empleado.usuario"]
+            relations: ["empleado", "empleado.usuario", "cliente", "cliente.usuario"]
         });
-    
+
     contratosVencer.forEach(c => {
         const emp = c.empleado?.usuario;
+        const cli = c.cliente?.usuario;
         alertasAgregadas.push({
             idAlerta: `contrato_${c.idContrato}`,
             mensaje: `Vencimiento de contrato: ${emp ? emp.nombre + ' ' + emp.apellido : 'Empleado desconocido'}`,
@@ -88,14 +89,22 @@ export async function getAlertasPendientes() {
     const contratosPendientes = await AppDataSource.getRepository("Contrato")
         .find({
             where: { estado: "PENDIENTE DE FIRMA" },
-            relations: ["empleado", "empleado.usuario"]
+            relations: ["empleado", "empleado.usuario", "cliente", "cliente.usuario"]
         });
-    
+
     contratosPendientes.forEach(c => {
         const emp = c.empleado?.usuario;
+        const cliente = c.cliente;
+    
+        let nombreAsignado = 'Desconocido';
+        if (emp) {
+            nombreAsignado = `Empleado - ${emp.nombre} ${emp.apellido}`;
+        } else if (cliente) {
+            nombreAsignado = `Cliente - ${cliente.nombreEmpresa}`;
+        }
         alertasAgregadas.push({
             idAlerta: `firma_${c.idContrato}`,
-            mensaje: `Contrato pendiente de firma: ${emp ? emp.nombre + ' ' + emp.apellido : 'Empleado desconocido'}`,
+            mensaje: `Contrato pendiente de firma: ${nombreAsignado}`,
             FechaCreacion: c.fechaActualizacion || c.fechaInicio || new Date(),
             tipoOriginal: 'firma'
         });
@@ -114,7 +123,7 @@ export async function getAlertasPendientes() {
             },
             relations: ["empleado", "empleado.usuario"]
         });
-    
+
     licenciasTerminando.forEach(l => {
         const emp = l.empleado?.usuario;
         alertasAgregadas.push({
