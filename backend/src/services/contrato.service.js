@@ -181,8 +181,8 @@ export async function createContrato(body) {
         if (rol === "supervisor" && cargo !== "Supervisor") {
             throw { status: 400, message: 'Un usuario con rol "supervisor" solo puede tener el cargo de "Supervisor".' };
         }
-        if (rol === "empleado" && !["Guardia", "Personal de Aseo"].includes(cargo)) {
-            throw { status: 400, message: 'Un usuario con rol "empleado" solo puede tener el cargo de "Guardia" o "Personal de Aseo".' };
+        if (rol === "empleado" && !["Personal de Aseo"].includes(cargo)) {
+            throw { status: 400, message: 'Un usuario con rol "empleado" solo puede tener el cargo de "Personal de Aseo".' };
         }
         
         const existeContratoActivo = await AppDataSource.getRepository("Contrato")
@@ -441,8 +441,8 @@ export async function updateContrato(id, body) {
         if (rolActual === "supervisor" && nuevoCargo !== "Supervisor") {
             throw { status: 400, message: 'Un usuario con rol "supervisor" solo puede tener el cargo de "Supervisor".' };
         }
-        if (rolActual === "empleado" && !["Guardia", "Personal de Aseo"].includes(nuevoCargo)) {
-            throw { status: 400, message: 'Un usuario con rol "empleado" solo puede tener el cargo de "Guardia" o "Personal de Aseo".' };
+        if (rolActual === "empleado" && !["Personal de Aseo"].includes(nuevoCargo)) {
+            throw { status: 400, message: 'Un usuario con rol "empleado" solo puede tener el cargo de "Personal de Aseo".' };
         }
         if (rolActual === "cliente" && nuevoCargo !== "Cliente") {
             throw { status: 400, message: 'Un usuario con rol "cliente" solo puede tener el cargo de "Cliente".' };

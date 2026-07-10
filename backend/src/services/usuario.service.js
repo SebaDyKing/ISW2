@@ -95,6 +95,7 @@ export async function obtenerEmpleadosService() {
       apellido: emp.usuario?.apellido,
       correo: emp.usuario?.correo,
       idUsuario: emp.usuario?.idUsuario,
+      rol: emp.usuario?.rol,
       instalacion: emp.instalacion,
     }));
 

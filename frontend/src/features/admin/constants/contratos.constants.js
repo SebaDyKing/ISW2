@@ -5,7 +5,6 @@ export const TIPOS_CONTRATO = [
 
 export const CARGOS_DISPONIBLES = [
   { value: 'Supervisor', label: 'Supervisor' },
-  { value: 'Guardia', label: 'Guardia' },
   { value: 'Personal de Aseo', label: 'Personal de Aseo' },
   { value: 'Cliente', label: 'Cliente' },
 ];
