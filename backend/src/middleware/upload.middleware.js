@@ -4,7 +4,7 @@ import path from "path"
 const storage = multer.diskStorage({ // DiskStorage -> Almacenamiento local
 
   destination: function(req,file,callback){
-    callback(null,"uploads/") // callback siempre recibe 2 argumentos error y carpeta
+    callback(null,"uploads/") // callback  recibe 2 argumentos error y carpeta
   },
 
   filename : function(req,file,callback){
@@ -30,7 +30,7 @@ const uploadMiddleware = multer({
   limits: {
      fileSize: 10 * 1024 * 1024 //10 Megas
   },
-  fileFilter: filter
+  fileFilter: filter // guardar la funcion que multer va a ocupar
 })
 
 export default uploadMiddleware

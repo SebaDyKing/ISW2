@@ -1,5 +1,6 @@
 "use strict";
 import { Router } from "express";
+import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
 import {
   getHojasVidaController,
   getHojaVidaByIdController,
@@ -10,10 +11,15 @@ import {
 
 const router = Router();
 
-router.get("/", getHojasVidaController);
-router.get("/:id", getHojaVidaByIdController);
-router.post("/", createHojaVidaController);
-router.patch("/:id", updateHojaVidaController);
-router.delete("/:id", deleteHojaVidaController);
+// Toda ruta de hojas de vida requiere sesión activa
+router.use(authMiddleware);
+
+// Lectura: el empleado consulta el listado para filtrar sus propias hojas
+router.get("/", autorizeEntities("administrador", "supervisor", "empleado"), getHojasVidaController);
+router.get("/:id", autorizeEntities("administrador", "supervisor"), getHojaVidaByIdController);
+// Escritura: admin y supervisor gestionan desde HojaVidaView
+router.post("/", autorizeEntities("administrador", "supervisor"), createHojaVidaController);
+router.patch("/:id", autorizeEntities("administrador", "supervisor"), updateHojaVidaController);
+router.delete("/:id", autorizeEntities("administrador", "supervisor"), deleteHojaVidaController);
 
 export default router;
