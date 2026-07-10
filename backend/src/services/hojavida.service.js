@@ -14,6 +14,7 @@ export async function getHojaVidaServices() {
         administrador: { usuario: true },
         reporte: true,
       },
+      order : { createdAt: "DESC" },
     })
 
   }catch(error){
