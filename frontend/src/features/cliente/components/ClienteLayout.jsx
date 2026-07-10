@@ -76,7 +76,7 @@ function IconInstalacion() {
 const NAV = [
   { to: "/cliente/mis-cotizaciones", label: "Cotizaciones", icon: IconMisCotizaciones },
   { to: "/cliente/instalaciones", label: "Instalaciones", icon: IconInstalacion },
-  { to: "/cliente/mis-documentos", label: "Mis Contratos", icon: IconDocumento },
+  { to: "/cliente/mis-documentos", label: "Mis Documentos", icon: IconDocumento },
 ];
 
 function ClienteLayout() {
