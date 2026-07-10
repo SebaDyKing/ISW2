@@ -2,7 +2,8 @@
 import { 
   subirDocumentoService, 
   getDocumentosByEmpleadoService,
-  downloadDocumentoService
+  downloadDocumentoService,
+  firmarDocumentoService
 } from "../services/documento.service.js";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHanders.js";
 
@@ -18,7 +19,10 @@ export const subirDocumentoController = async (req, res) => {
       return handleErrorClient(res, 400, "El tipo de documento es obligatorio");
     }
 
-    const documento = await subirDocumentoService(Number(id), tipo, req.file, req.user);
+    // Identificar si la ruta es de clientes
+    const isCliente = req.originalUrl.includes('/clientes/');
+
+    const documento = await subirDocumentoService(Number(id), tipo, req.file, req.user, isCliente);
     handleSuccess(res, 201, "Documento guardado exitosamente", documento);
   } catch (error) {
     if (error.status === 400 || error.status === 403 || error.status === 404) {
@@ -32,7 +36,8 @@ export const subirDocumentoController = async (req, res) => {
 export const getDocumentosByEmpleadoController = async (req, res) => {
   try {
     const { id } = req.params;
-    const documentos = await getDocumentosByEmpleadoService(Number(id), req.user);
+    const isCliente = req.originalUrl.includes('/clientes/');
+    const documentos = await getDocumentosByEmpleadoService(Number(id), req.user, isCliente);
     handleSuccess(res, 200, "Documentos obtenidos", documentos);
   } catch (error) {
     if (error.status === 403 || error.status === 404) {
@@ -72,6 +77,48 @@ export const getMisDocumentosController = async (req, res) => {
     handleSuccess(res, 200, "Mis documentos obtenidos", documentos);
   } catch (error) {
     if (error.status === 404) {
+      handleErrorClient(res, error.status, error.message);
+    } else {
+      handleErrorServer(res, 500, error.message);
+    }
+  }
+};
+
+export const getMisDocumentosClienteController = async (req, res) => {
+  try {
+    const { AppDataSource } = await import("../config/configDb.js");
+    const clienteRepo = AppDataSource.getRepository("Cliente");
+    
+    const cliente = await clienteRepo.findOne({ where: { usuario: { idUsuario: req.user.idUsuario } } });
+    
+    if (!cliente) {
+      return handleErrorClient(res, 404, "Perfil de cliente no encontrado");
+    }
+
+    const documentos = await getDocumentosByEmpleadoService(cliente.idCliente, req.user, true);
+    handleSuccess(res, 200, "Mis documentos obtenidos", documentos);
+  } catch (error) {
+    if (error.status === 404) {
+      handleErrorClient(res, error.status, error.message);
+    } else {
+      handleErrorServer(res, 500, error.message);
+    }
+  }
+};
+
+export const firmarDocumentoController = async (req, res) => {
+  try {
+    const { idDocumento } = req.params;
+    const { firmaBase64 } = req.body;
+    
+    if (!firmaBase64) {
+      return handleErrorClient(res, 400, "La firma es obligatoria");
+    }
+
+    const result = await firmarDocumentoService(Number(idDocumento), req.user, firmaBase64);
+    handleSuccess(res, 200, result.message, result);
+  } catch (error) {
+    if (error.status === 400 || error.status === 403 || error.status === 404) {
       handleErrorClient(res, error.status, error.message);
     } else {
       handleErrorServer(res, 500, error.message);

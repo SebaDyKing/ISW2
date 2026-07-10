@@ -3,6 +3,7 @@ import styles from './FiniquitoModal.module.css'
 
 export default function FiniquitoModal({ contrato, onClose, onConfirm, isSubmitting }) {
   const [fechaFin, setFechaFin] = useState(new Date().toISOString().split('T')[0])
+  const [causalTermino, setCausalTermino] = useState('')
   const [error, setError] = useState(null)
 
   if (!contrato) return null
@@ -21,7 +22,12 @@ export default function FiniquitoModal({ contrato, onClose, onConfirm, isSubmitt
       return
     }
 
-    onConfirm(contrato.id, fechaFin)
+    if (!causalTermino.trim()) {
+      setError("La causal de término es obligatoria.")
+      return
+    }
+
+    onConfirm(contrato.id, fechaFin, causalTermino)
   }
 
   return (
@@ -64,6 +70,20 @@ export default function FiniquitoModal({ contrato, onClose, onConfirm, isSubmitt
                 className={styles.input}
                 value={fechaFin}
                 onChange={(e) => setFechaFin(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.field} style={{ marginTop: '1rem' }}>
+              <label className={styles.label}>
+                Causal de Término / Motivo <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Ej: Necesidades de la empresa, Renuncia, etc."
+                className={styles.input}
+                value={causalTermino}
+                onChange={(e) => setCausalTermino(e.target.value)}
               />
             </div>
 

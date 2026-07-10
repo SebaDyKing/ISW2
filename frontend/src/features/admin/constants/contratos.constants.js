@@ -1,11 +1,16 @@
 export const TIPOS_CONTRATO = [
-  { value: 'Plazo Fijo',  label: 'Plazo Fijo' },
-  { value: 'Indefinido',  label: 'Indefinido' },
-  { value: 'Traslado',    label: 'Traslado' },
-  { value: 'Reemplazo',   label: 'Reemplazo' },
+  { value: 'Plazo Fijo', label: 'Plazo Fijo' },
+  { value: 'Indefinido', label: 'Indefinido' },
+];
+
+export const CARGOS_DISPONIBLES = [
+  { value: 'Supervisor', label: 'Supervisor' },
+  { value: 'Guardia', label: 'Guardia' },
+  { value: 'Personal de Aseo', label: 'Personal de Aseo' },
+  { value: 'Cliente', label: 'Cliente' },
 ];
 
 export const LEY_LABORAL_CHILE = {
-  JORNADA_MAXIMA_ACTUAL: 44, // Ley 21.561 a partir de Abril 2024
+  JORNADA_MAXIMA_ACTUAL: 42, // Ley 21.561 a partir del 2026
   SUELDO_MINIMO_CLP: 500000 // Sueldo mínimo actual
 };

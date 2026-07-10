@@ -1,10 +1,11 @@
 import { useNuevoContratoModal } from './useNuevoContratoModal'
-import { TIPOS_CONTRATO, LEY_LABORAL_CHILE } from '../../constants/contratos.constants'
+import { TIPOS_CONTRATO, CARGOS_DISPONIBLES, LEY_LABORAL_CHILE } from '../../constants/contratos.constants'
 import styles from './NuevoContratoModal.module.css'
 export default function NuevoContratoModal({ onClose, onSuccess, defaultUser }) {
   const {
     form,
     empleados,
+    clientes,
     instalaciones,
     loading,
     loadingOptions,
@@ -20,6 +21,7 @@ export default function NuevoContratoModal({ onClose, onSuccess, defaultUser }) 
   })
 
   const isPlazoFijo = form.tipo === 'Plazo Fijo'
+  const isComercial = form.tipoContratoPadre === 'Comercial'
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) onClose()
@@ -58,26 +60,77 @@ export default function NuevoContratoModal({ onClose, onSuccess, defaultUser }) 
             <p className={styles.sectionLabel}>Asignación</p>
 
             <div className={styles.row}>
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Empleado <span className={styles.required}>*</span>
-                </label>
-                <select
-                  name="idEmpleado"
-                  value={form.idEmpleado}
-                  onChange={handleChange}
-                  required
-                  disabled={loadingOptions}
-                  className={`${styles.select} ${loadingOptions ? styles.selectDisabled : ''}`}
-                >
-                  <option value="">Seleccionar...</option>
-                  {empleados.map((e) => (
-                    <option key={e.idEmpleado} value={e.idEmpleado}>
-                      {e.nombre} {e.apellido}
-                    </option>
-                  ))}
-                </select>
+              <div className={styles.field} style={{ marginBottom: '1rem', width: '100%' }}>
+                <label className={styles.label}>Modalidad de Contrato</label>
+                <div style={{ display: 'flex', gap: '2rem', marginTop: '0.5rem', alignItems: 'center' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <input
+                      type="radio"
+                      name="tipoContratoPadre"
+                      value="Laboral"
+                      checked={form.tipoContratoPadre === 'Laboral'}
+                      onChange={handleChange}
+                    />
+                    Laboral (Empleado)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <input
+                      type="radio"
+                      name="tipoContratoPadre"
+                      value="Comercial"
+                      checked={form.tipoContratoPadre === 'Comercial'}
+                      onChange={handleChange}
+                    />
+                    Comercial (Cliente)
+                  </label>
+                </div>
               </div>
+            </div>
+
+            <div className={styles.row}>
+              {!isComercial ? (
+                <div className={styles.field}>
+                  <label className={styles.label}>
+                    Empleado <span className={styles.required}>*</span>
+                  </label>
+                  <select
+                    name="idEmpleado"
+                    value={form.idEmpleado}
+                    onChange={handleChange}
+                    required={!isComercial}
+                    disabled={loadingOptions}
+                    className={`${styles.select} ${loadingOptions ? styles.selectDisabled : ''}`}
+                  >
+                    <option value="">Seleccionar...</option>
+                    {empleados.map((e) => (
+                      <option key={e.idEmpleado} value={e.idEmpleado}>
+                        {e.nombre} {e.apellido}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className={styles.field}>
+                  <label className={styles.label}>
+                    Cliente <span className={styles.required}>*</span>
+                  </label>
+                  <select
+                    name="idCliente"
+                    value={form.idCliente}
+                    onChange={handleChange}
+                    required={isComercial}
+                    disabled={loadingOptions}
+                    className={`${styles.select} ${loadingOptions ? styles.selectDisabled : ''}`}
+                  >
+                    <option value="">Seleccionar...</option>
+                    {clientes?.map((c) => (
+                      <option key={c.idCliente} value={c.idCliente}>
+                        {c.nombreEmpresa || c.usuario?.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className={styles.field}>
                 <label className={styles.label}>
@@ -107,138 +160,210 @@ export default function NuevoContratoModal({ onClose, onSuccess, defaultUser }) 
             <p className={styles.sectionLabel}>Contrato</p>
 
             <div className={styles.row}>
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Tipo <span className={styles.required}>*</span>
-                </label>
-                <select
-                  name="tipo"
-                  value={form.tipo}
-                  onChange={handleChange}
-                  required
-                  className={styles.select}
-                >
-                  <option value="">Seleccionar...</option>
-                  {TIPOS_CONTRATO.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
+              {!isComercial && (
+                <div className={styles.field}>
+                  <label className={styles.label}>
+                    Tipo <span className={styles.required}>*</span>
+                  </label>
+                  <select
+                    name="tipo"
+                    value={form.tipo}
+                    onChange={handleChange}
+                    required={!isComercial}
+                    className={styles.select}
+                  >
+                    <option value="">Seleccionar...</option>
+                    {TIPOS_CONTRATO.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Cargo <span className={styles.required}>*</span>
-                </label>
-                <input
-                  type="text"
-                  name="cargo"
-                  value={form.cargo}
-                  onChange={handleChange}
-                  placeholder="Ej: Supervisor de Aseo"
-                  required
-                  maxLength={100}
-                  className={styles.input}
-                />
-              </div>
+              {!isComercial && (
+                <div className={styles.field}>
+                  <label className={styles.label}>
+                    Cargo <span className={styles.required}>*</span>
+                  </label>
+                  <select
+                    name="cargo"
+                    value={form.cargo}
+                    onChange={handleChange}
+                    required={!isComercial}
+                    className={styles.select}
+                  >
+                    <option value="">Seleccionar...</option>
+                    {CARGOS_DISPONIBLES.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className={styles.row}>
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Sueldo (CLP) <span className={styles.required}>*</span>
-                </label>
-                <input
-                  type="number"
-                  name="sueldo"
-                  value={form.sueldo}
-                  onChange={handleChange}
-                  placeholder={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP.toString()}
-                  required
-                  min={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP}
-                  step="1"
-                  className={styles.input}
-                />
-              </div>
+              {!isComercial ? (
+                <div className={styles.field}>
+                  <label className={styles.label}>
+                    Sueldo (CLP) <span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="sueldo"
+                    value={form.sueldo}
+                    onChange={handleChange}
+                    placeholder={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP.toString()}
+                    required={!isComercial}
+                    min={LEY_LABORAL_CHILE.SUELDO_MINIMO_CLP}
+                    step="1"
+                    className={styles.input}
+                  />
+                </div>
+              ) : (
+                <div className={styles.fieldFull}>
+                  <label className={styles.label}>
+                    Valor del Servicio (CLP) <span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="montoServicio"
+                    value={form.montoServicio}
+                    onChange={handleChange}
+                    placeholder="Ej: 500000"
+                    required={isComercial}
+                    min="1"
+                    step="1"
+                    className={styles.input}
+                  />
+                </div>
+              )}
 
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Jornada (horas) <span className={styles.required}>*</span>
-                </label>
-                <input
-                  type="number"
-                  name="jornadaHoras"
-                  value={form.jornadaHoras}
-                  onChange={handleChange}
-                  placeholder={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL.toString()}
-                  required
-                  min={1}
-                  max={LEY_LABORAL_CHILE.JORNADA_MAXIMA_ACTUAL}
-                  className={styles.input}
-                />
-              </div>
+              {!isComercial && (
+                <div className={styles.field}>
+                  <label className={styles.label}>
+                    Jornada Semanal (Hrs) <span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="jornadaHoras"
+                    value={form.jornadaHoras}
+                    onChange={handleChange}
+                    placeholder="Ej: 42"
+                    required={!isComercial}
+                    min="1"
+                    max={LEY_LABORAL_CHILE.MAX_HORAS_SEMANALES}
+                    className={styles.input}
+                  />
+                </div>
+              )}
             </div>
+
+            {isComercial && (
+              <div className={styles.row}>
+                <div className={styles.fieldFull}>
+                  <label className={styles.label}>
+                    Descripción de Servicios/Productos <span className={styles.required}>*</span>
+                  </label>
+                  <textarea
+                    name="descripcionServicio"
+                    value={form.descripcionServicio}
+                    onChange={handleChange}
+                    placeholder="Descripción detallada del servicio a realizar."
+                    required={isComercial}
+                    rows={3}
+                    className={styles.input}
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {isComercial && (
+              <div className={styles.row}>
+                <div className={styles.fieldFull}>
+                  <label className={styles.label}>
+                    Condiciones de Pago <span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="condicionPago"
+                    value={form.condicionPago}
+                    onChange={handleChange}
+                    placeholder="Ej: 50% al inicio, 50% al finalizar"
+                    required={isComercial}
+                    className={styles.input}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className={styles.divider} />
 
             {/* Datos Personales */}
-            <p className={styles.sectionLabel}>Datos Personales del Contrato</p>
-            
+            {!isComercial && (
+              <>
+                <p className={styles.sectionLabel}>Datos Personales del Contrato</p>
+
+                <div className={styles.row}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>
+                      Nacionalidad <span className={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="nacionalidad"
+                      value={form.nacionalidad}
+                      onChange={handleChange}
+                      placeholder="Ej: Chilena"
+                      required={!isComercial}
+                      maxLength={100}
+                      className={styles.input}
+                    />
+                  </div>
+
+                  <div className={styles.field}>
+                    <label className={styles.label}>
+                      Estado Civil <span className={styles.required}>*</span>
+                    </label>
+                    <select
+                      name="estadoCivil"
+                      value={form.estadoCivil}
+                      onChange={handleChange}
+                      required={!isComercial}
+                      className={styles.select}
+                    >
+                      <option value="">Seleccione...</option>
+                      <option value="Soltero/a">Soltero/a</option>
+                      <option value="Casado/a">Casado/a</option>
+                      <option value="Divorciado/a">Divorciado/a</option>
+                      <option value="Viudo/a">Viudo/a</option>
+                      <option value="Conviviente Civil">Conviviente Civil</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.row}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>
+                      Fecha Nacimiento <span className={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="fechaNacimiento"
+                      value={form.fechaNacimiento}
+                      onChange={handleChange}
+                      required={!isComercial}
+                      className={styles.input}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
             <div className={styles.row}>
-              <div className={styles.field}>
+              <div className={isComercial ? styles.fieldFull : styles.field}>
                 <label className={styles.label}>
-                  Nacionalidad <span className={styles.required}>*</span>
-                </label>
-                <input
-                  type="text"
-                  name="nacionalidad"
-                  value={form.nacionalidad}
-                  onChange={handleChange}
-                  placeholder="Ej: Chilena"
-                  required
-                  maxLength={100}
-                  className={styles.input}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Estado Civil <span className={styles.required}>*</span>
-                </label>
-                <select
-                  name="estadoCivil"
-                  value={form.estadoCivil}
-                  onChange={handleChange}
-                  required
-                  className={styles.select}
-                >
-                  <option value="">Seleccione...</option>
-                  <option value="Soltero/a">Soltero/a</option>
-                  <option value="Casado/a">Casado/a</option>
-                  <option value="Divorciado/a">Divorciado/a</option>
-                  <option value="Viudo/a">Viudo/a</option>
-                  <option value="Acuerdo de Unión Civil">Acuerdo de Unión Civil</option>
-                </select>
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Fecha Nacimiento <span className={styles.required}>*</span>
-                </label>
-                <input
-                  type="date"
-                  name="fechaNacimiento"
-                  value={form.fechaNacimiento}
-                  onChange={handleChange}
-                  required
-                  className={styles.input}
-                />
-              </div>
-            </div>
-
-            <div className={styles.row}>
-              <div className={styles.field} style={{ flex: 1 }}>
-                <label className={styles.label}>
-                  Domicilio <span className={styles.required}>*</span>
+                  {isComercial ? 'Dirección Empresa' : 'Domicilio'} <span className={styles.required}>*</span>
                 </label>
                 <input
                   type="text"
@@ -275,7 +400,7 @@ export default function NuevoContratoModal({ onClose, onSuccess, defaultUser }) 
 
               <div className={styles.field}>
                 <label className={styles.label}>
-                  Fecha Fin {isPlazoFijo && <span className={styles.required}>*</span>}
+                  Fecha Fin {(isPlazoFijo || isComercial) && <span className={styles.required}>*</span>}
                 </label>
                 <input
                   type="date"
@@ -283,7 +408,7 @@ export default function NuevoContratoModal({ onClose, onSuccess, defaultUser }) 
                   value={form.fechaFin}
                   onChange={handleChange}
                   min={form.fechaInicio || undefined}
-                  required={isPlazoFijo}
+                  required={isPlazoFijo || isComercial}
                   className={styles.input}
                 />
               </div>

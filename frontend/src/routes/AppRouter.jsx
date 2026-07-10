@@ -16,6 +16,8 @@ import MisDocumentosView from "../features/empleado/components/MisDocumentosView
 import LandingPage from "../features/cliente/components/LandingPage";
 import ClienteLayout from "../features/cliente/components/ClienteLayout";
 import MisCotizacionesView from "../features/cliente/components/MisCotizacionesView";
+import ClienteInstalacionesView from "../features/cliente/components/ClienteInstalacionesView";
+import MisDocumentosClienteView from "../features/cliente/components/MisDocumentosView";
 import MarcarAsistencia from "../components/MarcarAsistencia";
 import AdminDashboard from "../features/admin/pages/AdminDashboard/AdminDashboard";
 import ContratosPage from "../features/admin/pages/ContratosPage/ContratosPage";
@@ -82,6 +84,8 @@ function AppRouter() {
         <Route path="/supervisor" element={<PrivateRoute allowedRoles={["supervisor"]}><AdminLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="contratos" replace />} />
           <Route path="contratos" element={<ContratosPage />} />
+          <Route path="documentos" element={<MisDocumentosView />} />
+          <Route path="instalaciones" element={<InstalacionesView />} />
           <Route path="licencias" element={<LicenciasMedicasView />} />
           <Route path="hojas-vida" element={<HojaVidaView />} />
         </Route>
@@ -89,6 +93,8 @@ function AppRouter() {
         <Route path="/cliente" element={<PrivateRoute allowedRoles={["cliente"]}><ClienteLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="mis-cotizaciones" replace />} />
           <Route path="mis-cotizaciones" element={<MisCotizacionesView />} />
+          <Route path="instalaciones" element={<ClienteInstalacionesView />} />
+          <Route path="mis-documentos" element={<MisDocumentosClienteView />} />
         </Route>
 
         <Route path="/empleado" element={<PrivateRoute allowedRoles={["empleado"]}><EmpleadoLayout /></PrivateRoute>}>

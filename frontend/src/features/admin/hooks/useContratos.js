@@ -10,12 +10,20 @@ export function useContratos() {
     try {
       setError(null)
       const response = await contratosService.getAll(params)
-      
-      const contratosMapeados = response.data.map(u => {
-        // Obtenemos el contrato activo si existe, sino el último finalizado
+
+      let contratosMapeados = response.data.map(u => {
         let contratoParaMostrar = null;
-        if (u.empleado && u.empleado.contratos && u.empleado.contratos.length > 0) {
-            const sortedContratos = [...u.empleado.contratos].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        let esCliente = u.rol === 'cliente';
+        let contratosList = [];
+
+        if (esCliente && u.cliente && u.cliente.contratos) {
+            contratosList = u.cliente.contratos;
+        } else if (u.empleado && u.empleado.contratos) {
+            contratosList = u.empleado.contratos;
+        }
+
+        if (contratosList && contratosList.length > 0) {
+            const sortedContratos = [...contratosList].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             const activo = sortedContratos.find(c => c.estado !== 'FINALIZADO');
             contratoParaMostrar = activo || sortedContratos[0];
         }
@@ -24,12 +32,13 @@ export function useContratos() {
           id: contratoParaMostrar ? contratoParaMostrar.idContrato : `u-${u.idUsuario}`, // Fallback ID for UI keys
           idContrato: contratoParaMostrar?.idContrato,
           idEmpleado: u.empleado?.idEmpleado,
+          idCliente: u.cliente?.idCliente,
           idUsuario: u.idUsuario,
           codigo: contratoParaMostrar ? `CT-${String(contratoParaMostrar.idContrato).padStart(4, '0')}` : 'N/A',
-          nombre: `${u.nombre} ${u.apellido}`,
+          nombre: esCliente ? (u.cliente?.nombreEmpresa || `${u.nombre} ${u.apellido}`) : `${u.nombre} ${u.apellido}`,
           rut: u.rut,
-          instalacion: contratoParaMostrar?.contratoInstalaciones?.length > 1 
-            ? 'Múltiples instalaciones' 
+          instalacion: contratoParaMostrar?.contratoInstalaciones?.length > 1
+            ? 'Múltiples instalaciones'
             : contratoParaMostrar?.contratoInstalaciones?.[0]?.instalacion?.nombre || (contratoParaMostrar ? 'Sin instalación' : '-'),
           rolSistema: u.rol,
           rol: contratoParaMostrar?.cargo || '-',
@@ -43,6 +52,11 @@ export function useContratos() {
           originalUsuario: u
         };
       })
+
+      const usuarioActual = JSON.parse(localStorage.getItem('usuario') || '{}');
+      if (usuarioActual.rol === 'supervisor') {
+        contratosMapeados = contratosMapeados.filter(c => c.idUsuario !== usuarioActual.idUsuario);
+      }
 
       setContratos(contratosMapeados)
     } catch (err) {

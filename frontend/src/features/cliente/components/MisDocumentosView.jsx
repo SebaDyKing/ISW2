@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { obtenerMisDocumentosService, descargarDocumentoEmpleadoService, firmarDocumentoEmpleadoService } from "../services/empleado.service";
+import { obtenerMisDocumentosClienteService, descargarDocumentoClienteService, firmarDocumentoClienteService } from "../services/cliente.service";
 import { toast } from "react-hot-toast";
-import FirmaDocumentoModal from "./FirmaDocumentoModal";
+import FirmaDocumentoModal from "../../empleado/components/FirmaDocumentoModal";
 
 export default function MisDocumentosView() {
   const [documentos, setDocumentos] = useState([]);
@@ -10,9 +10,9 @@ export default function MisDocumentosView() {
 
   async function cargarDatos() {
     try {
-      const res = await obtenerMisDocumentosService();
-      // res.data trae la lista de documentos
-      setDocumentos(res.data || []);
+      const res = await obtenerMisDocumentosClienteService();
+      // el servicio ya retorna res.data
+      setDocumentos(res || []);
     } catch (error) {
       toast.error("Error al cargar la carpeta digital");
     } finally {
@@ -26,7 +26,7 @@ export default function MisDocumentosView() {
 
   const handleVerDocumento = async (idDocumento) => {
     try {
-      const blob = await descargarDocumentoEmpleadoService(idDocumento);
+      const blob = await descargarDocumentoClienteService(idDocumento);
       
       if (blob.type === 'application/json') {
         const text = await blob.text();
@@ -43,7 +43,7 @@ export default function MisDocumentosView() {
 
   const handleGuardarFirma = async (firmaBase64) => {
     try {
-      await firmarDocumentoEmpleadoService(documentoAFirmar.idDocumento, firmaBase64);
+      await firmarDocumentoClienteService(documentoAFirmar.idDocumento, firmaBase64);
       toast.success("Documento firmado exitosamente");
       setDocumentoAFirmar(null);
       cargarDatos();
@@ -62,21 +62,21 @@ export default function MisDocumentosView() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="w-full max-w-6xl mx-auto px-4 py-8">
       <header className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Carpeta Digital</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Mis Contratos</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Revisa y descarga tus contratos y anexos generados por la empresa.
+          Revisa y descarga tus contratos y documentos generados por la empresa.
         </p>
       </header>
 
       {documentos.length === 0 ? (
-        <div className="bg-white border border-dashed border-slate-300 rounded-xl px-6 py-12 text-center flex flex-col items-center">
+        <div className="w-full bg-white border border-dashed border-slate-300 rounded-xl px-6 py-12 text-center flex flex-col items-center">
           <svg className="w-12 h-12 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <h3 className="text-slate-700 font-medium mb-1">Sin documentos</h3>
-          <p className="text-slate-500 text-sm">No tienes contratos ni anexos generados aún.</p>
+          <p className="text-slate-500 text-sm">No tienes contratos ni documentos generados aún.</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">

@@ -6,18 +6,18 @@ import { In } from "typeorm";
 
 const getRepo = () => AppDataSource.getRepository("Contrato");
 
-const TIPOS_VALIDOS = ["Plazo Fijo", "Indefinido"];
-const ESTADOS_VALIDOS = ["ACTIVO", "POR VENCER", "FINALIZADO"];
+const TIPOS_VALIDOS = ["Plazo Fijo", "Indefinido", "Prestación de Servicios"];
+const ESTADOS_VALIDOS = ["ACTIVO", "POR VENCER", "FINALIZADO", "PENDIENTE DE FIRMA"];
 
 export async function getAllContratos(user = null) {
     let whereClause = {};
-    
+
     if (user && user.rol === "supervisor") {
         const supervisor = await AppDataSource.getRepository("Supervisor").findOne({
             where: { usuario: { idUsuario: user.idUsuario } },
             relations: ["instalaciones", "instalaciones.instalacion"]
         });
-        
+
         if (supervisor && supervisor.instalaciones && supervisor.instalaciones.length > 0) {
             const instalacionIds = supervisor.instalaciones.map(si => si.instalacion.idInstalacion);
             whereClause = {
@@ -34,14 +34,14 @@ export async function getAllContratos(user = null) {
 
     return await getRepo().find({
         where: whereClause,
-        relations: ["empleado", "empleado.usuario", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
+        relations: ["empleado", "empleado.usuario", "cliente", "cliente.usuario", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
     });
 }
 
 export async function getContratoById(id) {
     const contrato = await getRepo().findOne({
         where: { idContrato: id },
-        relations: ["empleado", "empleado.usuario", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
+        relations: ["empleado", "empleado.usuario", "cliente", "cliente.usuario", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
     });
     if (!contrato) throw { status: 404, message: "Contrato no encontrado" };
     return contrato;
@@ -52,61 +52,169 @@ export async function getContratosByEmpleado(idEmpleado) {
         .findOne({ where: { idEmpleado } });
     if (!empleado) throw { status: 404, message: "Empleado no encontrado" };
 
-    return await getRepo().find({
+    const contratos = await getRepo().find({
         where: { empleado: { idEmpleado } },
         relations: ["empleado", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
+        order: { fechaInicio: "DESC" }
     });
+
+    contratos.forEach(c => {
+        if (c.contratoInstalaciones) {
+            c.contratoInstalaciones = c.contratoInstalaciones.filter(ci => ci.estadoFirma === "FIRMADO");
+        }
+    });
+
+    return contratos;
 }
 
 export async function getMisAsignacionesService(idUsuario) {
-    const empleado = await AppDataSource.getRepository("Empleado")
-        .findOne({ where: { usuario: { idUsuario } } });
+    const usuarioRepo = AppDataSource.getRepository("Usuario");
+    const user = await usuarioRepo.findOne({ where: { idUsuario }, relations: ["empleado", "cliente"] });
+    if (!user) throw { status: 404, message: "Usuario no encontrado" };
+
+    if (user.rol === "cliente" && user.cliente) {
+        const asignaciones = await getRepo().find({
+            where: { cliente: { idCliente: user.cliente.idCliente } },
+            relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion"],
+            order: { fechaInicio: "DESC" }
+        });
+        asignaciones.forEach(a => {
+            if (a.contratoInstalaciones) {
+                a.contratoInstalaciones = a.contratoInstalaciones.filter(ci => ci.estadoFirma === "FIRMADO");
+            }
+        });
+        return asignaciones;
+    }
+
+    const empleado = user.empleado;
     if (!empleado) throw { status: 404, message: "Perfil de empleado no encontrado" };
 
-    return await getRepo().find({
+    const asignaciones = await getRepo().find({
         where: { empleado: { idEmpleado: empleado.idEmpleado } },
         relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion", "contratoInstalaciones.instalacion.cliente"],
         order: { fechaInicio: "DESC" }
     });
+
+    asignaciones.forEach(a => {
+        if (a.contratoInstalaciones) {
+            a.contratoInstalaciones = a.contratoInstalaciones.filter(ci => ci.estadoFirma === "FIRMADO");
+        }
+    });
+
+    return asignaciones;
 }
 
 export async function createContrato(body) {
     const {
-        idEmpleado, tipo, cargo,
-        sueldo, jornadaHoras, fechaInicio, fechaFin,
+        idEmpleado, idCliente, tipo, cargo,
+        sueldo, montoServicio, jornadaHoras, fechaInicio, fechaFin,
         nacionalidad, estadoCivil, fechaNacimiento, domicilio,
+        descripcionServicio, condicionPago,
         idInstalacion
     } = body;
 
     // Validaciones de campos obligatorios
-    if (!idEmpleado || !tipo || !cargo ||
-        !sueldo || !jornadaHoras || !fechaInicio) {
-        throw { status: 400, message: "Todos los campos son obligatorios" };
+    if (!tipo || !cargo || !fechaInicio || !idInstalacion) {
+        throw { status: 400, message: "Tipo, cargo, fecha de inicio e instalación son obligatorios" };
     }
+    
+    if (!idEmpleado && !idCliente) {
+        throw { status: 400, message: "Debe especificar un empleado o un cliente para el contrato" };
+    }
+    
+    if (idEmpleado && idCliente) {
+        throw { status: 400, message: "El contrato no puede pertenecer a un empleado y a un cliente simultáneamente" };
+    }
+
+    if (idEmpleado) {
+        if (!sueldo || !jornadaHoras) {
+            throw { status: 400, message: "El sueldo y la jornada son obligatorios para empleados" };
+        }
+        if (jornadaHoras < 1 || jornadaHoras > 42) {
+            throw { status: 400, message: "La jornada laboral debe ser entre 1 y 42 horas semanales" };
+        }
+    } else if (idCliente) {
+        if (!montoServicio) {
+            throw { status: 400, message: "El valor del servicio es obligatorio para contratos comerciales" };
+        }
+        if (!fechaFin) {
+            throw { status: 400, message: "La fecha de término es obligatoria para contratos comerciales" };
+        }
+    }
+
     if (!TIPOS_VALIDOS.includes(tipo)) {
         throw { status: 400, message: `Tipo inválido. Permitidos: ${TIPOS_VALIDOS.join(", ")}` };
+    }
+    if (tipo === "Plazo Fijo" && !fechaFin) {
+        throw { status: 400, message: "La fecha de término es obligatoria para contratos a Plazo Fijo" };
     }
     if (fechaFin && new Date(fechaFin) <= new Date(fechaInicio)) {
         throw { status: 400, message: "La fecha fin debe ser posterior a la de inicio" };
     }
 
-    // Verifica que existan las entidades relacionadas
-    const empleado = await AppDataSource.getRepository("Empleado")
-        .findOne({ 
-            where: { idEmpleado },
-            relations: ["usuario"]
-        });
-    if (!empleado) throw { status: 404, message: "Empleado no encontrado" };
+    if (fechaNacimiento) {
+        const hoy = new Date();
+        const partes = String(fechaNacimiento).split('T')[0].split('-');
+        const nacimiento = new Date(partes[0], partes[1] - 1, partes[2]);
+        let edad = hoy.getFullYear() - nacimiento.getFullYear();
+        const m = hoy.getMonth() - nacimiento.getMonth();
+        if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+            edad--;
+        }
+        if (edad < 18) {
+            throw { status: 400, message: "El empleado debe tener al menos 18 años de edad" };
+        }
+    }
 
-    const existeContratoActivo = await AppDataSource.getRepository("Contrato")
-        .findOne({
+    let empleadoEntidad = null;
+    let clienteEntidad = null;
+
+    if (idEmpleado) {
+        empleadoEntidad = await AppDataSource.getRepository("Empleado")
+            .findOne({
+                where: { idEmpleado },
+                relations: ["usuario"]
+            });
+        if (!empleadoEntidad) throw { status: 404, message: "Empleado no encontrado" };
+
+        const rol = empleadoEntidad.usuario?.rol;
+        if (rol === "supervisor" && cargo !== "Supervisor") {
+            throw { status: 400, message: 'Un usuario con rol "supervisor" solo puede tener el cargo de "Supervisor".' };
+        }
+        if (rol === "empleado" && !["Guardia", "Personal de Aseo"].includes(cargo)) {
+            throw { status: 400, message: 'Un usuario con rol "empleado" solo puede tener el cargo de "Guardia" o "Personal de Aseo".' };
+        }
+        
+        const existeContratoActivo = await AppDataSource.getRepository("Contrato")
+            .findOne({
+                where: {
+                    empleado: { idEmpleado },
+                    estado: In(["ACTIVO", "activo", "PENDIENTE DE FIRMA"]),
+                },
+            });
+        if (existeContratoActivo) {
+            throw { status: 400, message: "El empleado ya tiene un contrato activo en el sistema. Debe finalizarlo o realizar un traslado." };
+        }
+    } else if (idCliente) {
+        clienteEntidad = await AppDataSource.getRepository("Cliente")
+            .findOne({ where: { idCliente } });
+        if (!clienteEntidad) throw { status: 404, message: "Cliente no encontrado" };
+        
+        if (cargo !== "Cliente") {
+            throw { status: 400, message: 'El cargo debe ser "Cliente" para contratos comerciales.' };
+        }
+
+        const cotizacionAprobada = await AppDataSource.getRepository("SolicitudCotizacion").findOne({
             where: {
-                empleado: { idEmpleado },
-                estado: In(["ACTIVO", "activo"]),
-            },
+                cliente: { idCliente },
+                instalacion: { idInstalacion },
+                estado: In(["Aprobada", "aprobada", "Aprobado", "aprobado"])
+            }
         });
-    if (existeContratoActivo) {
-        throw { status: 400, message: "El empleado ya tiene un contrato activo en el sistema. Debe finalizarlo o realizar un traslado." };
+        
+        if (!cotizacionAprobada) {
+            throw { status: 400, message: "No se puede generar un contrato porque no existe una cotización aprobada para esta instalación." };
+        }
     }
 
     if (tipo === "Plazo Fijo") {
@@ -143,12 +251,10 @@ export async function createContrato(body) {
         }
 
         if (sonConsecutivos) {
-            await crearAlerta(
-                idEmpleado,
-                "Alerta de Riesgo Legal (Plazo Fijo)",
-                `El empleado ${empleado.usuario?.nombre || 'Desconocido'} ${empleado.usuario?.apellido || ''} registrará su tercer contrato a Plazo Fijo de forma consecutiva.`,
-                "LIMITE_PLAZO_FIJO"
-            );
+            throw {
+                status: 400,
+                message: `El empleado ${empleadoEntidad.usuario?.nombre || 'Desconocido'} ${empleadoEntidad.usuario?.apellido || ''} no puede registrar un tercer contrato a Plazo Fijo consecutivo. Debe pasar a contrato Indefinido.`
+            };
         }
 
         // [NUEVA REGLA] Regla de los 15 meses: Si ha trabajado 12 meses (365 días) en un periodo de 15 meses.
@@ -167,52 +273,55 @@ export async function createContrato(body) {
             if (!c.fechaFin) continue; // solo contamos periodos cerrados para esta regla
             const dInicio = new Date(c.fechaInicio) < fechaInicioVentana ? fechaInicioVentana : new Date(c.fechaInicio);
             const dFin = new Date(c.fechaFin);
-            
-            if (dFin > dInicio) {
-                diasTrabajados += Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24));
+
+            if (dFin >= dInicio) {
+                diasTrabajados += Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24)) + 1;
             }
         }
 
         // Sumamos los días del nuevo contrato que se está creando
         if (fechaFin) {
-            const diasNuevo = Math.ceil((new Date(fechaFin) - new Date(fechaInicio)) / (1000 * 60 * 60 * 24));
+            const diasNuevo = Math.ceil((new Date(fechaFin) - new Date(fechaInicio)) / (1000 * 60 * 60 * 24)) + 1;
             diasTrabajados += diasNuevo;
         }
 
         if (diasTrabajados >= 365) {
-             await crearAlerta(
-                idEmpleado,
-                "Alerta Regla 15 Meses (Plazo Fijo)",
-                `El empleado ${empleado.usuario?.nombre || 'Desconocido'} superará los 12 meses de servicio discontinuo en un periodo de 15 meses con este contrato, debiendo pasar a Indefinido.`,
-                "LIMITE_PLAZO_FIJO"
-            );
+            throw {
+                status: 400,
+                message: `El empleado ${empleadoEntidad.usuario?.nombre || 'Desconocido'} superará los 12 meses (365 días) de servicio en un periodo de 15 meses. Por ley, debe pasar a contrato Indefinido.`
+            };
         }
     }
 
-    let estadoInicial = "ACTIVO";
+    let estadoInicial = "PENDIENTE DE FIRMA";
     if (fechaFin) {
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0); // Ignorar la hora para comparar solo días
         // Ajustar la fecha fin para comparar correctamente (generalmente viene en YYYY-MM-DD)
-        const dFin = new Date(fechaFin + "T00:00:00"); 
+        const dFin = new Date(fechaFin + "T00:00:00");
         if (dFin < hoy) {
             estadoInicial = "FINALIZADO";
         }
     }
 
     const nuevo = getRepo().create({
+        empleado: empleadoEntidad,
+        cliente: clienteEntidad,
         tipo,
         cargo,
-        sueldo,
-        jornadaHoras,
+        sueldo: idEmpleado ? sueldo : null,
+        montoServicio: idCliente ? montoServicio : null,
+        jornadaHoras: idEmpleado ? jornadaHoras : null,
         fechaInicio,
         fechaFin,
         estado: estadoInicial,
+        causalTermino: null,
         nacionalidad,
         estadoCivil,
         fechaNacimiento,
         domicilio,
-        empleado: { idEmpleado }
+        descripcionServicio: idCliente ? descripcionServicio : null,
+        condicionPago: idCliente ? condicionPago : null
     });
 
     const contratoGuardado = await getRepo().save(nuevo);
@@ -223,25 +332,30 @@ export async function createContrato(body) {
         const ci = ciRepo.create({
             contrato: { idContrato: contratoGuardado.idContrato },
             instalacion: { idInstalacion: idInstalacion },
-            horasSemanales: jornadaHoras,
+            horasSemanales: jornadaHoras || 0,
             pagoAdicional: 0
         });
         await ciRepo.save(ci);
     }
 
     // Registrar actividad
-    const nombreEmpleado = empleado?.usuario ? `${empleado.usuario.nombre} ${empleado.usuario.apellido}` : `ID ${idEmpleado}`;
+    let nombreContratado = "Desconocido";
+    if (empleadoEntidad) {
+        nombreContratado = empleadoEntidad.usuario ? `${empleadoEntidad.usuario.nombre} ${empleadoEntidad.usuario.apellido}` : `Empleado ID ${idEmpleado}`;
+    } else if (clienteEntidad) {
+        nombreContratado = clienteEntidad.nombreEmpresa || (clienteEntidad.usuario ? `${clienteEntidad.usuario.nombre} ${clienteEntidad.usuario.apellido}` : `Cliente ID ${idCliente}`);
+    }
 
     // [NUEVO] Verificación instantánea de vencimiento para nuevos contratos
     if (tipo === 'Plazo Fijo' && fechaFin && estadoInicial !== 'FINALIZADO') {
         const diffTime = new Date(fechaFin) - new Date();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays <= 15) {
             contratoGuardado.estado = 'POR VENCER';
             await getRepo().save(contratoGuardado);
-            
-            const mensaje = `El contrato a plazo fijo de ${nombreEmpleado} finaliza el ${fechaFin} (en ${diffDays} días).`;
+
+            const mensaje = `El contrato a plazo fijo de ${nombreContratado} finaliza el ${fechaFin} (en ${diffDays} días).`;
             await crearAlerta(
                 idEmpleado,
                 "ALERTA VENCIMIENTO",
@@ -252,8 +366,8 @@ export async function createContrato(body) {
         }
     }
 
-    await registrarActividad("Contrato creado", `Se creó un contrato a ${tipo} para ${nombreEmpleado}`);
-    
+    await registrarActividad("Contrato creado", `Se creó un contrato a ${tipo} para ${nombreContratado}`);
+
     return contratoGuardado;
 }
 
@@ -262,7 +376,7 @@ export async function updateContrato(id, body) {
 
     const {
         idEmpleado, tipo, cargo,
-        sueldo, jornadaHoras, fechaInicio, fechaFin, estado,
+        sueldo, jornadaHoras, fechaInicio, fechaFin, estado, causalTermino,
         nacionalidad, estadoCivil, fechaNacimiento, domicilio,
         idInstalacion
     } = body;
@@ -276,16 +390,63 @@ export async function updateContrato(id, body) {
     }
     const inicio = fechaInicio || contrato.fechaInicio;
     const fin = fechaFin !== undefined ? fechaFin : contrato.fechaFin;
+    const tipoActual = tipo || contrato.tipo;
+    const jornadaActual = jornadaHoras !== undefined ? jornadaHoras : contrato.jornadaHoras;
+
+    if (estado === "FINALIZADO" && contrato.estado !== "FINALIZADO") {
+        if (!causalTermino && !contrato.causalTermino) {
+            throw { status: 400, message: "Debe especificar una causal de término al finalizar el contrato" };
+        }
+    }
+
+    if (tipoActual === "Plazo Fijo" && !fin) {
+        throw { status: 400, message: "La fecha de término es obligatoria para contratos a Plazo Fijo" };
+    }
     if (fin && new Date(fin) <= new Date(inicio)) {
         throw { status: 400, message: "La fecha fin debe ser posterior a la de inicio" };
+    }
+    if (contrato.tipoContratoPadre === "Laboral") {
+        if (jornadaActual < 1 || jornadaActual > 42) {
+            throw { status: 400, message: "La jornada laboral debe ser entre 1 y 42 horas semanales" };
+        }
+    }
+
+    const nacimientoAValidar = fechaNacimiento !== undefined ? fechaNacimiento : contrato.fechaNacimiento;
+    if (nacimientoAValidar) {
+        const hoy = new Date();
+        const partes = String(nacimientoAValidar).split('T')[0].split('-');
+        const nacimiento = new Date(partes[0], partes[1] - 1, partes[2]);
+        let edad = hoy.getFullYear() - nacimiento.getFullYear();
+        const m = hoy.getMonth() - nacimiento.getMonth();
+        if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+            edad--;
+        }
+        if (edad < 18) {
+            throw { status: 400, message: "El empleado debe tener al menos 18 años de edad" };
+        }
     }
 
     // Verifica existencia de relaciones si se quieren cambiar
     if (idEmpleado) {
         const empleado = await AppDataSource.getRepository("Empleado")
-            .findOne({ where: { idEmpleado } });
+            .findOne({ where: { idEmpleado }, relations: ["usuario"] });
         if (!empleado) throw { status: 404, message: "Empleado no encontrado" };
-        contrato.empleado = { idEmpleado };
+        contrato.empleado = empleado; // Save the full object to use its role
+    }
+
+    const nuevoCargo = cargo || contrato.cargo;
+    const rolActual = contrato.empleado?.usuario?.rol;
+
+    if (rolActual) {
+        if (rolActual === "supervisor" && nuevoCargo !== "Supervisor") {
+            throw { status: 400, message: 'Un usuario con rol "supervisor" solo puede tener el cargo de "Supervisor".' };
+        }
+        if (rolActual === "empleado" && !["Guardia", "Personal de Aseo"].includes(nuevoCargo)) {
+            throw { status: 400, message: 'Un usuario con rol "empleado" solo puede tener el cargo de "Guardia" o "Personal de Aseo".' };
+        }
+        if (rolActual === "cliente" && nuevoCargo !== "Cliente") {
+            throw { status: 400, message: 'Un usuario con rol "cliente" solo puede tener el cargo de "Cliente".' };
+        }
     }
 
     // Actualiza solo los campos que llegaron
@@ -296,6 +457,7 @@ export async function updateContrato(id, body) {
     if (fechaInicio) contrato.fechaInicio = fechaInicio;
     if (fechaFin !== undefined) contrato.fechaFin = fechaFin;
     if (estado) contrato.estado = estado;
+    if (causalTermino !== undefined) contrato.causalTermino = causalTermino;
     if (nacionalidad !== undefined) contrato.nacionalidad = nacionalidad;
     if (estadoCivil !== undefined) contrato.estadoCivil = estadoCivil;
     if (fechaNacimiento !== undefined) contrato.fechaNacimiento = fechaNacimiento;
@@ -328,7 +490,7 @@ export async function updateContrato(id, body) {
     return contratoGuardado;
 }
 
-export async function updateEstadoContrato(id, estado) {
+export async function updateEstadoContrato(id, estado, causalTermino) {
     if (!estado) {
         throw { status: 400, message: "El campo estado es obligatorio" };
     }
@@ -336,33 +498,41 @@ export async function updateEstadoContrato(id, estado) {
         throw { status: 400, message: `Estado inválido. Permitidos: ${ESTADOS_VALIDOS.join(", ")}` };
     }
     const contrato = await getContratoById(id);
+
+    if (estado === "FINALIZADO" && contrato.estado !== "FINALIZADO") {
+        if (!causalTermino) {
+            throw { status: 400, message: "Debe especificar una causal de término al finalizar el contrato" };
+        }
+        contrato.causalTermino = causalTermino;
+    }
+
     contrato.estado = estado;
     const guardado = await getRepo().save(contrato);
-    
+
     const cod = `CT-${String(id).padStart(4, '0')}`;
     await registrarActividad("Estado modificado", `El contrato ${cod} cambió a estado ${estado}`);
-    
+
     return guardado;
 }
 
 export async function deleteContrato(id) {
     const contrato = await getContratoById(id);
     await getRepo().remove(contrato);
-    
+
     const cod = `CT-${String(id).padStart(4, '0')}`;
     await registrarActividad("Contrato eliminado", `Se eliminó el contrato ${cod}`);
 }
 
 export async function agregarInstalacionContrato(idContrato, idInstalacion, horasSemanales, pagoAdicional) {
     const contrato = await getContratoById(idContrato);
-    
+
     // Obtener las instalaciones actuales para sumar las horas
     const ciRepo = AppDataSource.getRepository("ContratoInstalacion");
-    const asignacionesActuales = await ciRepo.find({ 
+    const asignacionesActuales = await ciRepo.find({
         where: { contrato: { idContrato } },
         relations: ["instalacion"]
     });
-    
+
     let horasTotalesActuales = 0;
     for (const asig of asignacionesActuales) {
         if (asig.instalacion.idInstalacion === idInstalacion) {
@@ -370,61 +540,73 @@ export async function agregarInstalacionContrato(idContrato, idInstalacion, hora
         }
         horasTotalesActuales += Number(asig.horasSemanales);
     }
-    
-    const maxHorasLegales = 42; // LEY_LABORAL_CHILE
-    if ((horasTotalesActuales + Number(horasSemanales)) > maxHorasLegales) {
-        throw { status: 400, message: `No se puede exceder el límite legal de ${maxHorasLegales} horas. Total proyectado: ${horasTotalesActuales + Number(horasSemanales)} horas.` };
+
+    // Fallback: si por datos antiguos no hay asignaciones en la BD, usamos la jornada original
+    if (horasTotalesActuales === 0 && contrato.jornadaHoras) {
+        horasTotalesActuales = Number(contrato.jornadaHoras);
     }
-    
+
+    const maxHorasLegales = 42; // LEY_LABORAL_CHILE
+    const nuevoTotal = horasTotalesActuales + Number(horasSemanales);
+
+    if (nuevoTotal > maxHorasLegales) {
+        throw { status: 400, message: `No se puede exceder el límite legal de ${maxHorasLegales} horas. Total proyectado: ${nuevoTotal} horas (Actual: ${horasTotalesActuales}h + Nuevas: ${horasSemanales}h).` };
+    }
+
+    // Actualizamos las horas totales del contrato para que refleje la realidad
+    contrato.jornadaHoras = nuevoTotal;
+    await AppDataSource.getRepository("Contrato").save(contrato);
+
     const nuevaAsignacion = ciRepo.create({
         contrato: { idContrato },
         instalacion: { idInstalacion },
         horasSemanales: Number(horasSemanales),
-        pagoAdicional: Number(pagoAdicional)
+        pagoAdicional: Number(pagoAdicional),
+        estadoFirma: "PENDIENTE"
     });
-    
+
     await ciRepo.save(nuevaAsignacion);
-    
+
     // Registrar actividad
     const nombreEmpleado = contrato.empleado?.usuario ? `${contrato.empleado.usuario.nombre} ${contrato.empleado.usuario.apellido}` : `ID ${contrato.empleado.idEmpleado}`;
     await registrarActividad("Anexo generado", `Se asignó a ${nombreEmpleado} a una nueva instalación con ${horasSemanales}h adicionales.`);
-    
+
     return await getContratoById(idContrato);
 }
 
 export async function removerInstalacionService(idContrato, idInstalacion) {
-  try {
-    const contratoRepo = AppDataSource.getRepository("Contrato");
-    const contratoInstalacionRepo = AppDataSource.getRepository("ContratoInstalacion");
+    try {
+        const contratoRepo = AppDataSource.getRepository("Contrato");
+        const contratoInstalacionRepo = AppDataSource.getRepository("ContratoInstalacion");
 
-    const contrato = await contratoRepo.findOne({
-      where: { idContrato },
-      relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion"]
-    });
+        const contrato = await contratoRepo.findOne({
+            where: { idContrato },
+            relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion"]
+        });
 
-    if (!contrato) {
-      throw { status: 404, message: "Contrato no encontrado." };
+        if (!contrato) {
+            throw { status: 404, message: "Contrato no encontrado." };
+        }
+
+        if (contrato.contratoInstalaciones.length <= 1) {
+            throw { status: 400, message: "No se puede dejar un contrato sin ninguna instalación." };
+        }
+
+        const asignacion = contrato.contratoInstalaciones.find(ci => ci.instalacion.idInstalacion === idInstalacion);
+        if (!asignacion) {
+            throw { status: 404, message: "La instalación indicada no está asignada a este contrato." };
+        }
+
+        await contratoInstalacionRepo.delete({
+            contrato: { idContrato: idContrato },
+            instalacion: { idInstalacion: idInstalacion }
+        });
+
+        return true;
+    } catch (error) {
+        if (error.status) throw error;
+        throw new Error(`Error al remover instalación: ${error.message}`);
     }
-
-    if (contrato.contratoInstalaciones.length <= 1) {
-      throw { status: 400, message: "No se puede dejar un contrato sin ninguna instalación." };
-    }
-
-    const asignacion = contrato.contratoInstalaciones.find(ci => ci.instalacion.idInstalacion === idInstalacion);
-    if (!asignacion) {
-      throw { status: 404, message: "La instalación indicada no está asignada a este contrato." };
-    }
-
-    await contratoInstalacionRepo.delete({ 
-      contrato: { idContrato: idContrato }, 
-      instalacion: { idInstalacion: idInstalacion } 
-    });
-
-    return true;
-  } catch (error) {
-    if (error.status) throw error;
-    throw new Error(`Error al remover instalación: ${error.message}`);
-  }
 }
 
 export async function solicitarTrasladoService(idContrato, body) {
@@ -464,14 +646,19 @@ export async function getStaffContratosService(user = null) {
     const usuarios = await repo.find({
         where: [
             { rol: "empleado" },
-            { rol: "supervisor" }
+            { rol: "supervisor" },
+            { rol: "cliente" }
         ],
         relations: [
             "empleado",
             "empleado.contratos",
             "empleado.contratos.contratoInstalaciones",
             "empleado.contratos.contratoInstalaciones.instalacion",
-            "supervisor"
+            "supervisor",
+            "cliente",
+            "cliente.contratos",
+            "cliente.contratos.contratoInstalaciones",
+            "cliente.contratos.contratoInstalaciones.instalacion"
         ]
     });
 
@@ -481,7 +668,7 @@ export async function getStaffContratosService(user = null) {
         const supervisor = await AppDataSource.getRepository("Supervisor").findOne({
             where: { usuario: { idUsuario: user.idUsuario } },
             relations: [
-                "instalaciones", 
+                "instalaciones",
                 "instalaciones.instalacion",
                 "usuario",
                 "usuario.empleado",
@@ -490,9 +677,9 @@ export async function getStaffContratosService(user = null) {
                 "usuario.empleado.contratos.contratoInstalaciones.instalacion"
             ]
         });
-        
+
         let instalacionIds = [];
-        
+
         // Desde SupervisorInstalacion
         if (supervisor && supervisor.instalaciones) {
             instalacionIds.push(...supervisor.instalaciones.map(si => si.instalacion.idInstalacion));
@@ -514,12 +701,18 @@ export async function getStaffContratosService(user = null) {
 
         if (instalacionIds.length > 0) {
             filtrados = usuarios.filter(u => {
-                // Permitir ver a empleados y supervisores que no sean el mismo usuario
-                if ((u.rol !== "empleado" && u.rol !== "supervisor") || !u.empleado || !u.empleado.contratos) return false;
+                let contratosList = [];
+                if (u.rol === 'cliente' && u.cliente && u.cliente.contratos) {
+                    contratosList = u.cliente.contratos;
+                } else if ((u.rol === 'empleado' || u.rol === 'supervisor') && u.empleado && u.empleado.contratos) {
+                    contratosList = u.empleado.contratos;
+                } else {
+                    return false;
+                }
                 
-                return u.empleado.contratos.some(c => 
+                return contratosList.some(c =>
                     c.estado !== "FINALIZADO" &&
-                    c.contratoInstalaciones && 
+                    c.contratoInstalaciones &&
                     c.contratoInstalaciones.some(ci => ci.instalacion && instalacionIds.includes(ci.instalacion.idInstalacion))
                 );
             });

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { obtenerCotizacionesService, actualizarEstadoCotizacionService, reactivarCotizacionService, asignarEmpleadosCotizacionService } from "../services/admin.service";
+import { obtenerCotizacionesService, actualizarEstadoCotizacionService, reactivarCotizacionService } from "../services/admin.service";
 import toast from "react-hot-toast";
 
 const BADGE = {
@@ -66,7 +66,7 @@ function TiempoRestante({ fechaLimite, estado }) {
 }
 
 // ── Modal detalle ──────────────────────────────────────────────────────────────
-function ModalDetalle({ cotizacion, onCerrar, onResolver, onReactivar, onAsignarEmpleados, actualizandoId }) {
+function ModalDetalle({ cotizacion, onCerrar, onResolver, onReactivar, actualizandoId }) {
   if (!cotizacion) return null;
   const estadoN = cotizacion.estado?.toLowerCase();
   const badge   = BADGE[estadoN] ?? { bg: "#f1f5f9", color: "#475569" };
@@ -156,21 +156,6 @@ function ModalDetalle({ cotizacion, onCerrar, onResolver, onReactivar, onAsignar
             >
               {actualizandoId === cotizacion.idSolicitud ? "Reactivando..." : "Reactivar cotización ↺"}
             </button>
-          )}
-          {cotizacion.estado === "Aprobada" && cotizacion.instalacion && (
-            cotizacion.personalAsignado ? (
-              <span style={{ padding: "6px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 600, background: "#dcfce7", color: "#166534" }}>
-                Personal asignado ✓
-              </span>
-            ) : (
-              <button
-                onClick={() => onAsignarEmpleados(cotizacion)}
-                style={{ ...btnPrimario, background: "#0f172a" }}
-                disabled={actualizandoId === cotizacion.idSolicitud}
-              >
-                {actualizandoId === cotizacion.idSolicitud ? "Asignando..." : "Asignar Empleados →"}
-              </button>
-            )
           )}
         </div>
       </div>
@@ -394,26 +379,7 @@ function CotizacionesTable() {
     }).finally(() => setActualizandoId(null));
   }
 
-  async function handleAsignarEmpleados(c) {
-    setActualizandoId(c.idSolicitud);
-    toast.promise(
-      asignarEmpleadosCotizacionService(c.idSolicitud),
-      {
-        loading: "Asignando empleados...",
-        success: (res) => {
-          const { empleados, supervisor } = res.data;
-          const nombres = empleados.map((e) => `${e.nombre} ${e.apellido}`).join(", ");
-          return `Se asignaron ${empleados.length} empleado(s) (${nombres}) y el supervisor ${supervisor.nombre} ${supervisor.apellido}.`;
-        },
-        error: (err) => err?.response?.data?.message || "Error al asignar empleados.",
-      }
-    ).then(() => {
-      setCotizaciones((prev) =>
-        prev.map((x) => x.idSolicitud === c.idSolicitud ? { ...x, personalAsignado: true } : x)
-      );
-      setModalDetalle((prev) => prev && prev.idSolicitud === c.idSolicitud ? { ...prev, personalAsignado: true } : prev);
-    }).finally(() => setActualizandoId(null));
-  }
+
 
   async function handleReactivar(c) {
     setActualizandoId(c.idSolicitud);
@@ -507,7 +473,6 @@ function CotizacionesTable() {
           onCerrar={() => setModalDetalle(null)}
           onResolver={(c) => setModalResolver(c)}
           onReactivar={handleReactivar}
-          onAsignarEmpleados={handleAsignarEmpleados}
           actualizandoId={actualizandoId}
         />
       )}
@@ -602,7 +567,7 @@ function CotizacionesTable() {
         </div>
 
         {/* Tabla */}
-        <div style={{ background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+        <div style={{ background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
             <thead>
               <tr style={{ background: "#f1f5f9", textAlign: "left" }}>

@@ -1,12 +1,8 @@
 "use strict";
-import { IsNull } from "typeorm";
 import { AppDataSource } from "../config/configDb.js";
 import { SolicitudCotizacion } from "../models/SolicitudCotizacion.js";
 import { Cliente } from "../models/Cliente.js";
 import { Instalacion } from "../models/Instalacion.js";
-import { Empleado } from "../models/Empleado.js";
-import { Supervisor } from "../models/Supervisor.js";
-import { SupervisorInstalacion } from "../models/SupervisorInstalacion.js";
 import { enviarCorreoSolicitudRecibida, enviarCorreoEstadoCotizacion, enviarCorreoReactivacion } from "../utils/email.js";
 import { agregarHorasHabiles } from "../utils/businessHours.js";
 
@@ -55,8 +51,6 @@ export async function crearCotizacionService(datosCotizacion) {
     estado:             "Pendiente",
     fechaLimite,
     horasHabilesLimite: HORAS_HABILES_LIMITE,
-    // Se guarda tal cual la pide el cliente; es lo que despues lee asignarEmpleadosService
-    // para saber cuantos empleados tomar cuando el admin apruebe esta cotizacion.
     cantidadEmpleados,
     cliente:     clienteActual,
     instalacion: instalacionValida,
@@ -170,81 +164,4 @@ export async function reactivarCotizacionService(idSolicitud) {
   ).catch((err) => console.error("Error enviando correo de reactivación:", err));
 
   return cotizacionReactivada;
-}
-
-export async function asignarEmpleadosService(idSolicitud) {
-  const cotizacionRepo = AppDataSource.getRepository(SolicitudCotizacion);
-  const empleadoRepo = AppDataSource.getRepository(Empleado);
-  const supervisorRepo = AppDataSource.getRepository(Supervisor);
-  const supervisorInstalacionRepo = AppDataSource.getRepository(SupervisorInstalacion);
-
-  const cotizacion = await cotizacionRepo.findOne({
-    where: { idSolicitud: idSolicitud },
-    relations: ["instalacion"]
-  });
-  if (!cotizacion) throw new Error("Cotización no encontrada.");
-
-  // Solo tiene sentido asignar personal a algo ya aprobado y con un lugar concreto donde trabajar.
-  if (cotizacion.estado !== "Aprobada") throw new Error("Solo se pueden asignar empleados a cotizaciones aprobadas.");
-  if (!cotizacion.instalacion) throw new Error("Esta cotización no tiene una instalación asociada.");
-
-  // Guard de idempotencia: sin esto, volver a apretar el botón asignaría empleados de más.
-  if (cotizacion.personalAsignado) throw new Error("Esta cotización ya tiene personal asignado.");
-
-  // Busca los primeros N empleados que no tienen instalación asignada.
-  const empleadosLibres = await empleadoRepo.find({
-    where: { instalacion: IsNull() },
-    relations: ["usuario"],
-    order: { idEmpleado: "ASC" },
-    take: cotizacion.cantidadEmpleados,
-  });
-
-  //Verifica que haya empleados suficientes para la cotizacion
-  if (empleadosLibres.length < cotizacion.cantidadEmpleados) {
-    throw new Error(
-      `No hay suficientes empleados libres. Se necesitan ${cotizacion.cantidadEmpleados}, hay ${empleadosLibres.length} disponibles.`
-    );
-  }
-
-  //Se busca el primer supervisor que exista
-  const [supervisor] = await supervisorRepo.find({
-    relations: ["usuario"],
-    order: { idSupervisor: "ASC" },
-    take: 1,
-  });
-  if (!supervisor) throw new Error("No hay supervisores registrados.");
-
-  // Mueve a cada empleado libre a la instalación de la cotización.
-  for (const empleado of empleadosLibres) {
-    empleado.instalacion = cotizacion.instalacion;
-  }
-  await empleadoRepo.save(empleadosLibres);
-
-  // Vincula el supervisor a la instalación, salvo que ya estuviera a cargo de ella
-  const vinculoExistente = await supervisorInstalacionRepo.findOne({
-    where: {
-      supervisor: { idSupervisor: supervisor.idSupervisor },
-      instalacion: { idInstalacion: cotizacion.instalacion.idInstalacion }
-    }
-  });
-  if (!vinculoExistente) {
-    await supervisorInstalacionRepo.save({ supervisor, instalacion: cotizacion.instalacion });
-  }
-
-  // Marca la cotización para que el botón no se pueda volver a apretar sobre esta misma.
-  cotizacion.personalAsignado = true;
-  await cotizacionRepo.save(cotizacion);
-
-  return {
-    empleados: empleadosLibres.map((e) => ({
-      idEmpleado: e.idEmpleado,
-      nombre: e.usuario?.nombre,
-      apellido: e.usuario?.apellido,
-    })),
-    supervisor: {
-      idSupervisor: supervisor.idSupervisor,
-      nombre: supervisor.usuario?.nombre,
-      apellido: supervisor.usuario?.apellido,
-    },
-  };
 }

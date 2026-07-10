@@ -13,6 +13,10 @@ const ESTADO_CONFIG = {
     label: 'FINALIZADO',
     className: styles.finalizado,
   },
+  'PENDIENTE DE FIRMA': {
+    label: 'PENDIENTE DE FIRMA',
+    className: styles.pendiente,
+  }
 }
 
 export function useContratoEstadoBadge(estado) {

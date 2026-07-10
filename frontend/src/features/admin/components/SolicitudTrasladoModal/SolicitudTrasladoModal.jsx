@@ -49,11 +49,11 @@ export default function SolicitudTrasladoModal({ contrato, onClose, onSuccess })
         </div>
 
         {/* Form */}
-        <form onSubmit={submit} className={styles.form}>
-          <div className={styles.formBody}>
+        <form onSubmit={submit}>
+          <div className={styles.body}>
             
             {error && (
-              <div className={styles.errorAlert}>
+              <div className={styles.error}>
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
@@ -61,7 +61,7 @@ export default function SolicitudTrasladoModal({ contrato, onClose, onSuccess })
               </div>
             )}
 
-            <div className={styles.formGroup}>
+            <div className={styles.field}>
               <label className={styles.label}>Instalación de Destino <span style={{color: 'red'}}>*</span></label>
               <select
                 name="idInstalacion"
@@ -80,7 +80,7 @@ export default function SolicitudTrasladoModal({ contrato, onClose, onSuccess })
               </select>
             </div>
 
-            <div className={styles.formGroup}>
+            <div className={styles.field}>
               <label className={styles.label}>Motivo del Traslado <span style={{color: 'red'}}>*</span></label>
               <textarea
                 name="motivo"
@@ -91,7 +91,11 @@ export default function SolicitudTrasladoModal({ contrato, onClose, onSuccess })
                 placeholder="Indica la razón por la que solicitas el traslado de este trabajador"
                 disabled={loading}
                 required
+                maxLength={150}
               ></textarea>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', textAlign: 'right', marginTop: '0.25rem' }}>
+                {(form.motivo || '').length}/150 caracteres
+              </p>
             </div>
 
           </div>
@@ -100,14 +104,14 @@ export default function SolicitudTrasladoModal({ contrato, onClose, onSuccess })
             <button
               type="button"
               onClick={onClose}
-              className={styles.cancelBtn}
+              className={styles.btnCancel}
               disabled={loading}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className={styles.submitBtn}
+              className={styles.btnSubmit}
               disabled={loading || loadingOptions}
             >
               {loading ? 'Enviando...' : 'Enviar Solicitud'}

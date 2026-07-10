@@ -5,7 +5,9 @@ import {
   subirDocumentoController, 
   getDocumentosByEmpleadoController, 
   getMisDocumentosController,
-  downloadDocumentoController 
+  getMisDocumentosClienteController,
+  downloadDocumentoController,
+  firmarDocumentoController
 } from "../controllers/documento.controller.js";
 import { authMiddleware, autorizeEntities } from "../middleware/authentication.js";
 
@@ -20,7 +22,7 @@ const upload = multer({
 router.use(authMiddleware);
 
 // GET /api/empleados/mis-documentos - Obtener historial de documentos del propio empleado
-router.get("/empleados/mis-documentos", autorizeEntities("empleado"), getMisDocumentosController);
+router.get("/empleados/mis-documentos", autorizeEntities("empleado", "supervisor"), getMisDocumentosController);
 
 // GET /api/empleados/:id/documentos - Obtener historial de documentos de un empleado
 router.get("/empleados/:id/documentos", autorizeEntities("administrador", "supervisor"), getDocumentosByEmpleadoController);
@@ -28,7 +30,18 @@ router.get("/empleados/:id/documentos", autorizeEntities("administrador", "super
 // POST /api/empleados/:id/documentos - Subir un nuevo documento
 router.post("/empleados/:id/documentos", autorizeEntities("administrador", "supervisor"), upload.single("archivoPdf"), subirDocumentoController);
 
+// GET /api/clientes/mis-documentos - Obtener historial de documentos del propio cliente
+router.get("/clientes/mis-documentos", autorizeEntities("cliente"), getMisDocumentosClienteController);
+
+// GET /api/clientes/:id/documentos - Obtener historial de documentos de un cliente
+router.get("/clientes/:id/documentos", autorizeEntities("administrador", "supervisor"), getDocumentosByEmpleadoController);
+
+// POST /api/clientes/:id/documentos - Subir un nuevo documento
+router.post("/clientes/:id/documentos", autorizeEntities("administrador"), upload.single("archivoPdf"), subirDocumentoController);
+
 // GET /api/documentos/:idDocumento/download - Descargar un documento (protegido)
-router.get("/documentos/:idDocumento/download", autorizeEntities("administrador", "supervisor", "empleado"), downloadDocumentoController);
+router.get("/documentos/:idDocumento/download", autorizeEntities("administrador", "supervisor", "empleado", "cliente"), downloadDocumentoController);
+// POST /api/documentos/:idDocumento/firmar - Firmar digitalmente un documento
+router.post("/documentos/:idDocumento/firmar", autorizeEntities("empleado", "supervisor", "cliente"), firmarDocumentoController);
 
 export default router;

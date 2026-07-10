@@ -10,6 +10,8 @@ import {
   validateCrearInstalacion, 
   validateActualizarInstalacion 
 } from "../validations/instalacion.validations.js";
+import { AppDataSource } from "../config/configDb.js";
+import { Cliente } from "../models/Cliente.js";
 
 export async function obtenerMisInstalaciones(req, res) {
   try {
@@ -32,6 +34,17 @@ export async function obtenerInstalaciones(req, res) {
 
 export async function crearInstalacion(req, res) {
   try {
+    if (req.user.rol === "cliente") {
+      const clienteRepo = AppDataSource.getRepository(Cliente);
+      const cliente = await clienteRepo.findOne({
+        where: { usuario: { idUsuario: req.user.idUsuario } },
+      });
+      if (!cliente) {
+        return res.status(400).json({ message: "Perfil de cliente no encontrado." });
+      }
+      req.body.idCliente = cliente.idCliente;
+    }
+
     const { error, value } = validateCrearInstalacion(req.body);
     if (error) {
       return res.status(400).json({ message: error.details.map((d) => d.message).join(", ") });
@@ -50,7 +63,7 @@ export async function actualizarInstalacion(req, res) {
     if (error) {
       return res.status(400).json({ message: error.details.map((d) => d.message).join(", ") });
     }
-    const actualizada = await actualizarInstalacionService(Number(id), value);
+    const actualizada = await actualizarInstalacionService(Number(id), value, req.user);
     res.status(200).json({ status: "Success", data: actualizada });
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -60,7 +73,7 @@ export async function actualizarInstalacion(req, res) {
 export async function eliminarInstalacion(req, res) {
   try {
     const { id } = req.params;
-    await eliminarInstalacionService(Number(id));
+    await eliminarInstalacionService(Number(id), req.user);
     res.status(200).json({ status: "Success", message: "Instalación eliminada correctamente." });
   } catch (error) {
     res.status(400).json({ message: error.message });

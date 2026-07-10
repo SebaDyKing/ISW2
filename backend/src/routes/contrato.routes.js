@@ -11,7 +11,7 @@ const router = Router();
 router.get("/staff", authMiddleware, autorizeEntities("administrador", "supervisor"), getStaffContratos);
 router.get("/", authMiddleware, autorizeEntities("administrador", "supervisor"), getAll);
 router.get("/empleado/:id_empleado", authMiddleware, autorizeEntities("administrador", "supervisor"), getByEmpleado);
-router.get("/mis-asignaciones", authMiddleware, autorizeEntities("empleado"), getMisAsignaciones);
+router.get("/mis-asignaciones", authMiddleware, autorizeEntities("empleado", "supervisor", "cliente"), getMisAsignaciones);
 router.get("/:id", authMiddleware, autorizeEntities("administrador", "supervisor"), getById);
 
 // Escritura — solo admin

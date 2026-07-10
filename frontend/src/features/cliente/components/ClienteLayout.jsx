@@ -33,6 +33,18 @@ function IconMisCotizaciones() {
   );
 }
 
+function IconDocumento() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
+    </svg>
+  );
+}
+
 function IconMenu() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -52,8 +64,19 @@ function IconClose() {
   );
 }
 
+function IconInstalacion() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
 const NAV = [
   { to: "/cliente/mis-cotizaciones", label: "Cotizaciones", icon: IconMisCotizaciones },
+  { to: "/cliente/instalaciones", label: "Instalaciones", icon: IconInstalacion },
+  { to: "/cliente/mis-documentos", label: "Mis Contratos", icon: IconDocumento },
 ];
 
 function ClienteLayout() {
@@ -69,7 +92,7 @@ function ClienteLayout() {
   async function cerrarSesion() {
     try {
       await api.post("/auth/logout");
-    } catch (_) {}
+    } catch (_) { }
     finally {
       localStorage.removeItem("usuario");
       navigate("/login");
@@ -120,10 +143,9 @@ function ClienteLayout() {
               to={to}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-white text-slate-900"
-                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
+                  ? "bg-white text-slate-900"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
                 }`
               }
             >
@@ -139,7 +161,9 @@ function ClienteLayout() {
               {inicial}
             </div>
             <div className="min-w-0 leading-tight">
-              <div className="text-sm font-medium text-white truncate">{usuario.nombreMostrar}</div>
+              <div className="text-sm font-medium text-white truncate">
+                {usuario.empresa || usuario.nombreMostrar}
+              </div>
               <div className="text-[10px] tracking-wider text-slate-500 capitalize">{usuario.rol}</div>
             </div>
           </div>

@@ -1,18 +1,42 @@
 import React from 'react'
+
 import { useNavigate } from 'react-router-dom'
 import { useAdminDashboard } from './useAdminDashboard'
 import styles from './AdminDashboard.module.css'
+import Swal from 'sweetalert2'
 
 export default function AdminDashboard() {
   const { data, loading } = useAdminDashboard()
   const navigate = useNavigate()
 
   const handleAlertClick = (alerta) => {
-    // Intentamos extraer el nombre del empleado del mensaje. 
-    // El formato del mensaje es "El empleado Nombre Apellido registrará..."
-    const match = alerta.mensaje.match(/El empleado (.+) registrará/)
-    const nombre = match ? match[1] : ''
-    navigate(`/admin/contratos?search=${encodeURIComponent(nombre)}`)
+    const isTraslado = alerta.tipoAlerta === 'Solicitud de Traslado'
+
+    Swal.fire({
+      title: 'Detalle de la Alerta',
+      text: alerta.mensaje,
+      icon: 'info',
+      confirmButtonText: isTraslado ? 'Ir a Contratos para Aprobar' : 'Ir al detalle',
+      showCancelButton: true,
+      cancelButtonText: isTraslado ? 'Dejar pendiente' : 'Cerrar',
+      confirmButtonColor: '#4f46e5',
+      cancelButtonColor: '#94a3b8'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        if (alerta.tipoOriginal === 'cotizacion') {
+          navigate('/admin/cotizaciones')
+        } else if (alerta.tipoOriginal === 'licencia') {
+          navigate('/admin/licencias')
+        } else if (alerta.tipoOriginal === 'contrato' || alerta.tipoOriginal === 'firma') {
+          navigate('/admin/contratos')
+        } else {
+          // Intentamos extraer el nombre del empleado por defecto (alertas antiguas/generales)
+          const match = alerta.mensaje?.match(/(?:El empleado|para) (.+?) (?:registrará|a la instalación)/)
+          const nombre = match ? match[1].trim() : ''
+          navigate(`/admin/contratos?search=${encodeURIComponent(nombre)}`)
+        }
+      }
+    })
   }
 
   if (loading) {

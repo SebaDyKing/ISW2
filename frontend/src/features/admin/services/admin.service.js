@@ -25,10 +25,7 @@ export async function reactivarCotizacionService(id) {
   return res;
 }
 
-export async function asignarEmpleadosCotizacionService(id) {
-  const res = await api.post(`/cotizaciones/${id}/asignar-empleados`);
-  return res;
-}
+
 
 export async function crearUsuarioService(datos) {
   const res = await api.post(`/usuarios`, datos);
@@ -98,9 +95,37 @@ export async function getDocumentosEmpleado(idEmpleado) {
   return res;
 }
 
+export async function subirDocumentoCliente(idCliente, tipo, archivoBlob) {
+  const formData = new FormData();
+  formData.append("tipo", tipo);
+  formData.append("archivoPdf", archivoBlob, `${tipo}.pdf`);
+  
+  const res = await api.post(`/clientes/${idCliente}/documentos`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res;
+}
+
+export async function getDocumentosCliente(idCliente) {
+  const res = await api.get(`/clientes/${idCliente}/documentos`);
+  return res;
+}
+
 export async function descargarDocumentoService(idDocumento) {
   const res = await api.get(`/documentos/${idDocumento}/download`, {
     responseType: 'blob'
   });
+  return res;
+}
+
+export async function getFirmaAdminService() {
+  const res = await api.get('/usuarios/admin/firma');
+  return res;
+}
+
+export async function guardarFirmaAdminService(firmaBase64) {
+  const res = await api.post('/usuarios/admin/firma', { firmaBase64 });
   return res;
 }

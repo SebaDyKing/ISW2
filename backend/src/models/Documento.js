@@ -1,9 +1,9 @@
 "use strict";
 import { EntitySchema } from "typeorm";
 
-export const DocumentoEmpleado = new EntitySchema({
-  name: "DocumentoEmpleado",
-  tableName: "documento_empleado",
+export const Documento = new EntitySchema({
+  name: "Documento",
+  tableName: "documento",
   columns: {
     idDocumento: {
       name: "id_documento",
@@ -30,6 +30,22 @@ export const DocumentoEmpleado = new EntitySchema({
       type: "timestamp",
       createDate: true,
     },
+    estadoFirma: {
+      name: "estado_firma",
+      type: "varchar",
+      length: 20,
+      default: "PENDIENTE",
+    },
+    fechaFirma: {
+      name: "fecha_firma",
+      type: "timestamp",
+      nullable: true,
+    },
+    firmaBase64: {
+      name: "firma_base64",
+      type: "text",
+      nullable: true,
+    },
   },
   relations: {
     empleado: {
@@ -40,6 +56,17 @@ export const DocumentoEmpleado = new EntitySchema({
         referencedColumnName: "idEmpleado",
       },
       onDelete: "CASCADE",
+      nullable: true,
+    },
+    cliente: {
+      target: "Cliente",
+      type: "many-to-one",
+      joinColumn: {
+        name: "id_cliente",
+        referencedColumnName: "idCliente",
+      },
+      onDelete: "CASCADE",
+      nullable: true,
     },
   },
 });

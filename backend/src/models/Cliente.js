@@ -44,6 +44,11 @@ export const Cliente = new EntitySchema({
       target: "Instalacion",
       inverseSide: "cliente",
     },
+    contratos: {
+      type: "one-to-many",
+      target: "Contrato",
+      inverseSide: "cliente",
+    },
     clientesPlan: {
       type: "one-to-many",
       target: "ClientePlan",
@@ -58,7 +63,7 @@ export const Cliente = new EntitySchema({
       type: "one-to-many",
       target: "SolicitudCotizacion",
       inverseSide: "cliente",
-  },
-}
+    },
+  }
 }
 );
