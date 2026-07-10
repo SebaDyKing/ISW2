@@ -9,6 +9,12 @@ import { Cliente } from "../models/Cliente.js";
 import { Instalacion } from "../models/Instalacion.js";
 import { Contrato } from "../models/Contrato.js";
 import { Plan } from "../models/Plan.js";
+import { SolicitudCotizacion } from "../models/SolicitudCotizacion.js";
+import { LicenciaMedica } from "../models/LicenciaMedica.js";
+import { Asistencia } from "../models/Asistencia.js";
+import { HojaVida } from "../models/HojaVida.js";
+import { Documento } from "../models/Documento.js";
+import { SupervisorInstalacion } from "../models/SupervisorInstalacion.js";
 
 const PLANES_DATA = [
   {
@@ -68,22 +74,36 @@ export async function seedDatabase() {
 
   const passwordHash = await bcrypt.hash("password123", 10);
 
-  // 5 usuarios base
+  // 7 usuarios base (agregamos 2 empleados extra)
   const usuarios = await usuarioRepo.save([
     { nombre: "Juan",     apellido: "Pérez",   rut: "11111111-1", correo: "juan@test.cl",      passwordHash, rol: "empleado" },
     { nombre: "Ana",      apellido: "Soto",    rut: "22222222-2", correo: "ana@test.cl",       passwordHash, rol: "administrador" },
     { nombre: "Carlos",   apellido: "Ruiz",    rut: "33333333-3", correo: "carlos@test.cl",    passwordHash, rol: "supervisor" },
     { nombre: "CleanPro", apellido: "SpA",     rut: "44444444-4", correo: "cleanpro@test.cl",  passwordHash, rol: "cliente" },
-    { nombre: "Angelo", apellido: "Valenzuela",    rut: "55555555-5", correo: "valenzuelaangelo02@gmail.com",  passwordHash, rol: "cliente" },
+    { nombre: "Angelo",   apellido: "Valenzuela",rut: "55555555-5", correo: "valenzuelaangelo02@gmail.com",  passwordHash, rol: "cliente" },
+    { nombre: "María",    apellido: "Gómez",   rut: "66666666-6", correo: "maria@test.cl",     passwordHash, rol: "empleado" },
+    { nombre: "Luis",     apellido: "Torres",  rut: "77777777-7", correo: "luis@test.cl",      passwordHash, rol: "empleado" },
   ]);
 
-  // Empleado (usa Usuario 1 = Juan Pérez)
+  // Empleados
   const empleadoRepo = AppDataSource.getRepository(Empleado);
-  const empleado = await empleadoRepo.save({
-    rut: "11111111-1",
-    fechaNacimiento: "1990-01-01",
-    usuario: usuarios[0],
-  });
+  const [empleado1, empleado2, empleado3] = await empleadoRepo.save([
+    {
+      rut: "11111111-1",
+      fechaNacimiento: "1990-01-01",
+      usuario: usuarios[0],
+    },
+    {
+      rut: "66666666-6",
+      fechaNacimiento: "1995-05-10",
+      usuario: usuarios[5],
+    },
+    {
+      rut: "77777777-7",
+      fechaNacimiento: "1988-11-20",
+      usuario: usuarios[6],
+    }
+  ]);
 
   // Administrador (usa Usuario 2 = Ana Soto)
   const adminRepo = AppDataSource.getRepository(Administrador);
@@ -179,23 +199,195 @@ export async function seedDatabase() {
     jornadaHoras: 8,
     fechaInicio: "2026-01-01",
     estado: "activo",
-    empleado,
+    empleado: empleado1,
+  });
+
+  const contratoGuardado2 = await contratoRepo.save({
+    tipo: "plazo_fijo",
+    cargo: "Supervisor de Área",
+    sueldo: 750000,
+    jornadaHoras: 9,
+    fechaInicio: "2026-03-15",
+    estado: "activo",
+    empleado: empleado2,
   });
 
   const ciRepo = AppDataSource.getRepository("ContratoInstalacion");
-  await ciRepo.save({
-    contrato: { idContrato: contratoGuardado.idContrato },
-    instalacion: { idInstalacion: instalacion.idInstalacion },
-    horasSemanales: 8,
-    pagoAdicional: 0
-  });
+  await ciRepo.save([
+    {
+      contrato: { idContrato: contratoGuardado.idContrato },
+      instalacion: { idInstalacion: instalacion.idInstalacion },
+      horasSemanales: 8,
+      pagoAdicional: 0
+    },
+    {
+      contrato: { idContrato: contratoGuardado2.idContrato },
+      instalacion: { idInstalacion: instalacion.idInstalacion }, // Comparten instalación
+      horasSemanales: 9,
+      pagoAdicional: 50000
+    }
+  ]);
 
-  console.log("=> Seed: Datos insertados correctamente");
-  console.log("   - Empleado: idEmpleado=1 (Juan Pérez)");
-  console.log("   - Administrador: idAdmin=1 (Ana Soto)");
-  console.log("   - Supervisor: idSupervisor=1 (Carlos Ruiz)");
+  // ----------------------------------------------------
+  // DATOS DE EXHIBICIÓN: Licencias Médicas
+  // ----------------------------------------------------
+  const licenciaRepo = AppDataSource.getRepository(LicenciaMedica);
+  await licenciaRepo.save([
+    {
+      diagnostico: "Enfermedad común (Gripe)",
+      fechaInicio: new Date().toISOString().split("T")[0],
+      fechaFin: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString().split("T")[0],
+      archivoPdf: "licencia_medica_ejemplo.pdf",
+      estado: "Pendiente",
+      empleado: empleado1
+    },
+    {
+      diagnostico: "Licencia Maternal",
+      fechaInicio: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split("T")[0],
+      fechaFin: new Date(new Date().setDate(new Date().getDate() + 60)).toISOString().split("T")[0],
+      archivoPdf: "licencia_maternal_maria.pdf",
+      estado: "Aprobada",
+      empleado: empleado2
+    }
+  ]);
+
+  // ----------------------------------------------------
+  // DATOS DE EXHIBICIÓN: Cotizaciones para el Dashboard
+  // ----------------------------------------------------
+  const cotizacionRepo = AppDataSource.getRepository(SolicitudCotizacion);
+  
+  // Fecha límite simulada (2 días en el futuro)
+  const fechaLimitePendiente = new Date();
+  fechaLimitePendiente.setDate(fechaLimitePendiente.getDate() + 2);
+
+  await cotizacionRepo.save([
+    {
+      estado: "Pendiente",
+      fechaLimite: fechaLimitePendiente,
+      comentarios: "Necesitamos limpieza urgente para la inauguración del nuevo edificio.",
+      cantidadEmpleados: 3,
+      cliente: cliente1,
+      plan: { idPlan: 2 }, // Estándar
+      instalacion: instalacion, // Edificio Central
+      medioContacto: "Teléfono",
+      horarioContacto: "Mañana",
+      horasHabilesLimite: 24
+    },
+    {
+      estado: "Aprobada",
+      fechaLimite: new Date(),
+      comentarios: "Servicio de limpieza básica semanal para oficina pequeña.",
+      cantidadEmpleados: 1,
+      cliente: cliente2,
+      plan: { idPlan: 1 }, // Básico
+      instalacion: null,
+      horasHabilesLimite: 24
+    },
+    {
+      estado: "Rechazada",
+      motivo: "No tenemos disponibilidad de personal para horario nocturno.",
+      fechaLimite: new Date(),
+      comentarios: "Requerimos limpieza nocturna todos los días.",
+      cantidadEmpleados: 5,
+      cliente: cliente1,
+      plan: { idPlan: 3 }, // Personalizado
+      instalacion: null,
+      horasHabilesLimite: 48
+    },
+    {
+      estado: "Pendiente",
+      fechaLimite: fechaLimitePendiente,
+      comentarios: "Solicito cotización para sanitización de bodega sur.",
+      cantidadEmpleados: 2,
+      cliente: cliente1,
+      plan: { idPlan: 3 }, // Personalizado
+      instalacion: null,
+      medioContacto: "Correo",
+      horarioContacto: "Tarde",
+      horasHabilesLimite: 48
+    },
+    {
+      estado: "Aprobada",
+      fechaLimite: new Date(),
+      comentarios: "Mantención quincenal de ventanales edificio principal.",
+      cantidadEmpleados: 2,
+      cliente: cliente2,
+      plan: { idPlan: 2 }, // Estándar
+      instalacion: null,
+      horasHabilesLimite: 24
+    }
+  ]);
+
+  // ----------------------------------------------------
+  // DATOS DE EXHIBICIÓN: Asistencia, Hoja de Vida y más
+  // ----------------------------------------------------
+  
+  // 1. Asistencia (Empleado marcando entrada hoy)
+  const asistenciaRepo = AppDataSource.getRepository(Asistencia);
+  const fechaHoy = new Date().toISOString().split("T")[0];
+  await asistenciaRepo.save([
+    {
+      fecha: fechaHoy,
+      entrada: "08:00:00",
+      estado: "Presente",
+      contrato: contratoGuardado
+    },
+    {
+      fecha: fechaHoy,
+      entrada: "08:15:00",
+      estado: "Atraso",
+      contrato: contratoGuardado2
+    }
+  ]);
+
+  // 2. Hoja de Vida (Anotación positiva)
+  const hojaVidaRepo = AppDataSource.getRepository(HojaVida);
+  await hojaVidaRepo.save([
+    {
+      tipo: "Positiva",
+      descripcion: "Excelente desempeño durante la limpieza del evento anual del cliente.",
+      fecha: new Date(),
+      empleado: empleado1
+    },
+    {
+      tipo: "Negativa",
+      descripcion: "Llegó tarde 3 días seguidos sin justificación.",
+      fecha: new Date(new Date().setDate(new Date().getDate() - 5)),
+      empleado: empleado3
+    }
+  ]);
+
+  // 3. Documento (Certificado de Antecedentes)
+  const documentoRepo = AppDataSource.getRepository(Documento);
+  await documentoRepo.save([
+    {
+      nombreArchivo: "Certificado_Antecedentes_Juan_Perez.pdf",
+      tipo: "Antecedentes",
+      rutaArchivo: "/uploads/cert_antecedentes.pdf", // Mock URL
+      empleado: empleado1
+    },
+    {
+      nombreArchivo: "Contrato_Firmado_Maria.pdf",
+      tipo: "Contrato",
+      rutaArchivo: "/uploads/contrato_maria.pdf", // Mock URL
+      empleado: empleado2
+    }
+  ]);
+
+  // 4. Asignación de Supervisor a Instalación
+  const superInstRepo = AppDataSource.getRepository(SupervisorInstalacion);
+  const supervisor = await AppDataSource.getRepository(Supervisor).findOne({ where: { usuario: { idUsuario: usuarios[2].idUsuario } } });
+  if (supervisor) {
+    await superInstRepo.save({
+      supervisor: supervisor,
+      instalacion: instalacion
+    });
+  }
+
+  console.log("=> Seed: Datos de exhibición insertados correctamente");
+  console.log("   - Empleados extra: María Gómez, Luis Torres");
+  console.log("   - Cotizaciones: 1 Pendiente, 1 Aprobada, 1 Rechazada");
+  console.log("   - Administrador: idAdmin=1 (Ana Soto) → ana@test.cl / password123");
   console.log("   - Cliente 1: idCliente=1 (CleanPro SpA)  → cleanpro@test.cl / password123");
   console.log("   - Cliente 2: idCliente=2 (Angelo Valenzuela) → valenzuelaangelo02@gmail.com / password123");
-  console.log("   - Instalación: idInstalacion=1 (Edificio Central)");
-  console.log("   - Contrato: idContrato=1 (Juan @ Edificio Central)");
 }
