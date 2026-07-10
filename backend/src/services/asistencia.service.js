@@ -1,6 +1,7 @@
 "use strict";
 import { AppDataSource } from "../config/configDb.js";
 import { Asistencia } from "../models/Asistencia.js";
+import { In } from "typeorm";
 
 // Helper para convertir formato HH:mm:ss o HH:mm a minutos totales y facilitar comparaciones
 function horaAMinutos(horaStr) {
@@ -161,15 +162,46 @@ export async function registrarFinColacionService(data) {
   }
 }
 
-export async function getAsistenciasService(idContrato) {
+export async function getAsistenciasService(idContrato, user) {
   try {
     const asistenciaRepository = AppDataSource.getRepository(Asistencia);
-    const where = idContrato ? { contrato: { idContrato } } : {};
+    
+    let targetContratoIds = idContrato;
+    if (user && user.rol === "empleado") {
+      const usuarioRepo = AppDataSource.getRepository("Usuario");
+      const userDb = await usuarioRepo.findOne({
+        where: { idUsuario: user.idUsuario },
+        relations: ["empleado", "empleado.contratos"],
+      });
+      const contratosIds = userDb?.empleado?.contratos?.map(c => c.idContrato) || [];
+      
+      if (idContrato) {
+        if (!contratosIds.includes(Number(idContrato))) {
+          throw { status: 403, message: "No tienes permisos para ver estas asistencias." };
+        }
+      } else {
+        if (contratosIds.length === 0) {
+          return [];
+        }
+        targetContratoIds = contratosIds;
+      }
+    }
+
+    let where = {};
+    if (targetContratoIds) {
+      if (Array.isArray(targetContratoIds)) {
+        where = { contrato: { idContrato: In(targetContratoIds) } };
+      } else {
+        where = { contrato: { idContrato: Number(targetContratoIds) } };
+      }
+    }
+
     return await asistenciaRepository.find({
       where,
       relations: ["contrato"],
     });
   } catch (error) {
+    if (error.status) throw error;
     throw new Error(`Error al obtener asistencias: ${error.message}`);
   }
 }

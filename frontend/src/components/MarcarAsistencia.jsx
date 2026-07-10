@@ -70,6 +70,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
   const cargarDatos = async () => {
     setErrorText("");
     setLoadingHistory(true);
+    let contratoIdReal = idContrato;
     try {
       // Cargar asignación de instalación para el contrato del empleado
       try {
@@ -81,6 +82,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
             if (resAsig && resAsig.status === "Success" && resAsig.data) {
               const activeContract = (idContrato ? resAsig.data.find(c => c.idContrato === idContrato) : null) || resAsig.data[0];
               if (activeContract) {
+                contratoIdReal = activeContract.idContrato;
                 setIdContrato(activeContract.idContrato);
                 localStorage.setItem("idContrato", activeContract.idContrato);
                 if (activeContract.contratoInstalaciones && activeContract.contratoInstalaciones.length > 0) {
@@ -96,18 +98,20 @@ export default function MarcarAsistencia({ idContratoProp }) {
         console.warn("No se pudo obtener la instalación asignada:", err);
       }
 
-      // Obtener todos los registros de asistencia
-      const res = await api.get("/asistencias");
+      // Obtener los registros de asistencia correspondientes
+      const res = await api.get(contratoIdReal ? `/asistencias?idContrato=${contratoIdReal}` : "/asistencias");
       if (res && res.status === "Success") {
         const registros = res.data;
 
         // Filtrar por contrato actual
         const registrosEmpleado = registros.filter(
-          (reg) => reg.contrato && reg.contrato.idContrato === idContrato
+          (reg) => reg.contrato && reg.contrato.idContrato === contratoIdReal
         );
 
         // Guardar copia local de respaldo
-        localStorage.setItem(`historial_${idContrato}`, JSON.stringify(registrosEmpleado));
+        if (contratoIdReal) {
+          localStorage.setItem(`historial_${contratoIdReal}`, JSON.stringify(registrosEmpleado));
+        }
 
         // Identificar el registro de hoy
         const hoyStr = new Date().toISOString().slice(0, 10);
@@ -121,7 +125,7 @@ export default function MarcarAsistencia({ idContratoProp }) {
     } catch (err) {
       console.warn("No se pudo obtener el historial desde la API, usando respaldo local:", err);
       // Fallback silencioso a localStorage
-      const cache = localStorage.getItem(`historial_${idContrato}`);
+      const cache = contratoIdReal ? localStorage.getItem(`historial_${contratoIdReal}`) : null;
       if (cache) {
         const registrosEmpleado = JSON.parse(cache);
         const hoyStr = new Date().toISOString().slice(0, 10);

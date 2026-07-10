@@ -98,10 +98,14 @@ export async function registrarFinColacionController(req, res) {
 export async function getAsistenciasController(req, res) {
   try {
     const { idContrato } = req.query;
-    const data = await getAsistenciasService(idContrato ? Number(idContrato) : undefined);
+    const data = await getAsistenciasService(idContrato ? Number(idContrato) : undefined, req.user);
     handleSuccess(res, 200, "Asistencias obtenidas correctamente", data);
   } catch (error) {
-    handleErrorServer(res, 500, error.message);
+    if (error.status === 403) {
+      handleErrorClient(res, 403, error.message);
+    } else {
+      handleErrorServer(res, 500, error.message);
+    }
   }
 }
 
