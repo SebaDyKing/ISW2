@@ -10,26 +10,7 @@ import { Instalacion } from "../models/Instalacion.js";
 import { Contrato } from "../models/Contrato.js";
 import { Plan } from "../models/Plan.js";
 
-/**
- * @brief Inserta datos iniciales en la base de datos para pruebas locales.
- *        Es IDEMPOTENTE: si ya hay usuarios cargados, no hace nada.
- *        Solo se debería usar en desarrollo. Para producción, deshabilitar.
- */
-export async function seedDatabase() {
-  const usuarioRepo = AppDataSource.getRepository(Usuario);
-
-  const count = await usuarioRepo.count();
-  if (count > 0) {
-    console.log("=> Seed: La base ya tiene datos, se omite");
-    return;
-  }
-
-  console.log("=> Seed: Insertando datos iniciales...");
-
-  const passwordHash = await bcrypt.hash("password123", 10);
-
-  const planRepo = AppDataSource.getRepository(Plan);
-  const planes = await planRepo.save([
+const PLANES_DATA = [
   {
     tipo: "Básico",
     descripcion: "Limpieza general periódica para mantener tus instalaciones en óptimas condiciones.",
@@ -51,7 +32,41 @@ export async function seedDatabase() {
     idealPara: "Plantas industriales, hospitales, colegios",
     esPersonalizado: true,
   },
-]);
+];
+
+/**
+ * @brief Inserta datos iniciales en la base de datos para pruebas locales.
+ *        Es IDEMPOTENTE: si ya hay usuarios cargados, no hace nada.
+ *        Solo se debería usar en desarrollo. Para producción, deshabilitar.
+ */
+export async function seedDatabase() {
+  const planRepo = AppDataSource.getRepository(Plan);
+  const planesExistentes = await planRepo.find({ order: { idPlan: "ASC" } });
+
+  // PARCHE PARA PRODUCCIÓN: Siempre actualizar los textos de los planes si ya existen,
+  // para evitar que queden en blanco tras un despliegue de código nuevo.
+  if (planesExistentes.length > 0) {
+    for (let i = 0; i < planesExistentes.length; i++) {
+      const data = PLANES_DATA[i] || PLANES_DATA[2];
+      Object.assign(planesExistentes[i], data);
+      await planRepo.save(planesExistentes[i]);
+    }
+  } else {
+    // Si no existen (DB limpia), los creamos.
+    await planRepo.save(PLANES_DATA);
+  }
+
+  const usuarioRepo = AppDataSource.getRepository(Usuario);
+
+  const count = await usuarioRepo.count();
+  if (count > 0) {
+    console.log("=> Seed: La base ya tiene datos, se omite");
+    return;
+  }
+
+  console.log("=> Seed: Insertando datos iniciales...");
+
+  const passwordHash = await bcrypt.hash("password123", 10);
 
   // 5 usuarios base
   const usuarios = await usuarioRepo.save([
