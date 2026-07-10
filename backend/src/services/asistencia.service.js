@@ -225,6 +225,10 @@ async function validarDistanciaInstalacion(idContrato, latDispositivo, lonDispos
     throw { status: 400, message: "La geolocalización es obligatoria para registrar la asistencia." };
   }
 
+  const maxDistancia = process.env.MAX_ASISTENCIA_DISTANCIA
+    ? Number(process.env.MAX_ASISTENCIA_DISTANCIA)
+    : 150;
+
   const contratoRepo = AppDataSource.getRepository("Contrato");
   const contrato = await contratoRepo.findOne({
     where: { idContrato },
@@ -257,7 +261,7 @@ async function validarDistanciaInstalacion(idContrato, latDispositivo, lonDispos
       menorDistancia = distancia;
     }
 
-    if (distancia <= 150) {
+    if (distancia <= maxDistancia) {
       instalacionValida = true;
       break;
     }
@@ -266,7 +270,7 @@ async function validarDistanciaInstalacion(idContrato, latDispositivo, lonDispos
   if (!instalacionValida) {
     throw {
       status: 400,
-      message: `Marcaje fuera de rango. Estás a ${Math.round(menorDistancia)} metros del lugar de trabajo más cercano, el rango máximo permitido es 150 metros.`
+      message: `Marcaje fuera de rango. Estás a ${Math.round(menorDistancia)} metros del lugar de trabajo más cercano (rango máx: ${maxDistancia}m). Coordenadas detectadas: ${latDispositivo}, ${lonDispositivo}`
     };
   }
 }

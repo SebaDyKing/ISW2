@@ -217,42 +217,55 @@ export default function MarcarAsistencia({ idContratoProp }) {
         })
         .catch((err) => {
           const mensajeError = err.response?.data?.message || "Ocurrió un error al procesar el marcaje.";
-          
-          // Si el error es de límites/distancia
-          if (
-            mensajeError.toLowerCase().includes("rango") ||
-            mensajeError.toLowerCase().includes("límite") ||
-            mensajeError.toLowerCase().includes("limite") ||
-            mensajeError.toLowerCase().includes("distancia")
-          ) {
-            const msgLimites = "No se puede marcar asistencia usted se encuentra fuera de limites.";
-            setErrorText(msgLimites);
-          } else {
-            setErrorText(mensajeError);
-            toast.error(mensajeError);
-          }
+          setErrorText(mensajeError);
+          toast.error(mensajeError);
         })
         .finally(() => {
           setLoading(false);
         });
     };
 
-    // Solicitar coordenadas de forma obligatoria
+    // Solicitar coordenadas de forma obligatoria con fallback
     if (navigator.geolocation) {
+      // Intentar primero con alta precisión (GPS)
       navigator.geolocation.getCurrentPosition(
         (position) => {
           enviarPeticion(position.coords.latitude, position.coords.longitude);
         },
-        (error) => {
-          console.warn("Geolocalización rechazada o con error:", error);
-          const msgGeo = "Para registrar tu asistencia debes permitir el acceso a tu ubicación en los permisos de tu navegador.";
-          setErrorText(msgGeo);
-          toast.error(msgGeo);
-          setLoading(false);
+        (errorHigh) => {
+          console.warn("Fallo geolocalización de alta precisión, intentando precisión estándar:", errorHigh);
+          
+          // Fallback a precisión estándar (red/Wi-Fi)
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              enviarPeticion(position.coords.latitude, position.coords.longitude);
+            },
+            (errorLow) => {
+              console.error("Fallo geolocalización de precisión estándar:", errorLow);
+              
+              let msgGeo = "Para registrar tu asistencia debes permitir el acceso a tu ubicación en los permisos de tu navegador.";
+              if (errorLow.code === errorLow.PERMISSION_DENIED) {
+                msgGeo = "Permiso de ubicación denegado. Por favor, activa el acceso a la ubicación para este sitio en tu navegador.";
+              } else if (errorLow.code === errorLow.POSITION_UNAVAILABLE) {
+                msgGeo = "Ubicación no disponible. Asegúrate de tener activo el GPS y buena cobertura de red móvil.";
+              } else if (errorLow.code === errorLow.TIMEOUT) {
+                msgGeo = "Tiempo de espera agotado al obtener tu ubicación. Inténtalo de nuevo o muévete a un área con mejor señal.";
+              }
+              
+              setErrorText(msgGeo);
+              toast.error(msgGeo);
+              setLoading(false);
+            },
+            { 
+              enableHighAccuracy: false,
+              timeout: 10000,
+              maximumAge: 60000
+            }
+          );
         },
         { 
           enableHighAccuracy: true,
-          timeout: 10000 
+          timeout: 7000 // 7 segundos de timeout antes de intentar el fallback
         }
       );
     } else {
