@@ -23,6 +23,12 @@ export const ContratoInstalacion = new EntitySchema({
       nullable: true,
       default: 0
     },
+    estadoFirma: {
+      name: "estado_firma",
+      type: "varchar",
+      length: 20,
+      default: "FIRMADO"
+    },
     createdAt: {
       name: "created_at",
       type: "timestamp",

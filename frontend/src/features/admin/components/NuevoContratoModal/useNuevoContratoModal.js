@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { contratosService } from '../../services/contrato.service'
-import { obtenerClientesService, getEmpleados, getInstalaciones } from '../../services/admin.service'
+import { obtenerClientesService, getEmpleados, getInstalaciones, obtenerCotizacionesService } from '../../services/admin.service'
 import { generateContractPDF } from '../../utils/pdfGenerator'
 
 const INITIAL_FORM = {
@@ -33,6 +33,7 @@ export function useNuevoContratoModal({ onSuccess, defaultUser } = {}) {
   const [empleados, setEmpleados] = useState([])
   const [clientes, setClientes] = useState([])
   const [instalaciones, setInstalaciones] = useState([])
+  const [cotizaciones, setCotizaciones] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingOptions, setLoadingOptions] = useState(true)
   const [error, setError] = useState(null)
@@ -42,14 +43,17 @@ export function useNuevoContratoModal({ onSuccess, defaultUser } = {}) {
     const fetchOptions = async () => {
       try {
         setLoadingOptions(true)
-        const [empRes, cliRes, instRes] = await Promise.all([
+        const [empRes, cliRes, instRes, cotRes] = await Promise.all([
           getEmpleados(),
           obtenerClientesService(),
-          getInstalaciones()
+          getInstalaciones(),
+          obtenerCotizacionesService()
         ])
         setEmpleados(empRes.data)
         setClientes(cliRes.data)
         setInstalaciones(instRes.data)
+        // Adjust for potential nested data depending on controller response format
+        setCotizaciones(cotRes.data?.data || cotRes.data || [])
       } catch {
         setError('Error al cargar opciones del formulario')
       } finally {
@@ -69,6 +73,21 @@ export function useNuevoContratoModal({ onSuccess, defaultUser } = {}) {
     setError(null)
   }, [])
 
+  const instalacionesFiltradas = instalaciones.filter(inst => {
+    if (form.tipoContratoPadre === 'Comercial' && form.idCliente) {
+      const perteneceAlCliente = inst.cliente?.idCliente === parseInt(form.idCliente, 10)
+      if (!perteneceAlCliente) return false
+
+      const tieneCotizacionAprobada = cotizaciones.some(cot => 
+        cot.cliente?.idCliente === parseInt(form.idCliente, 10) &&
+        cot.instalacion?.idInstalacion === inst.idInstalacion &&
+        ["Aprobada", "aprobada", "Aprobado", "aprobado"].includes(cot.estado)
+      )
+      return tieneCotizacionAprobada
+    }
+    return true
+  })
+
   const submit = useCallback(async (e) => {
     e.preventDefault()
     try {
@@ -85,12 +104,13 @@ export function useNuevoContratoModal({ onSuccess, defaultUser } = {}) {
         idInstalacion: form.idInstalacion ? parseInt(form.idInstalacion, 10) : null,
       }
 
+      if (!form.idInstalacion) {
+        setError('La instalación es obligatoria');
+        setLoading(false);
+        return;
+      }
+
       if (form.tipoContratoPadre === 'Laboral') {
-        if (!form.idInstalacion) {
-          setError('La instalación es obligatoria para contratos laborales');
-          setLoading(false);
-          return;
-        }
         payload.idEmpleado = parseInt(form.idEmpleado, 10)
         payload.sueldo = parseFloat(form.sueldo)
         payload.jornadaHoras = parseInt(form.jornadaHoras, 10)
@@ -122,13 +142,13 @@ export function useNuevoContratoModal({ onSuccess, defaultUser } = {}) {
     } finally {
       setLoading(false)
     }
-  }, [form, onSuccess, reset])
+  }, [form, onSuccess, reset, empleados, clientes, instalaciones])
 
   return {
     form,
     empleados,
     clientes,
-    instalaciones,
+    instalaciones: instalacionesFiltradas,
     loading,
     loadingOptions,
     error,

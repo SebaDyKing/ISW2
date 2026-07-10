@@ -197,6 +197,8 @@ export async function trasladarEmpleadoService(idEmpleado, idInstalacion) {
     });
     if (!empleado) throw new Error("Empleado no encontrado");
 
+    const idInstalacionPrevia = empleado.instalacion ? empleado.instalacion.idInstalacion : null;
+
     if (idInstalacion) {
       const idInstalacionNum = parseInt(idInstalacion, 10);
       if (empleado.instalacion && empleado.instalacion.idInstalacion === idInstalacionNum) {
@@ -222,7 +224,8 @@ export async function trasladarEmpleadoService(idEmpleado, idInstalacion) {
     if (contratoActivo) {
       const contratoInstalacionRepo = AppDataSource.getRepository("ContratoInstalacion");
       
-      // Eliminar las asignaciones previas para este contrato
+      // Eliminar TODAS las asignaciones previas para este contrato
+      // Un empleado trasladado solo debe estar en la nueva instalación
       await contratoInstalacionRepo.createQueryBuilder()
         .delete()
         .where("id_contrato = :idContrato", { idContrato: contratoActivo.idContrato })

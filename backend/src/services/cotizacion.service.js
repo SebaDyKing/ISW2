@@ -51,8 +51,6 @@ export async function crearCotizacionService(datosCotizacion) {
     estado:             "Pendiente",
     fechaLimite,
     horasHabilesLimite: HORAS_HABILES_LIMITE,
-    // Se guarda tal cual la pide el cliente; es lo que despues lee asignarEmpleadosService
-    // para saber cuantos empleados tomar cuando el admin apruebe esta cotizacion.
     cantidadEmpleados,
     cliente:     clienteActual,
     instalacion: instalacionValida,
@@ -167,5 +165,3 @@ export async function reactivarCotizacionService(idSolicitud) {
 
   return cotizacionReactivada;
 }
-
-

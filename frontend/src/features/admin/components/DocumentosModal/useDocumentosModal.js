@@ -31,6 +31,14 @@ export function useDocumentosModal(contrato, isOpen) {
   const descargarDocumento = async (idDocumento, nombreArchivo) => {
     try {
       const blob = await descargarDocumentoService(idDocumento);
+      
+      // Check if the response is actually a JSON error
+      if (blob.type === 'application/json') {
+        const text = await blob.text();
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.message || 'Error al descargar el documento');
+      }
+
       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
@@ -40,17 +48,26 @@ export function useDocumentosModal(contrato, isOpen) {
       document.body.removeChild(link);
     } catch (err) {
       console.error('Error al descargar el documento', err);
-      // Opcional: mostrar un toast de error
+      setError(err.message || 'Error al descargar el documento. Es posible que el archivo físico ya no exista.');
     }
   }
 
   const verDocumento = async (idDocumento) => {
     try {
       const blob = await descargarDocumentoService(idDocumento);
+      
+      // Check if the response is actually a JSON error
+      if (blob.type === 'application/json') {
+        const text = await blob.text();
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.message || 'Error al abrir el documento');
+      }
+
       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
       window.open(url, '_blank');
     } catch (err) {
       console.error('Error al abrir el documento', err);
+      setError(err.message || 'Error al abrir el documento. Es posible que el archivo físico ya no exista.');
     }
   }
 

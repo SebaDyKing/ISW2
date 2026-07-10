@@ -27,10 +27,17 @@ export default function MisDocumentosView() {
   const handleVerDocumento = async (idDocumento) => {
     try {
       const blob = await descargarDocumentoEmpleadoService(idDocumento);
+      
+      if (blob.type === 'application/json') {
+        const text = await blob.text();
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.message || 'Error al abrir el documento');
+      }
+
       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
       window.open(url, '_blank');
     } catch (error) {
-      toast.error("Error al abrir el documento");
+      toast.error(error.message || "Error al abrir el documento");
     }
   };
 

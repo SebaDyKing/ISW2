@@ -21,29 +21,8 @@ export async function obtenerMisInstalacionesService(id_usuario) {
 }
 
 export async function obtenerInstalacionesService() {
-  const cotizacionRepo = AppDataSource.getRepository(SolicitudCotizacion);
-  const estadosBloqueantes = [
-    "Pendiente", "pendiente",
-    "Aprobada", "aprobada", "Aprobado", "aprobado",
-    "Rechazada", "rechazada", "Rechazado", "rechazado"
-  ];
-  
-  const cotizaciones = await cotizacionRepo.find({
-    where: estadosBloqueantes.map((est) => ({
-      estado: est
-    })),
-    relations: ["instalacion"]
-  });
-
-  const instalacionIds = [...new Set(cotizaciones.map((c) => c.instalacion?.idInstalacion).filter(Boolean))];
-
-  if (instalacionIds.length === 0) {
-    return [];
-  }
-
   const instalacionRepo = AppDataSource.getRepository(Instalacion);
   return await instalacionRepo.find({
-    where: instalacionIds.map((id) => ({ idInstalacion: id })),
     relations: ["cliente", "cliente.usuario"],
     order: { createdAt: "DESC" },
   });

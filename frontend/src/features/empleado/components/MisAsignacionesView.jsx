@@ -25,14 +25,14 @@ export default function MisAsignacionesView() {
   const asignacionesFiltradas = useMemo(() => {
     return asignaciones.filter((c) => {
       if (activeTab === "activas") {
-        return c.estado === "ACTIVO" || c.estado === "POR VENCER";
+        return c.estado === "ACTIVO" || c.estado === "POR VENCER" || c.estado === "PENDIENTE DE FIRMA";
       } else {
         return c.estado === "FINALIZADO";
       }
     });
   }, [asignaciones, activeTab]);
 
-  const activasCount = asignaciones.filter((c) => c.estado === "ACTIVO" || c.estado === "POR VENCER").length;
+  const activasCount = asignaciones.filter((c) => c.estado === "ACTIVO" || c.estado === "POR VENCER" || c.estado === "PENDIENTE DE FIRMA").length;
   const historialCount = asignaciones.filter((c) => c.estado === "FINALIZADO").length;
 
   const formatDate = (dateStr) => {
@@ -49,7 +49,7 @@ export default function MisAsignacionesView() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="w-full max-w-6xl mx-auto px-4 py-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Mis Asignaciones</h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -79,7 +79,7 @@ export default function MisAsignacionesView() {
 
       {/* Grid de Asignaciones */}
       {asignacionesFiltradas.length === 0 ? (
-        <div className="bg-white border border-dashed border-slate-300 rounded-xl px-6 py-12 text-center">
+        <div className="w-full bg-white border border-dashed border-slate-300 rounded-xl px-6 py-12 text-center">
           <p className="text-slate-500 text-sm font-medium">
             {activeTab === "activas" ? "No tienes proyectos activos en este momento." : "No tienes historial de proyectos."}
           </p>
@@ -95,6 +95,7 @@ export default function MisAsignacionesView() {
             if (isActivo) badgeClasses = "bg-green-100 text-green-800";
             else if (isPorVencer) badgeClasses = "bg-amber-100 text-amber-800";
             else if (isFinalizado) badgeClasses = "bg-rose-100 text-rose-800";
+            else if (c.estado === "PENDIENTE DE FIRMA") badgeClasses = "bg-blue-100 text-blue-800";
 
             const instalacion = c.contratoInstalaciones?.[0]?.instalacion;
 

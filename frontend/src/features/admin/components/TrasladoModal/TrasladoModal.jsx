@@ -1,11 +1,12 @@
 import { useTrasladoModal } from './useTrasladoModal'
 import styles from './TrasladoModal.module.css'
 
-export default function TrasladoModal({ onClose, onSuccess }) {
+export default function TrasladoModal({ onClose, onSuccess, defaultEmpleadoId, contrato }) {
   const {
     form,
     empleados,
     instalaciones,
+    instalacionesFiltradas,
     loading,
     loadingOptions,
     error,
@@ -16,6 +17,8 @@ export default function TrasladoModal({ onClose, onSuccess }) {
       onSuccess?.()
       onClose()
     },
+    defaultEmpleadoId,
+    contrato
   })
 
   const handleOverlayClick = (e) => {
@@ -85,11 +88,11 @@ export default function TrasladoModal({ onClose, onSuccess }) {
                   value={form.idInstalacion}
                   onChange={handleChange}
                   required
-                  disabled={loadingOptions}
+                  disabled={loadingOptions || !form.idEmpleado}
                   className={`${styles.select} ${loadingOptions ? styles.selectDisabled : ''}`}
                 >
                   <option value="">Seleccionar nueva instalación...</option>
-                  {instalaciones.map((i) => (
+                  {instalacionesFiltradas.map((i) => (
                     <option key={i.idInstalacion} value={i.idInstalacion}>
                       {i.nombre}
                     </option>

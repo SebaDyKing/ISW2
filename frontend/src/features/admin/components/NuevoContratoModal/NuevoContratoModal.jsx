@@ -134,15 +134,15 @@ export default function NuevoContratoModal({ onClose, onSuccess, defaultUser }) 
 
               <div className={styles.field}>
                 <label className={styles.label}>
-                  Instalación {!isComercial && <span className={styles.required}>*</span>}
+                  Instalación <span className={styles.required}>*</span>
                 </label>
                 <select
                   name="idInstalacion"
                   value={form.idInstalacion}
                   onChange={handleChange}
-                  required={!isComercial}
-                  disabled={loadingOptions || form.tipoContratoPadre === 'Comercial'}
-                  className={`${styles.select} ${(loadingOptions || form.tipoContratoPadre === 'Comercial') ? styles.selectDisabled : ''}`}
+                  required
+                  disabled={loadingOptions}
+                  className={`${styles.select} ${loadingOptions ? styles.selectDisabled : ''}`}
                 >
                   <option value="">Seleccionar...</option>
                   {instalaciones?.map((i) => (

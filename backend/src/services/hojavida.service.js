@@ -9,7 +9,12 @@ export async function getHojaVidaServices() {
   try{
     const hojavidaRepository = AppDataSource.getRepository(HojaVida)
     return await hojavidaRepository.find({
-      relations : ["empleado","empleado.usuario","administrador","administrador.usuario","reporte"]
+      relations : {
+        empleado: { usuario: true },
+        administrador: { usuario: true },
+        reporte: true,
+      },
+      order : { createdAt: "DESC" },
     })
 
   }catch(error){
@@ -22,7 +27,7 @@ export async function getHojaVidaServicesByID(id) {
     const hojavidaRepository = AppDataSource.getRepository(HojaVida)
     const hojaVida = await hojavidaRepository.findOne({
       where : {idRegistro : id},
-      relations : ["empleado","empleado.usuario","administrador","administrador.usuario","reporte"]
+      relations : { empleado: { usuario: true }, administrador: { usuario: true }, reporte: true,},
     })
     if(!hojaVida) throw new Error("Hoja de vida no encontrada")
     return hojaVida

@@ -5,9 +5,10 @@ export const obtenerMisDocumentosService = async () => {
 };
 
 export const descargarDocumentoEmpleadoService = async (idDocumento) => {
-  return await api.get(`/documentos/${idDocumento}/download`, {
+  const res = await api.get(`/documentos/${idDocumento}/download`, {
     responseType: 'blob'
   });
+  return res;
 };
 
 export const firmarDocumentoEmpleadoService = async (idDocumento, firmaBase64) => {

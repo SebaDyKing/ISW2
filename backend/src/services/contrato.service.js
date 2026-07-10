@@ -52,22 +52,56 @@ export async function getContratosByEmpleado(idEmpleado) {
         .findOne({ where: { idEmpleado } });
     if (!empleado) throw { status: 404, message: "Empleado no encontrado" };
 
-    return await getRepo().find({
+    const contratos = await getRepo().find({
         where: { empleado: { idEmpleado } },
         relations: ["empleado", "contratoInstalaciones", "contratoInstalaciones.instalacion"],
+        order: { fechaInicio: "DESC" }
     });
+
+    contratos.forEach(c => {
+        if (c.contratoInstalaciones) {
+            c.contratoInstalaciones = c.contratoInstalaciones.filter(ci => ci.estadoFirma === "FIRMADO");
+        }
+    });
+
+    return contratos;
 }
 
 export async function getMisAsignacionesService(idUsuario) {
-    const empleado = await AppDataSource.getRepository("Empleado")
-        .findOne({ where: { usuario: { idUsuario } } });
+    const usuarioRepo = AppDataSource.getRepository("Usuario");
+    const user = await usuarioRepo.findOne({ where: { idUsuario }, relations: ["empleado", "cliente"] });
+    if (!user) throw { status: 404, message: "Usuario no encontrado" };
+
+    if (user.rol === "cliente" && user.cliente) {
+        const asignaciones = await getRepo().find({
+            where: { cliente: { idCliente: user.cliente.idCliente } },
+            relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion"],
+            order: { fechaInicio: "DESC" }
+        });
+        asignaciones.forEach(a => {
+            if (a.contratoInstalaciones) {
+                a.contratoInstalaciones = a.contratoInstalaciones.filter(ci => ci.estadoFirma === "FIRMADO");
+            }
+        });
+        return asignaciones;
+    }
+
+    const empleado = user.empleado;
     if (!empleado) throw { status: 404, message: "Perfil de empleado no encontrado" };
 
-    return await getRepo().find({
+    const asignaciones = await getRepo().find({
         where: { empleado: { idEmpleado: empleado.idEmpleado } },
         relations: ["contratoInstalaciones", "contratoInstalaciones.instalacion", "contratoInstalaciones.instalacion.cliente"],
         order: { fechaInicio: "DESC" }
     });
+
+    asignaciones.forEach(a => {
+        if (a.contratoInstalaciones) {
+            a.contratoInstalaciones = a.contratoInstalaciones.filter(ci => ci.estadoFirma === "FIRMADO");
+        }
+    });
+
+    return asignaciones;
 }
 
 export async function createContrato(body) {
@@ -80,8 +114,8 @@ export async function createContrato(body) {
     } = body;
 
     // Validaciones de campos obligatorios
-    if (!tipo || !cargo || !fechaInicio) {
-        throw { status: 400, message: "Tipo, cargo y fecha de inicio son obligatorios" };
+    if (!tipo || !cargo || !fechaInicio || !idInstalacion) {
+        throw { status: 400, message: "Tipo, cargo, fecha de inicio e instalación son obligatorios" };
     }
     
     if (!idEmpleado && !idCliente) {
@@ -93,9 +127,6 @@ export async function createContrato(body) {
     }
 
     if (idEmpleado) {
-        if (!idInstalacion) {
-            throw { status: 400, message: "La instalación es obligatoria para contratos de empleados" };
-        }
         if (!sueldo || !jornadaHoras) {
             throw { status: 400, message: "El sueldo y la jornada son obligatorios para empleados" };
         }
@@ -123,7 +154,8 @@ export async function createContrato(body) {
 
     if (fechaNacimiento) {
         const hoy = new Date();
-        const nacimiento = new Date(fechaNacimiento);
+        const partes = String(fechaNacimiento).split('T')[0].split('-');
+        const nacimiento = new Date(partes[0], partes[1] - 1, partes[2]);
         let edad = hoy.getFullYear() - nacimiento.getFullYear();
         const m = hoy.getMonth() - nacimiento.getMonth();
         if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
@@ -170,6 +202,18 @@ export async function createContrato(body) {
         
         if (cargo !== "Cliente") {
             throw { status: 400, message: 'El cargo debe ser "Cliente" para contratos comerciales.' };
+        }
+
+        const cotizacionAprobada = await AppDataSource.getRepository("SolicitudCotizacion").findOne({
+            where: {
+                cliente: { idCliente },
+                instalacion: { idInstalacion },
+                estado: In(["Aprobada", "aprobada", "Aprobado", "aprobado"])
+            }
+        });
+        
+        if (!cotizacionAprobada) {
+            throw { status: 400, message: "No se puede generar un contrato porque no existe una cotización aprobada para esta instalación." };
         }
     }
 
@@ -288,7 +332,7 @@ export async function createContrato(body) {
         const ci = ciRepo.create({
             contrato: { idContrato: contratoGuardado.idContrato },
             instalacion: { idInstalacion: idInstalacion },
-            horasSemanales: jornadaHoras,
+            horasSemanales: jornadaHoras || 0,
             pagoAdicional: 0
         });
         await ciRepo.save(ci);
@@ -370,7 +414,8 @@ export async function updateContrato(id, body) {
     const nacimientoAValidar = fechaNacimiento !== undefined ? fechaNacimiento : contrato.fechaNacimiento;
     if (nacimientoAValidar) {
         const hoy = new Date();
-        const nacimiento = new Date(nacimientoAValidar);
+        const partes = String(nacimientoAValidar).split('T')[0].split('-');
+        const nacimiento = new Date(partes[0], partes[1] - 1, partes[2]);
         let edad = hoy.getFullYear() - nacimiento.getFullYear();
         const m = hoy.getMonth() - nacimiento.getMonth();
         if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
@@ -496,16 +541,28 @@ export async function agregarInstalacionContrato(idContrato, idInstalacion, hora
         horasTotalesActuales += Number(asig.horasSemanales);
     }
 
-    const maxHorasLegales = 42; // LEY_LABORAL_CHILE
-    if ((horasTotalesActuales + Number(horasSemanales)) > maxHorasLegales) {
-        throw { status: 400, message: `No se puede exceder el límite legal de ${maxHorasLegales} horas. Total proyectado: ${horasTotalesActuales + Number(horasSemanales)} horas.` };
+    // Fallback: si por datos antiguos no hay asignaciones en la BD, usamos la jornada original
+    if (horasTotalesActuales === 0 && contrato.jornadaHoras) {
+        horasTotalesActuales = Number(contrato.jornadaHoras);
     }
+
+    const maxHorasLegales = 42; // LEY_LABORAL_CHILE
+    const nuevoTotal = horasTotalesActuales + Number(horasSemanales);
+
+    if (nuevoTotal > maxHorasLegales) {
+        throw { status: 400, message: `No se puede exceder el límite legal de ${maxHorasLegales} horas. Total proyectado: ${nuevoTotal} horas (Actual: ${horasTotalesActuales}h + Nuevas: ${horasSemanales}h).` };
+    }
+
+    // Actualizamos las horas totales del contrato para que refleje la realidad
+    contrato.jornadaHoras = nuevoTotal;
+    await AppDataSource.getRepository("Contrato").save(contrato);
 
     const nuevaAsignacion = ciRepo.create({
         contrato: { idContrato },
         instalacion: { idInstalacion },
         horasSemanales: Number(horasSemanales),
-        pagoAdicional: Number(pagoAdicional)
+        pagoAdicional: Number(pagoAdicional),
+        estadoFirma: "PENDIENTE"
     });
 
     await ciRepo.save(nuevaAsignacion);

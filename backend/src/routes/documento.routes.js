@@ -34,7 +34,7 @@ router.post("/empleados/:id/documentos", autorizeEntities("administrador", "supe
 router.get("/clientes/mis-documentos", autorizeEntities("cliente"), getMisDocumentosClienteController);
 
 // GET /api/clientes/:id/documentos - Obtener historial de documentos de un cliente
-router.get("/clientes/:id/documentos", autorizeEntities("administrador"), getDocumentosByEmpleadoController);
+router.get("/clientes/:id/documentos", autorizeEntities("administrador", "supervisor"), getDocumentosByEmpleadoController);
 
 // POST /api/clientes/:id/documentos - Subir un nuevo documento
 router.post("/clientes/:id/documentos", autorizeEntities("administrador"), upload.single("archivoPdf"), subirDocumentoController);

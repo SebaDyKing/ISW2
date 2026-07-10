@@ -10,13 +10,12 @@ export async function revisarVencimientos() {
         const contratoRepo = AppDataSource.getRepository("Contrato");
         const hoy = new Date();
 
-        // Obtener todos los contratos a plazo fijo que sigan activos o por vencer
+        // Obtener todos los contratos que sigan activos o por vencer
         const contratos = await contratoRepo.find({
             where: {
-                tipo: "Plazo Fijo",
                 estado: In(["ACTIVO", "POR VENCER"])
             },
-            relations: ["empleado", "empleado.usuario"]
+            relations: ["empleado", "empleado.usuario", "cliente", "cliente.usuario"]
         });
 
         let contratosPorVencer = 0;
@@ -38,7 +37,7 @@ export async function revisarVencimientos() {
                 // Generar alerta en el dashboard
                 if (contrato.empleado) {
                     const nombreEmpleado = contrato.empleado.usuario ? `${contrato.empleado.usuario.nombre} ${contrato.empleado.usuario.apellido}` : `ID ${contrato.empleado.idEmpleado}`;
-                    const mensaje = `El contrato a plazo fijo de ${nombreEmpleado} ha finalizado el ${contrato.fechaFin}.`;
+                    const mensaje = `El contrato de ${nombreEmpleado} ha finalizado el ${contrato.fechaFin}.`;
                     await crearAlerta(
                         contrato.empleado.idEmpleado,
                         "CONTRATO FINALIZADO",
@@ -56,7 +55,7 @@ export async function revisarVencimientos() {
                 // Generar alerta en el dashboard
                 if (contrato.empleado) {
                     const nombreEmpleado = contrato.empleado.usuario ? `${contrato.empleado.usuario.nombre} ${contrato.empleado.usuario.apellido}` : `ID ${contrato.empleado.idEmpleado}`;
-                    const mensaje = `El contrato a plazo fijo de ${nombreEmpleado} finaliza el ${contrato.fechaFin} (en ${diffDays} días).`;
+                    const mensaje = `El contrato de ${nombreEmpleado} finaliza el ${contrato.fechaFin} (en ${diffDays} días).`;
                     await crearAlerta(
                         contrato.empleado.idEmpleado,
                         "ALERTA VENCIMIENTO",

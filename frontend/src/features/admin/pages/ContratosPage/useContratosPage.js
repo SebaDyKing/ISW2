@@ -12,6 +12,7 @@ export function useContratosPage() {
   const [showFirmaAdminModal, setShowFirmaAdminModal] = useState(false)
   const [selectedUsuarioForNuevoContrato, setSelectedUsuarioForNuevoContrato] = useState(null)
   const [showTrasladoModal, setShowTrasladoModal] = useState(false)
+  const [selectedContratoForTraslado, setSelectedContratoForTraslado] = useState(null)
   const [showSolicitudTrasladoModal, setShowSolicitudTrasladoModal] = useState(false)
   const [selectedContratoForSolicitudTraslado, setSelectedContratoForSolicitudTraslado] = useState(null)
   const [showAnexoModal, setShowAnexoModal] = useState(false)
@@ -115,6 +116,8 @@ export function useContratosPage() {
     setSelectedUsuarioForNuevoContrato,
     showTrasladoModal,
     setShowTrasladoModal,
+    selectedContratoForTraslado,
+    setSelectedContratoForTraslado,
     showSolicitudTrasladoModal,
     setShowSolicitudTrasladoModal,
     selectedContratoForSolicitudTraslado,

@@ -34,7 +34,7 @@ async function getInstalacionesSupervisor(user) {
         activos.forEach(c => {
             if (c.contratoInstalaciones) {
                 c.contratoInstalaciones.forEach(ci => {
-                    if (ci.instalacion) instalacionIds.push(ci.instalacion.idInstalacion);
+                    if (ci.instalacion && ci.estadoFirma === "FIRMADO") instalacionIds.push(ci.instalacion.idInstalacion);
                 });
             }
         });
@@ -169,6 +169,8 @@ export async function downloadDocumentoService(idDocumento, user) {
         if (!isAssigned) {
           throw { status: 403, message: "No tienes permisos para descargar este documento" };
         }
+      } else if (documento.cliente) {
+        // Permitir a supervisores descargar documentos de clientes (ver contratos comerciales)
       } else {
         throw { status: 403, message: "No tienes permisos" };
       }
@@ -264,6 +266,40 @@ export async function firmarDocumentoService(idDocumento, user, firmaBase64) {
       if (contrato) {
         contrato.estado = "ACTIVO";
         await contratoRepo.save(contrato);
+      }
+    } else if (documento.tipo === "Anexo_MultiInstalacion" && documento.empleado) {
+      // Activar la asignación de instalación pendiente
+      const ciRepo = AppDataSource.getRepository("ContratoInstalacion");
+      const ciPendiente = await ciRepo.findOne({
+        where: { 
+          estadoFirma: "PENDIENTE",
+          contrato: { empleado: { idEmpleado: documento.empleado.idEmpleado } }
+        },
+        relations: ["contrato", "contrato.empleado"],
+        order: { createdAt: "DESC" }
+      });
+      if (ciPendiente) {
+        ciPendiente.estadoFirma = "FIRMADO";
+        await ciRepo.save(ciPendiente);
+      }
+    }
+
+    // NUEVO: Si el documento firmado es un Anexo (ej. Traslado), resolver la alerta de "Solicitud de Traslado"
+    if (documento.tipo.startsWith("Anexo") && documento.empleado) {
+      const alertaRepo = AppDataSource.getRepository("Alertas");
+      const alertasPendientes = await alertaRepo.find({
+        where: {
+          tipo: "Solicitud de Traslado",
+          Estado: "PENDIENTE",
+          Empleado: { idEmpleado: documento.empleado.idEmpleado }
+        }
+      });
+      
+      if (alertasPendientes && alertasPendientes.length > 0) {
+        for (let alerta of alertasPendientes) {
+          alerta.Estado = "RESUELTO"; // o el estado que use el sistema para cerrarla
+          await alertaRepo.save(alerta);
+        }
       }
     }
 
