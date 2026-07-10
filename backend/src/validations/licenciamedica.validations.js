@@ -41,9 +41,8 @@ export const licenciaMedicaBodyValidation = Joi.object({
 
 /**
  * @brief Esquema de validación para el cambio de estado de una licencia médica.
- *        Valida que el estado sea uno de los permitidos y que el supervisor que toma
- *        la decisión sea identificado.
- * @param {Object} input - Objeto con los campos estado e idSupervisor.
+ *        Valida que el estado sea uno de los permitidos.
+ * @param {Object} input - Objeto con el campo estado.
  * @return {Object} - Resultado de la validación.
  */
 export const licenciaMedicaEstadoValidation = Joi.object({
@@ -51,12 +50,6 @@ export const licenciaMedicaEstadoValidation = Joi.object({
     "any.only": `El estado debe ser uno de: pendiente, aprobada, rechazada`,
     "string.empty": `El estado no puede estar vacío`,
     "any.required": `El estado es obligatorio`,
-  }),
-  idSupervisor: Joi.number().integer().positive().required().messages({
-    "number.base": `El campo idSupervisor debe ser un número`,
-    "number.integer": `El campo idSupervisor debe ser un entero`,
-    "number.positive": `El campo idSupervisor debe ser un número positivo`,
-    "any.required": `El campo idSupervisor es obligatorio`,
   }),
 });
 
@@ -72,7 +65,7 @@ export function validateLicenciaMedicaBody(input) {
 
 /**
  * @brief Función que valida los datos del cambio de estado de una licencia médica.
- * @param {Object} input - Objeto con los campos estado e idSupervisor.
+ * @param {Object} input - Objeto con el campo estado.
  * @return {Object} - Resultado de la validación, con detalles de los errores si existen.
  */
 export function validateLicenciaMedicaEstado(input) {

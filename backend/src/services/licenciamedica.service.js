@@ -4,7 +4,6 @@ import path from "path"
 import { AppDataSource } from "../config/configDb.js";
 import { LicenciaMedica } from "../models/LicenciaMedica.js";
 import { Empleado } from "../models/Empleado.js";
-import { Supervisor } from "../models/Supervisor.js";
 
 export async function getLicenciasMedicasServices() {
   try {
@@ -68,17 +67,9 @@ export async function updateEstadoLicenciaMedicaServices(id, data) {
     const licencia = await licenciaRepository.findOneBy({ idLicencia: id });
     if (!licencia) throw new Error("Licencia médica no encontrada");
 
-    // Validar supervisor
-    const supervisorRepository = AppDataSource.getRepository(Supervisor);
-    const supervisor = await supervisorRepository.findOne({
-      where: { idSupervisor: data.idSupervisor },
-    });
-    if (!supervisor) throw new Error("Supervisor no encontrado");
-
-    // Aplicar cambios  solo estado y supervisor
+    // Aplicar cambio solo al estado (la resuelve el administrador, no un supervisor)
     licenciaRepository.merge(licencia, {
       estado: data.estado,
-      supervisor,
     });
     return await licenciaRepository.save(licencia);
   } catch (error) {

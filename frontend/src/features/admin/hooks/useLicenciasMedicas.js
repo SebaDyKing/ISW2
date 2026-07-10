@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react"
 import * as licenciaService from "../services/licenciaMedica.service"
 
-// TODO: reemplazar por el id del supervisor logueado cuando exista auth/contexto de sesión.
-// El backend (PATCH /:id/estado) EXIGE idSupervisor para registrar quién tomó la decisión.
-// Misma convención provisional que NuevoRegistroModal usa hoy con idAdmin: 1.
-const ID_SUPERVISOR_ACTUAL = 1
-
 export function useLicenciasMedicas() {
   const [licencias, setLicencias] = useState([])
   const [loading, setLoading] = useState(true)
@@ -32,10 +27,7 @@ export function useLicenciasMedicas() {
   const cambiarEstado = async (id, estado) => {
     setProcesando(id)
     try {
-      await licenciaService.updateEstado(id, {
-        estado,
-        idSupervisor: ID_SUPERVISOR_ACTUAL,
-      })
+      await licenciaService.updateEstado(id, { estado })
       await fetchLicencias()
     } finally {
       setProcesando(null)
