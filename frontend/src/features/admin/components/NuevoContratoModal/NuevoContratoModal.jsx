@@ -193,7 +193,13 @@ export default function NuevoContratoModal({ onClose, onSuccess, defaultUser }) 
                     className={styles.select}
                   >
                     <option value="">Seleccionar...</option>
-                    {CARGOS_DISPONIBLES.map((c) => (
+                    {CARGOS_DISPONIBLES.filter(c => {
+                      if (c.value === 'Cliente') return false;
+                      const selectedEmp = empleados.find(e => String(e.idEmpleado) === String(form.idEmpleado));
+                      if (selectedEmp?.rol === 'supervisor') return c.value === 'Supervisor';
+                      if (selectedEmp?.rol === 'empleado') return c.value === 'Personal de Aseo';
+                      return true;
+                    }).map((c) => (
                       <option key={c.value} value={c.value}>{c.label}</option>
                     ))}
                   </select>
